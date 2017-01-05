@@ -1,0 +1,277 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ui version="4.0">
+ <class>Form</class>
+ <widget class="QWidget" name="Form">
+  <property name="geometry">
+   <rect>
+    <x>0</x>
+    <y>0</y>
+    <width>666</width>
+    <height>567</height>
+   </rect>
+  </property>
+  <property name="windowTitle">
+   <string>Performance Fit - Module</string>
+  </property>
+  <layout class="QGridLayout" name="gridLayout">
+   <item row="5" column="0" rowspan="2" colspan="2">
+    <widget class="QGroupBox" name="groupBox">
+     <property name="title">
+      <string>Variable</string>
+     </property>
+     <layout class="QVBoxLayout" name="verticalLayout">
+      <item>
+       <widget class="QRadioButton" name="rb_sd">
+        <property name="text">
+         <string>scatter diagram</string>
+        </property>
+       </widget>
+      </item>
+      <item>
+       <widget class="QRadioButton" name="rb_pm">
+        <property name="text">
+         <string>user provided power matrix</string>
+        </property>
+       </widget>
+      </item>
+      <item>
+       <widget class="QRadioButton" name="rb_pto">
+        <property name="text">
+         <string>pto damping</string>
+        </property>
+       </widget>
+      </item>
+      <item>
+       <widget class="QRadioButton" name="rb_moo">
+        <property name="text">
+         <string>mooring stiffness</string>
+        </property>
+       </widget>
+      </item>
+      <item>
+       <widget class="QRadioButton" name="rb_k_ext">
+        <property name="text">
+         <string>external damping</string>
+        </property>
+       </widget>
+      </item>
+      <item>
+       <widget class="QRadioButton" name="rb_d_ext">
+        <property name="text">
+         <string>external stiffness</string>
+        </property>
+       </widget>
+      </item>
+     </layout>
+    </widget>
+   </item>
+   <item row="6" column="2" rowspan="2" colspan="4">
+    <widget class="QWidget" name="mpl_window" native="true">
+     <layout class="QVBoxLayout" name="mpl_vl"/>
+    </widget>
+   </item>
+   <item row="2" column="0" colspan="4">
+    <widget class="QLineEdit" name="le_pfit_data">
+     <property name="placeholderText">
+      <string>C:\Users\JohnDoe\test_prj_inputs</string>
+     </property>
+    </widget>
+   </item>
+   <item row="5" column="2" colspan="4">
+    <widget class="QPushButton" name="btn_plot_pfit">
+     <property name="text">
+      <string>plot</string>
+     </property>
+    </widget>
+   </item>
+   <item row="7" column="0">
+    <widget class="QComboBox" name="cb_angle_index"/>
+   </item>
+   <item row="7" column="1">
+    <widget class="QLabel" name="label">
+     <property name="text">
+      <string>angle index</string>
+     </property>
+    </widget>
+   </item>
+   <item row="2" column="5">
+    <widget class="QPushButton" name="btn_load_pfit">
+     <property name="text">
+      <string>load data</string>
+     </property>
+    </widget>
+   </item>
+   <item row="2" column="4">
+    <widget class="QPushButton" name="btn_browse_pfit">
+     <property name="text">
+      <string>browse</string>
+     </property>
+    </widget>
+   </item>
+   <item row="3" column="3" colspan="3">
+    <widget class="QPushButton" name="btn_fitting">
+     <property name="text">
+      <string>Power Matrix Fitting</string>
+     </property>
+    </widget>
+   </item>
+   <item row="0" column="0" colspan="6">
+    <layout class="QGridLayout" name="gridLayout_2">
+     <property name="sizeConstraint">
+      <enum>QLayout::SetMinimumSize</enum>
+     </property>
+     <property name="spacing">
+      <number>0</number>
+     </property>
+     <item row="0" column="0">
+      <widget class="QLabel" name="label_2">
+       <property name="minimumSize">
+        <size>
+         <width>0</width>
+         <height>50</height>
+        </size>
+       </property>
+       <property name="maximumSize">
+        <size>
+         <width>16777215</width>
+         <height>50</height>
+        </size>
+       </property>
+       <property name="sizeIncrement">
+        <size>
+         <width>0</width>
+         <height>0</height>
+        </size>
+       </property>
+       <property name="font">
+        <font>
+         <italic>false</italic>
+        </font>
+       </property>
+       <property name="text">
+        <string>Weatherwane angle semi-span [deg] 
+ The full angle span i considered 2x the given value </string>
+       </property>
+      </widget>
+     </item>
+     <item row="0" column="1">
+      <widget class="QDoubleSpinBox" name="wwAngle">
+       <property name="sizePolicy">
+        <sizepolicy hsizetype="Minimum" vsizetype="Fixed">
+         <horstretch>0</horstretch>
+         <verstretch>0</verstretch>
+        </sizepolicy>
+       </property>
+       <property name="minimumSize">
+        <size>
+         <width>0</width>
+         <height>20</height>
+        </size>
+       </property>
+       <property name="maximumSize">
+        <size>
+         <width>200</width>
+         <height>20</height>
+        </size>
+       </property>
+       <property name="maximum">
+        <double>180.000000000000000</double>
+       </property>
+      </widget>
+     </item>
+     <item row="1" column="0">
+      <widget class="QLabel" name="label_3">
+       <property name="text">
+        <string>Spectrum type</string>
+       </property>
+      </widget>
+     </item>
+     <item row="2" column="0">
+      <widget class="QLabel" name="label_4">
+       <property name="text">
+        <string>Peak Enhancement Factor (only used in the Jonswap spectrum type)</string>
+       </property>
+      </widget>
+     </item>
+     <item row="1" column="1">
+      <widget class="QComboBox" name="uiSpectrum">
+       <item>
+        <property name="text">
+         <string>Jonswap</string>
+        </property>
+       </item>
+       <item>
+        <property name="text">
+         <string>Pierson_Moskowitz</string>
+        </property>
+       </item>
+       <item>
+        <property name="text">
+         <string>Bretschneider Mitsuyasu </string>
+        </property>
+       </item>
+       <item>
+        <property name="text">
+         <string>Modified_Bretschneider Mitsuyasu</string>
+        </property>
+       </item>
+       <item>
+        <property name="text">
+         <string>Psc Swell</string>
+        </property>
+       </item>
+       <item>
+        <property name="text">
+         <string>Regular</string>
+        </property>
+       </item>
+      </widget>
+     </item>
+     <item row="2" column="1">
+      <widget class="QDoubleSpinBox" name="uiGamma">
+       <property name="minimum">
+        <double>1.000000000000000</double>
+       </property>
+       <property name="maximum">
+        <double>7.000000000000000</double>
+       </property>
+      </widget>
+     </item>
+     <item row="3" column="0">
+      <widget class="QLabel" name="label_5">
+       <property name="text">
+        <string>Spreading Paremeter</string>
+       </property>
+      </widget>
+     </item>
+     <item row="3" column="1">
+      <widget class="QDoubleSpinBox" name="uiSpreading">
+       <property name="minimum">
+        <double>-1.000000000000000</double>
+       </property>
+       <property name="maximum">
+        <double>50.000000000000000</double>
+       </property>
+      </widget>
+     </item>
+    </layout>
+   </item>
+   <item row="3" column="0" colspan="3">
+    <widget class="QPushButton" name="btn_skip_fit">
+     <property name="text">
+      <string>Skip Power Matrix Fitting</string>
+     </property>
+    </widget>
+   </item>
+   <item row="1" column="0" colspan="6">
+    <widget class="Line" name="line">
+     <property name="orientation">
+      <enum>Qt::Horizontal</enum>
+     </property>
+    </widget>
+   </item>
+  </layout>
+ </widget>
+ <resources/>
+ <connections/>
+</ui>

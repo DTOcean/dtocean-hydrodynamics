@@ -1,0 +1,116 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ui version="4.0">
+ <class>Form</class>
+ <widget class="QWidget" name="Form">
+  <property name="geometry">
+   <rect>
+    <x>0</x>
+    <y>0</y>
+    <width>666</width>
+    <height>567</height>
+   </rect>
+  </property>
+  <property name="windowTitle">
+   <string>Form</string>
+  </property>
+  <layout class="QGridLayout" name="gridLayout">
+   <item row="1" column="0" colspan="6">
+    <widget class="QPushButton" name="btn_fitting">
+     <property name="text">
+      <string>Power Matrix Fitting</string>
+     </property>
+    </widget>
+   </item>
+   <item row="0" column="4">
+    <widget class="QPushButton" name="btn_browse_pfit">
+     <property name="text">
+      <string>browse</string>
+     </property>
+    </widget>
+   </item>
+   <item row="0" column="5">
+    <widget class="QPushButton" name="btn_load_pfit">
+     <property name="text">
+      <string>load data</string>
+     </property>
+    </widget>
+   </item>
+   <item row="0" column="0" colspan="4">
+    <widget class="QLineEdit" name="le_pfit_data"/>
+   </item>
+   <item row="4" column="0">
+    <widget class="QComboBox" name="cb_angle_index"/>
+   </item>
+   <item row="4" column="1">
+    <widget class="QLabel" name="label">
+     <property name="text">
+      <string>angle index</string>
+     </property>
+    </widget>
+   </item>
+   <item row="2" column="0" rowspan="2" colspan="2">
+    <widget class="QGroupBox" name="groupBox">
+     <property name="title">
+      <string>Variable</string>
+     </property>
+     <layout class="QVBoxLayout" name="verticalLayout">
+      <item>
+       <widget class="QRadioButton" name="rb_sd">
+        <property name="text">
+         <string>scatter diagram</string>
+        </property>
+       </widget>
+      </item>
+      <item>
+       <widget class="QRadioButton" name="rb_pm">
+        <property name="text">
+         <string>power matrix</string>
+        </property>
+       </widget>
+      </item>
+      <item>
+       <widget class="QRadioButton" name="rb_pto">
+        <property name="text">
+         <string>pto</string>
+        </property>
+       </widget>
+      </item>
+      <item>
+       <widget class="QRadioButton" name="rb_moo">
+        <property name="text">
+         <string>mooring</string>
+        </property>
+       </widget>
+      </item>
+      <item>
+       <widget class="QRadioButton" name="rb_k_ext">
+        <property name="text">
+         <string>external damping</string>
+        </property>
+       </widget>
+      </item>
+      <item>
+       <widget class="QRadioButton" name="rb_d_ext">
+        <property name="text">
+         <string>external stiffness</string>
+        </property>
+       </widget>
+      </item>
+     </layout>
+    </widget>
+   </item>
+   <item row="3" column="2" rowspan="2" colspan="4">
+    <widget class="QWidget" name="plt_pfit" native="true"/>
+   </item>
+   <item row="2" column="2" colspan="4">
+    <widget class="QPushButton" name="btn_plot_pfit">
+     <property name="text">
+      <string>plot</string>
+     </property>
+    </widget>
+   </item>
+  </layout>
+ </widget>
+ <resources/>
+ <connections/>
+</ui>

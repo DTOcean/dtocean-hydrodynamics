@@ -1,0 +1,137 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ui version="4.0">
+ <class>Form</class>
+ <widget class="QWidget" name="Form">
+  <property name="geometry">
+   <rect>
+    <x>0</x>
+    <y>0</y>
+    <width>552</width>
+    <height>294</height>
+   </rect>
+  </property>
+  <property name="windowTitle">
+   <string>Hydrodynamic - Module</string>
+  </property>
+  <layout class="QGridLayout" name="gridLayout">
+   <item row="0" column="0" colspan="4">
+    <widget class="QLineEdit" name="le_data_t4">
+     <property name="placeholderText">
+      <string>C:\users\johndoe\desktop\data_WAMIT</string>
+     </property>
+    </widget>
+   </item>
+   <item row="0" column="4">
+    <widget class="QPushButton" name="btn_browse_t4">
+     <property name="text">
+      <string>browse</string>
+     </property>
+    </widget>
+   </item>
+   <item row="2" column="0" colspan="2">
+    <widget class="QLineEdit" name="mesh_f_t4">
+     <property name="placeholderText">
+      <string>C:\user\johndoe\desktop\cylinder.gdf</string>
+     </property>
+    </widget>
+   </item>
+   <item row="2" column="2">
+    <widget class="QPushButton" name="btn_mesh_f_t4">
+     <property name="text">
+      <string>browse</string>
+     </property>
+    </widget>
+   </item>
+   <item row="2" column="3" colspan="2">
+    <widget class="QPushButton" name="btn_view_mesh_t4">
+     <property name="text">
+      <string>view</string>
+     </property>
+    </widget>
+   </item>
+   <item row="3" column="0">
+    <widget class="QPushButton" name="btn_submit_t4">
+     <property name="text">
+      <string>Submit Inputs</string>
+     </property>
+    </widget>
+   </item>
+   <item row="3" column="1" colspan="4">
+    <widget class="QPushButton" name="btn_load_data_t4">
+     <property name="text">
+      <string>Load Data</string>
+     </property>
+    </widget>
+   </item>
+   <item row="1" column="0" colspan="5">
+    <widget class="QGroupBox" name="gen_input_3">
+     <property name="title">
+      <string>general inputs</string>
+     </property>
+     <layout class="QGridLayout" name="gridLayout_18">
+      <item row="2" column="2" colspan="2">
+       <widget class="QLabel" name="label_34">
+        <property name="text">
+         <string>ID of the independent degree of freedoms connected to the mooring </string>
+        </property>
+       </widget>
+      </item>
+      <item row="2" column="0" colspan="2">
+       <widget class="QLineEdit" name="moor_dof_t4">
+        <property name="text">
+         <string/>
+        </property>
+        <property name="placeholderText">
+         <string>1</string>
+        </property>
+       </widget>
+      </item>
+      <item row="0" column="2" colspan="2">
+       <widget class="QLabel" name="label_35">
+        <property name="text">
+         <string>number of independent degree of freedoms</string>
+        </property>
+       </widget>
+      </item>
+      <item row="0" column="0" colspan="2">
+       <widget class="QLineEdit" name="ndof_t4">
+        <property name="text">
+         <string/>
+        </property>
+        <property name="placeholderText">
+         <string>6</string>
+        </property>
+       </widget>
+      </item>
+      <item row="1" column="2" colspan="2">
+       <widget class="QLabel" name="label_36">
+        <property name="text">
+         <string>ID of the independent degree of freedoms connected to the PTO </string>
+        </property>
+       </widget>
+      </item>
+      <item row="1" column="0" colspan="2">
+       <widget class="QLineEdit" name="pto_dof_t4">
+        <property name="text">
+         <string/>
+        </property>
+        <property name="placeholderText">
+         <string>1, 3</string>
+        </property>
+       </widget>
+      </item>
+      <item row="3" column="0">
+       <widget class="QCheckBox" name="cb_gen_array_mat_t4">
+        <property name="text">
+         <string>load array interaction matrices</string>
+        </property>
+       </widget>
+      </item>
+     </layout>
+    </widget>
+   </item>
+  </layout>
+ </widget>
+ <resources/>
+ <connections/>
+</ui>

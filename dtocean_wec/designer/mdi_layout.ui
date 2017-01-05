@@ -1,0 +1,202 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ui version="4.0">
+ <class>MainWindow</class>
+ <widget class="QMainWindow" name="MainWindow">
+  <property name="geometry">
+   <rect>
+    <x>0</x>
+    <y>0</y>
+    <width>1088</width>
+    <height>1015</height>
+   </rect>
+  </property>
+  <property name="windowTitle">
+   <string>WEC Analysis</string>
+  </property>
+  <widget class="QWidget" name="centralwidget">
+   <layout class="QGridLayout" name="gridLayout">
+    <item row="0" column="1">
+     <widget class="QMdiArea" name="mdi_area"/>
+    </item>
+    <item row="0" column="0">
+     <widget class="QListView" name="lw_area">
+      <property name="sizePolicy">
+       <sizepolicy hsizetype="Fixed" vsizetype="Expanding">
+        <horstretch>0</horstretch>
+        <verstretch>0</verstretch>
+       </sizepolicy>
+      </property>
+      <property name="minimumSize">
+       <size>
+        <width>200</width>
+        <height>0</height>
+       </size>
+      </property>
+      <property name="maximumSize">
+       <size>
+        <width>200</width>
+        <height>16777215</height>
+       </size>
+      </property>
+     </widget>
+    </item>
+    <item row="1" column="0" colspan="2">
+     <widget class="QTextEdit" name="console">
+      <property name="sizePolicy">
+       <sizepolicy hsizetype="Expanding" vsizetype="Fixed">
+        <horstretch>0</horstretch>
+        <verstretch>0</verstretch>
+       </sizepolicy>
+      </property>
+     </widget>
+    </item>
+   </layout>
+  </widget>
+  <widget class="QMenuBar" name="menubar">
+   <property name="geometry">
+    <rect>
+     <x>0</x>
+     <y>0</y>
+     <width>1088</width>
+     <height>21</height>
+    </rect>
+   </property>
+   <widget class="QMenu" name="menuFile">
+    <property name="title">
+     <string>File</string>
+    </property>
+    <addaction name="actionNew_Project"/>
+    <addaction name="actionLoad_Project"/>
+    <addaction name="actionSave_Project"/>
+    <addaction name="separator"/>
+    <addaction name="actionAbout_2"/>
+    <addaction name="actionQuit_2"/>
+   </widget>
+   <widget class="QMenu" name="menuDTOcean">
+    <property name="title">
+     <string>DTOcean</string>
+    </property>
+    <addaction name="actionGenerate_array_hydrodynamic"/>
+   </widget>
+   <widget class="QMenu" name="menuWindows">
+    <property name="title">
+     <string>Windows</string>
+    </property>
+    <widget class="QMenu" name="menuOpen_Window">
+     <property name="title">
+      <string>Open Window</string>
+     </property>
+     <addaction name="actionHydrodynamic"/>
+     <addaction name="actionPerformance_Fit"/>
+     <addaction name="actionData_Visualisation"/>
+    </widget>
+    <addaction name="actionCascade"/>
+    <addaction name="actionTiled"/>
+    <addaction name="separator"/>
+    <addaction name="menuOpen_Window"/>
+   </widget>
+   <addaction name="menuFile"/>
+   <addaction name="menuDTOcean"/>
+   <addaction name="menuWindows"/>
+  </widget>
+  <widget class="QStatusBar" name="statusbar"/>
+  <action name="actionNew_Project">
+   <property name="text">
+    <string>New Project</string>
+   </property>
+  </action>
+  <action name="actionLoad_Project">
+   <property name="text">
+    <string>Load Project</string>
+   </property>
+  </action>
+  <action name="actionAbout">
+   <property name="text">
+    <string>About</string>
+   </property>
+  </action>
+  <action name="actionQuit">
+   <property name="text">
+    <string>Quit</string>
+   </property>
+  </action>
+  <action name="actionAbout_2">
+   <property name="text">
+    <string>About</string>
+   </property>
+  </action>
+  <action name="actionQuit_2">
+   <property name="text">
+    <string>Quit</string>
+   </property>
+  </action>
+  <action name="actionGenerate_array_hydrodynamic">
+   <property name="enabled">
+    <bool>false</bool>
+   </property>
+   <property name="text">
+    <string>Generate array hydrodynamic</string>
+   </property>
+  </action>
+  <action name="actionCascade">
+   <property name="text">
+    <string>Cascade</string>
+   </property>
+  </action>
+  <action name="actionTiled">
+   <property name="text">
+    <string>Tiled</string>
+   </property>
+  </action>
+  <action name="actionMinimise_All">
+   <property name="text">
+    <string>Minimise All</string>
+   </property>
+  </action>
+  <action name="actionSave_Project">
+   <property name="enabled">
+    <bool>false</bool>
+   </property>
+   <property name="text">
+    <string>Save Project</string>
+   </property>
+  </action>
+  <action name="actionHydrodynamic">
+   <property name="text">
+    <string>Hydrodynamic</string>
+   </property>
+  </action>
+  <action name="actionPerformance_Fit">
+   <property name="text">
+    <string>Performance Fit</string>
+   </property>
+  </action>
+  <action name="actionData_Visualisation">
+   <property name="text">
+    <string>Data Visualisation</string>
+   </property>
+  </action>
+ </widget>
+ <resources/>
+ <connections>
+  <connection>
+   <sender>actionQuit_2</sender>
+   <signal>triggered()</signal>
+   <receiver>MainWindow</receiver>
+   <slot>close()</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>-1</x>
+     <y>-1</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>543</x>
+     <y>385</y>
+    </hint>
+   </hints>
+  </connection>
+ </connections>
+ <slots>
+  <slot>displayAbout()</slot>
+ </slots>
+</ui>
