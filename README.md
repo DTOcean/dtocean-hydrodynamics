@@ -43,9 +43,7 @@ conda config --add channels https://conda.anaconda.org/topper
 conda install configobj cma descartes h5py libpython=1.0 matplotlib numpy=1.10.1 pandas pyopengl pyqt=4.11.4 pyyaml scikit-learn scipy shapely-win-py27
 ```
 
-The package "polite" must currently be installed separately from the "dev"
-brach of the hg repository https://bitbucket.org/team_dtocean/polite using the
-commands
+The package "polite" can be downloaded from [SETIS](https://setis.ec.europa.eu/dt-ocean/).
 
 ```
 cd path\to\polite
