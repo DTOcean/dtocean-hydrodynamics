@@ -5,7 +5,7 @@
 ### Install Data Package
 
 The hydrodynamic data package can be downloaded from
-[Dropbox](https://www.dropbox.com/s/7i1sgp5j2y5vhog/dtocean-hydrodynamics-data-0.3.exe?dl=0).
+[SETIS](https://setis.ec.europa.eu/dt-ocean/).
 
 Once downloaded execute the file to install. Remember to uninstall any old
 versions first using the uninstaller in the DTOcean Hydrodynamics start menu
