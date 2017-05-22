@@ -15,9 +15,9 @@ import matplotlib.pyplot as plt
 from .utils import distance_from_streamline
 from .utils.interpolation import interpol_scatter2grid, interp_at_point
 from .utils.misc import pi2pi, deg360_to_radpi
-#from .modules.vertical_velocity_profile import vvpw
+from .modules.vertical_velocity_profile import vvpw
 # TR: alternative using Soulsby formulation
-from .modules.vertical_velocity_profile import vvpw_soulsby
+#from .modules.vertical_velocity_profile import vvpw_soulsby
 from .modules import Streamlines, ArrayYield, HydroImpact
 from .submodel.WakeInteraction import WakeInteraction
 from .submodel.ParametricWake import read_database
@@ -218,11 +218,11 @@ class Array:
                 z = -hh
             # Computing velocity vertical profile weight
             radius = self.features['turbine' + str(i)]['Diam'] / 2.0
-            #wTop = vvpw(u, v, z+radius, el, h, n, debug=debug)
-            #wBottom = vvpw(u, v, z-radius, el, h, n, debug=debug)
+            wTop = vvpw(u, v, z+radius, el, h, n, debug=debug)
+            wBottom = vvpw(u, v, z-radius, el, h, n, debug=debug)
             # TR: alternative using Soulsby formulation
-            wTop = vvpw_soulsby(z+radius, el, h, n, ple, debug=debug)
-            wBottom = vvpw_soulsby(z-radius, el, h, n, ple, debug=debug)
+#            wTop = vvpw_soulsby(z+radius, el, h, n, ple, debug=debug)
+#            wBottom = vvpw_soulsby(z-radius, el, h, n, ple, debug=debug)
             w = (wTop + wBottom) / 2.0  # Linear interpolation along the vertical
             self.velHub['turbine' + str(i)] = np.array([u * w, v * w])
             self.velHubIni['turbine' + str(i)] = np.array([u * w, v * w])
