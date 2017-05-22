@@ -174,7 +174,7 @@ class Cleaner(object):
 
 ## Proceed to standard setup
 setup(name='dtocean-hydrodynamics',
-      version='1.0.0',
+      version='1.1.dev0',
       description='Hydrodynamics module for the DTOcean tools',
       author=('Francesco Ferri, '
               'Pau Mercade, '
