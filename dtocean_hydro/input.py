@@ -118,7 +118,7 @@ class WP2_SiteData:
         self.BR = BR
         self.electrical_connection_point = electrical_connection_point
         self.boundary_padding = boundary_padding
-    
+            
     def printInput(self, indent=4):
         
         """print the Site class input arguments
@@ -613,27 +613,45 @@ class WP2input:
             self.S_data.NogoAreas_bathymetry = NoGo                 
 
         if not self.M_data.tidalFlag:
-            module_logger.warning('[Warning] The wave module cannot run with variable bathymetry\n'
-                    'The bathymetry is reduced to its average value.')
-            module_logger.info('The averge bathymetry value is {} m'.format(np.mean(Bathymetry[:,-1])))
+            module_logger.warning('[Warning] The wave module cannot run with '
+                                  'variable bathymetry\n'
+                                  'The bathymetry is reduced to its average '
+                                  'value.')
+            module_logger.info('The averge bathymetry value is '
+                               '{} m'.format(np.mean(Bathymetry[:,-1])))
             
-            # calculate the average water depth withint he lease area and outside the nogozones
-            # specified by the user
+            # calculate the average water depth withint he lease area and
+            # outside the nogozones specified by the user
             active_area = Polygon(self.S_data.LeaseArea)
             mask_outofwater = Bathymetry[:,-1] <= 0  # true all points below swl
             mask_nan = np.logical_not(np.isnan(Bathymetry[:,-1]))  # true all valid points
-            mask_lease = np.asarray([active_area.contains(Point(el)) for el in Bathymetry[:,:-1]])  # true all points inside
+            mask_lease = np.asarray([active_area.intersects(Point(el))
+                                            for el in Bathymetry[:,:-1]])  # true all points inside
             mask_nogo = np.ones(mask_lease.shape, dtype='bool')
+            
             if self.S_data.NogoAreas:
                 if not isinstance(self.S_data.NogoAreas, list):
-                    raise IOError('The nogo areas input by the user needs to be a list of numpy.ndarray')                        
+                    raise IOError('The nogo areas input by the user needs to '
+                                  'be a list of numpy.ndarray')                        
                 for el in self.S_data.NogoAreas:
                     nogo_poly = Polygon(el)
-                    t = np.asarray([not nogo_poly.contains(Point(grid_p)) for grid_p in Bathymetry[:,:-1]])
+                    t = np.asarray([not nogo_poly.intersects(Point(grid_p))
+                                            for grid_p in Bathymetry[:,:-1]])
                     mask_nogo *= t  # true all point outside
                         
-            bathymetry_mask = mask_lease*mask_nan*mask_outofwater*mask_nogo  # only true point satisfy the above conditions
-            self.S_data._average_water_depth = np.mean(Bathymetry[bathymetry_mask,-1])
+            bathymetry_mask = (mask_lease *
+                               mask_nan *
+                               mask_outofwater *
+                               mask_nogo)  # only true point satisfy the above conditions
+            
+            if Bathymetry[bathymetry_mask,-1].size == 0:
+                raise ValueError("No valid points found within lease area. "
+                                 "Check depths and exclusion zones")
+            
+            self.S_data._average_water_depth = np.mean(Bathymetry[
+                                                        bathymetry_mask,-1])
+                    
+            return
 
     def getMainAngle(self):
         """

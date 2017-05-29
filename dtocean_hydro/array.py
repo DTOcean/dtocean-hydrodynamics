@@ -21,7 +21,7 @@ import matplotlib.pyplot as plt
 from matplotlib.path import Path
 import matplotlib.patches as patches
 import numpy as np
-from shapely.geometry import MultiPoint, MultiPolygon, Polygon, Point
+from shapely.geometry import MultiPoint, MultiPolygon, Polygon
 from dtocean_hydro.utils.Visualise_polygons import *
 
 
@@ -159,11 +159,7 @@ class Array_pkg(object):
         """
         if self.coord is None:
             raise IOError("No coordinates provided")
-            
-        if self.coord.shape[0] == 1:
-            self.minDist_constraint = False
-            return
-        
+
         def distances(xy1, xy2):
             n = len(xy1)
             d0 = np.subtract.outer(xy1[:,0], xy2[:,0])
@@ -191,12 +187,14 @@ class Array_pkg(object):
         """
         if self.minDist_constraint:
             if self._debug:
-                module_logger.warning('Warning[minDist]: violation of the minimum distance constraint in the actual array layout')
+                module_logger.warning('Warning[minDist]: violation of the '
+                                      'minimum distance constraint in the '
+                                      'actual array layout')
             machine_mask = np.zeros(self.coord.shape[0],dtype=bool)
         else:
-#            
             original_el = MultiPoint(self.coord)
-            lease_mask = np.array([self._lease_P.contains(el) for el in original_el],'bool')
+            lease_mask = np.array([self._lease_P.intersects(el)
+                                                for el in original_el],'bool')
             
             if np.any(lease_mask):  # identify the points inside the lease
                 if not self.Nogo_bathymetry is None:  # bathymetry related nogo zones (WP2 generated)
@@ -205,9 +203,12 @@ class Array_pkg(object):
                     reduced_el_array = self.coord[lease_mask]
                     reduced_mask = np.zeros(reduced_el_array.shape[0],'bool')
                     reduced_el = MultiPoint(reduced_el_array)
-                    reduced_mask = np.array([self.Nogo_bathymetry.contains(el) for el in reduced_el],'bool')
+                    reduced_mask = np.array([
+                            self.Nogo_bathymetry.intersects(el)
+                                                for el in reduced_el],'bool')
                     nogo_bath_mask = lease_mask.copy()
-                    nogo_bath_mask[nogo_bath_mask] = np.logical_not(reduced_mask)
+                    nogo_bath_mask[nogo_bath_mask] = np.logical_not(
+                                                                reduced_mask)
                 else:
                     nogo_bath_mask = True
                                     
@@ -222,7 +223,8 @@ class Array_pkg(object):
                     reduced_mask = np.zeros(reduced_el_array.shape[0],'bool')
                     reduced_el = MultiPoint(reduced_el_array)
                     for ng in nogo:
-                        reduced_mask = np.array([ng.contains(el) for el in reduced_el],'bool')+reduced_mask
+                        reduced_mask = np.array([ng.intersects(el)
+                                for el in reduced_el],'bool') + reduced_mask
                     nogo_mask = lease_mask.copy()
                     nogo_mask[nogo_mask] = np.logical_not(reduced_mask)
                 else:
@@ -305,20 +307,19 @@ class Array_pkg(object):
                             edgecolor='k'
                         )
                     )
-       
+
         Nbody = np.shape(self.coord[inside,0])[0]
     
         for mac, Str in enumerate(range(Nbody)):
             ax.annotate(Str,(self.coord[inside,0][mac],
                              self.coord[inside,1][mac]))
-        ax.plot(self.coord[:,0],self.coord[:,1],'k+',
-                self.coord[inside,0],self.coord[inside,1],'bo')
-                    
-        ax.plot( Leasep_unbuffered[:,0],Leasep_unbuffered[:,1],'r',linewidth=2)
+        
         ax.plot(Leasep[:,0],Leasep[:,1], color='#6699cc', alpha=0.7,
                         linewidth=2, solid_capstyle='round', zorder=10000)
         
-       
+        ax.plot(self.coord[:,0],self.coord[:,1],'k+',
+                    self.coord[inside,0],self.coord[inside,1],'bo',
+                    Leasep_unbuffered[:,0],Leasep_unbuffered[:,1],'r',linewidth=2)
         
         
 
