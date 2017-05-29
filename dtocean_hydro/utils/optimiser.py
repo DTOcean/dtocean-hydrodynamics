@@ -29,37 +29,52 @@ import pickle
 
 class SearchOptimum(object):
     """
-    SearchOptimum: the class is used to optimise the array layout for both tidal and wave cases
+    SearchOptimum: the class is used to optimise the array layout for both
+        tidal and wave cases
 
     Args:
-        hyd_obj (Tidal or Wave Object): array_hydrodynamic solver object that contains the methods to assess the energy
-                                        production of the array.
+        hyd_obj (Tidal or Wave Object): array_hydrodynamic solver object that
+            contains the methods to assess the energy production of the array.
         array_obj (Array_pkg): array_pkg object used to generate new layouts
-        val (str/numpy.ndarray)[-/m]: depending on the opt input the variable will contains a string to identify the
-                                        parameterised array layout or a collection of point to be optimised using
-                                        contraction/expansion
+        val (str/numpy.ndarray)[-/m]: depending on the opt input the variable
+            will contains a string to identify the parameterised array layout
+            or a collection of point to be optimised using
+            contraction/expansion
         opt (int)[-]: optimisation option method
-        max_num_dev (float) [-]: max number of devices allowed in the array estimated from the array rated power
-                                        and the machine rated power
+        max_num_dev (float) [-]: max number of devices allowed in the array
+            estimated from the array rated power and the machine rated power
         min_q_factor (float)[-]: defines the minimum allowed q-factor
-        nogo_areas (list) [m]: list containing the UTM coordinates of the nogo areas poligons expressed as [X(Northing),Y(Easting)].
+        nogo_areas (list) [m]: list containing the UTM coordinates of the nogo
+            areas poligons expressed as [X(Northing),Y(Easting)].
 
-        debug (boolean): if set to True, plots and additional command line outputs are issued.
+        debug (boolean): if set to True, plots and additional command line
+            outputs are issued.
 
     Attributes:
         main (WP2 class): same as args
-        problemOrder (int): dimension of the problem to be solved, parameters space order
-        combineparam (numpy.ndarray): describes the correlation between parameters if any. This is used to
-                                        reduce the parameters space order.
-        offsetparam (numpy.ndarray): describes the parameters offset if any. Used alog with the combineparam attribute
+        problemOrder (int): dimension of the problem to be solved, parameters
+            space order
+        combineparam (numpy.ndarray): describes the correlation between
+            parameters if any. This is used to reduce the parameters space
+            order.
+        offsetparam (numpy.ndarray): describes the parameters offset if any.
+            Used alog with the combineparam attribute
         _debug (boolean): debug flag
         _Val (str/numpy.ndarray): array structure description
         _Opt (int): array type option.
     """
-    def __init__(self, hyd_obj, array_obj, val, opt, max_num_dev, min_q_factor, nogo_areas, debug=False):
+    def __init__(self, hyd_obj,
+                       array_obj,
+                       val,
+                       opt,
+                       max_num_dev,
+                       min_q_factor,
+                       nogo_areas,
+                       debug=False):
+        
         self.nogo_areas = nogo_areas
-        self.__array = array_obj
-        self.__hyd_obj = hyd_obj
+        self._array = array_obj
+        self._hyd_obj = hyd_obj
 
         self._debug = debug
         self._Val = val
@@ -80,7 +95,9 @@ class SearchOptimum(object):
 
     def __set_problem_parameters(self):
         """
-        __set_problem_parameters: method used to set up the problem order based on the __Opt and _Val attributes
+        __set_problem_parameters: method used to set up the problem order based
+            on the __Opt and _Val attributes
+            
         Returns:
 
         """
@@ -101,26 +118,28 @@ class SearchOptimum(object):
                 self.par_a[2,1] = 1.
                 self.par_a[3,1] = -1.
             elif self._Val == 'full':
-                pass
+                self.par_a[-1,-1] = -1.
             else:
-                err_str = 'Error[UserArray input]: For the Option 1 the entered Value is incorrect'
+                err_str = ('Error[UserArray input]: For the Option 1 the '
+                           'entered Value is incorrect')
                 raise ValueError(err_str)
         elif self._Opt == 3:
-            self.opt_dim = 1
+            self.opt_dim = 2
             self.par_a = self.par_a[:, :2]
         else:
             raise IOError("The specified array option is out of bounds")
 
     def eval_optimal_layout(self, opt_method_id=1):
         """
-        eval_optimal_layout: calls the method specified in the opt_method args and send the
-                results back to the calling environment
+        eval_optimal_layout: calls the method specified in the opt_method args
+            and send the results back to the calling environment
 
         Args:
-            opt_method_id (int): defines the optimisation method used in the call.
-                                1 - Evolutionary Strategy
-                                2 - Monte Carlo
-                                3 - Brutal Force
+            opt_method_id (int): defines the optimisation method used in the
+                                 call.
+                                    1 - Evolutionary Strategy
+                                    2 - Monte Carlo
+                                    3 - Brutal Force
 
         Returns:
             0 if the optimisation was successful
@@ -135,18 +154,19 @@ class SearchOptimum(object):
         elif opt_method_id == 3:
             xopt = self.method_brutal_force()
         else:
-            raise IOError("The specified optimisation method ID is out of range.")
+            raise IOError("The specified optimisation method ID is out of "
+                          "range.")
         
         # rescale the optimal solution, if any. 
         if xopt == -1:
-            errStr=("Error[OptimisationResults]: No array configuration",
-                    " satisfies the given optimisation constrains")
+            errStr=("Error[OptimisationResults]: No array configuration "
+                    "satisfies the given optimisation constrains")
             raise ValueError(errStr)
         else:
 
             xmap = self.scale_param(xopt)
 
-            module_logger.info("\nOptimal configuration parameters:")
+            module_logger.info("Optimal configuration parameters:")
             module_logger.info("Inter-column distance: {}".format(xmap[0]))
             module_logger.info("Inter-row distance: {}".format(xmap[1]))
             module_logger.info("Column angle: {}".format(xmap[2]))
@@ -155,9 +175,10 @@ class SearchOptimum(object):
             
             if self._Opt == 1:
                 NR, NC, IR, IC, beta, psi = self.param_conditioning(xmap)
-                self.__array.generator(NR, NC, IR, IC, beta, psi)
+                self._array.generator(NR, NC, IR, IC, beta, psi)
             else:
-                self.__array.coord = self._Val*int(xmap[0])/self._normalisation_point
+                self._array.coord = (self._Val*int(xmap[0]) / 
+                                                     self._normalisation_point)
 
             module_logger.info('Ending the optimisation loop.....')
             module_logger.info('Re-generating the best array layout')
@@ -180,7 +201,8 @@ class SearchOptimum(object):
                 fit[ind] = -self.optimCostFunNorm((inter_col, beta))[0]
         # index = np.unravel_index(fit.argmin(), fit.shape)
         index = fit.argmin()
-        pickle.dump([fit,x,y], open("optimisation_results_brutal_force.pkl", "wb"))
+        pickle.dump([fit, x, y],
+                    open("optimisation_results_brutal_force.pkl", "wb"))
 
         if fit[index] > 0:
             return -1
@@ -188,13 +210,19 @@ class SearchOptimum(object):
             return (x[index//N], y[int(index%N)])
 
 
-    def method_cma_es(self, tolfun=1e1, tolx=1e-3, maxiter=200, maxfevals=2000):
+    def method_cma_es(self, tolfun=1e1,
+                            tolx=1e-3,
+                            maxiter=200,
+                            maxfevals=2000):
         """
-        method_cma_es: calls the cma package to optimise the power production of the array
+        method_cma_es: calls the cma package to optimise the power production
+            of the array
 
         Args (optional):
-            tolfun (float)[W]: minimun allowed variation of the fit to decide for the solution stagnation
-            tolx (float)[-]: minimun allowed variation of the parameters to decide for the solution stagnation
+            tolfun (float)[W]: minimun allowed variation of the fit to decide
+                for the solution stagnation
+            tolx (float)[-]: minimun allowed variation of the parameters to
+                decide for the solution stagnation
             maxiter (int)[-]: max number of population regeneration
             maxfevals (int)[-]: max number of total function evaluation
 
@@ -203,12 +231,11 @@ class SearchOptimum(object):
                solution found
         """
         
-        x0 = self.estimate_start_point()
-        if not x0 or not (len(x0)==len([True for x in x0 if x>self._min_bound 
-                                        and x<self._max_bound])):
-            warning_str = ("Could not find a suitable starting point for",
-                           " the optimiser, the centroid of the parameter ",
-                           "space is used instead")
+        x0, self._normalisation_point = self.estimate_start_point()
+        if not x0:
+            warning_str = ('Could not find a suitable starting point '
+                           'for the optimiser, the centroid of the '
+                           'parameter space is used instead')
             module_logger.warning(warning_str)
             x0 = self.opt_dim * [(self._min_bound+self._max_bound)/2]
         
@@ -226,6 +253,8 @@ class SearchOptimum(object):
             
             solutions = es.ask()
 			
+            # reduce the significant digits of the search space
+            # solutions = [np.around(s, decimals=1) for s in solutions]
             temp = [self.optimCostFunNorm(s) for s in solutions]
             fitness = [(-el[0]) for el in temp]
             es.tell(solutions, fitness)
@@ -246,15 +275,18 @@ class SearchOptimum(object):
 
     def method_monte_carlo(self, maxiter=5):
         """
-        methodMonteCarlo: optimise the array layout using the Motecarlo simulation approach
+        methodMonteCarlo: optimise the array layout using the Motecarlo
+            simulation approach
 
         Args:
-            n_MC (int): number of simulation to be run. Since there is no rational behind this method,
-                        but everything is based on the randomness of the solution, the number of n_MC is
-                         directly affecting the stability of the solution
+            n_MC (int): number of simulation to be run. Since there is no
+                rational behind this method, but everything is based on the
+                randomness of the solution, the number of n_MC is directly
+                affecting the stability of the solution
 
         Returns:
-            x (list): list of normalised parameters that represent the best solution found
+            x (list): list of normalised parameters that represent the best
+              solution found
         """
         xx = np.random.random_sample((self.opt_dim, maxiter))
         xx *= (self._max_bound-self._min_bound)
@@ -269,7 +301,8 @@ class SearchOptimum(object):
             fit[i] = -self.optimCostFunNorm(x)[0]
         # find max average energy for arrays with q-factor larger than q_min
         index = fit.argmin()
-        pickle.dump([fit,xx], open("optimisation_results_brutal_force.pkl", "wb"))
+        pickle.dump([fit, xx],
+                    open("optimisation_results_brutal_force.pkl", "wb"))
 
         if self._debug:
                 module_logger.info('AEP for the different configurations:')
@@ -288,18 +321,24 @@ class SearchOptimum(object):
                 X_norm = ((float(IR)-sc)/sc, (float(IC)-sc)/sc)
             elif val == 'staggered':
                 X_norm = ((float(IR)-sc)/sc, beta/(0.1*(np.pi/2)))
+            elif val == 'full':
+                X_norm = ((float(IR)-sc)/sc,
+                          (float(IR)-sc)/sc,
+                          beta/(0.1*(np.pi/2)),
+                          beta/(0.1*(np.pi/2)))
             else:
-                X_norm = ((float(IR)-sc)/sc, (float(IC)-sc)/sc, beta/(0.1*(np.pi/2)), psi/(0.1*(np.pi/2)))
-            return X_norm
+                X_norm = (IR/sc, IC/sc)
+            
+            if abs(X_norm[0]-5) > 1:
+                sc = float(IR)/6
+                return remap(val, sc, IR, IC, beta, psi)
+            return (X_norm, sc)
             
         module_logger.info("\nEstimating the optimisation starting point:")
         max_eval = 100
         
-        l_b = self._min_bound
-        u_b = self._max_bound
-        
-        if self.opt_dim > 2:  # arrange a fake staggered grid for full array case
-            opt_dim = 2
+        # arrange a fake staggered grid for full array case
+        if self.opt_dim > 2:  
             par_a = np.eye(4)
             par_b = np.zeros(4)
             par_a = par_a[:, :2]*0.
@@ -308,58 +347,51 @@ class SearchOptimum(object):
             par_a[2,1] = 1.
             par_a[3,1] = -1.
         else:
-            opt_dim = self.opt_dim
             par_a = self.par_a
             par_b = self.par_b
            
                     
         # un-normalize optimization variable
         x_b = np.array([5,5],'f')
-        xNorm = self.scale_param(x_b)
+        xmap = np.dot(par_a, x_b)
+        xmap[0] *= self._normalisation_point
+        xmap[1] *= self._normalisation_point
+        xmap[0] += self._normalisation_point
+        xmap[1] += self._normalisation_point
+        xmap[2] *= 0.1 * np.pi/2
+        xmap[3] *= 0.1 * np.pi/2
+        
+        xNorm = xmap + par_b
+    
         NR, NC, IR, IC, beta, psi = self.param_conditioning(xNorm)
-        IC = self.__array.Dmin[0]+1.01
-        IR = self.__array.Dmin[1]+1.01
-       
+        IC = self._array.Dmin[0]+1.01
+        IR = self._array.Dmin[1]+1.01
+
         ind = 0
         
         while True:
             
             if self._Opt == 3:
-                scale = IC/self._normalisation_point
-                self.__array.coord = self._Val*scale
-                self.__array.checkMinDist()
+                scaleX = IC/self._normalisation_point
+                scaleY = IR/self._normalisation_point
+                self._array.coord = self._Val*np.array([scaleX, scaleY])
+                self._array.checkMinDist()
             else:
-                self.__array.generator(NR, NC, IR, IC, beta, psi)
+                self._array.generator(NR, NC, IR, IC, beta, psi)
     
-            inside = self.__array.checkout(nogo_list=self.nogo_areas)
+            inside = self._array.checkout()
     
             # check conditions prior to solve the array interaction
-            if inside.any() and not self.__array.minDist_constraint:
+            if inside.any() and not self._array.minDist_constraint:
                 
-                if self.__array.coord[inside].shape[0] > self._max_num_dev:
-                    
+                if self._array.coord[inside].shape[0] > self._max_num_dev:
                     IC *= 1.05
                     IR *= 1.05
-                    
                 else:
-                    
-                    x0_attmpt = remap(self._Val,
-                                      self._normalisation_point,
-                                      IC,
-                                      IR,
-                                      beta,
-                                      psi)
-                    
-                    if x0_attmpt > self._max_bound:
-                        
-                        self._normalisation_point = \
-                            (x0_attmpt[0] * self._normalisation_point) / \
-                                    ((self._max_bound + self._min_bound) / 2.)
-                                    
                     return remap(self._Val,
                                  self._normalisation_point,
                                  IC,
-                                 IR,
+                                 IR, 
                                  beta,
                                  psi)
                     
@@ -371,11 +403,12 @@ class SearchOptimum(object):
             ind += 1
             
             if ind > max_eval:
-                return ()
+                return (), self._normalisation_point 
                 
     def param_conditioning(self, x_scale):
         """
-        param_conditioning: the function applies truncation to the scale parameters.
+        param_conditioning: the function applies truncation to the scale
+            parameters.
         Args:
             x_scale (numpy.ndarray): array of scaled parameters
 
@@ -384,8 +417,8 @@ class SearchOptimum(object):
         """
         Nb = self._max_num_dev
         # the factor 10 is used because for small skewing angles there is a
-        # risk to do not fill the lease area. The extra number of bodies do not affect the
-        # calculation.
+        # risk to do not fill the lease area. The extra number of bodies do not 
+        # affect the calculation.
         NR = 10*int(sqrt(Nb))
         NC = 10*int(sqrt(Nb))+1
         IC = int(x_scale[0])
@@ -437,8 +470,8 @@ class SearchOptimum(object):
 
     def optimCostFun(self, x):
         """
-        optimCostFun: the method calculate the AEP and q-factor for the given configuration, calling
-                        either the tidal or the wave modules
+        optimCostFun: the method calculate the AEP and q-factor for the given
+            configuration, calling either the tidal or the wave modules
 
         Args:
             x (list): list of 4 parameters used to build the array layout
@@ -449,50 +482,85 @@ class SearchOptimum(object):
         """
         NR, NC, IR, IC, beta, psi = self.param_conditioning(x)
         
-        if beta<0.05:
-            module_logger.debug("mmmmm")
+        if beta<0.05 and self._Opt != 3:
+            module_logger.debug("The angle between rows and "
+                                "columns is too close to zero.")
             
         if self._Opt == 3:
-            scale = IC/self._normalisation_point  # it was why?self.__array.Dmin
-            self.__array.coord = self._Val*scale
-            self.__array.checkMinDist()
+            scaleX = IC/self._normalisation_point  
+            scaleY = IR/self._normalisation_point
+            self._array.coord = self._Val*np.array([scaleX, scaleY])
+            self._array.checkMinDist()
         else:
-            self.__array.generator(NR, NC, IR, IC, beta, psi)
+            self._array.generator(NR, NC, IR, IC, beta, psi)
 
-        inside = self.__array.checkout(nogo_list=self.nogo_areas)
+        inside = self._array.checkout(nogo_list=self.nogo_areas)
         if self._debug:
-            self.__array.show(inside)
+            self._array.show(inside)
         
-        module_logger.debug("Array parameters:\tIC {}\tIR {}\tbeta {}\tpsi {}".format(IC, IR, beta, psi))
-        module_logger.info("Number of devices: {}".format(self.__array.coord[inside].shape[0]))
+        module_logger.debug("Array parameters: IC: {} IR: {} beta: {} "
+                            "psi: {}".format(IC, IR, beta, psi))
 
         # check conditions prior to solve the array interaction
-        if inside.any() and not self.__array.minDist_constraint:
-            if self.__array.coord[inside].shape[0] > self._max_num_dev:
-                if self._debug: module_logger.info("Not valid: N_dev > N_max ({})".format(self._max_num_dev))
+        if inside.any() and not self._array.minDist_constraint:
+            
+            if self._array.coord[inside].shape[0] > self._max_num_dev:
+                
+                if self._debug: module_logger.info("Not valid: N_dev > "
+                                                   "N_max ({})".format(
+                                                           self._max_num_dev))
+                
                 # return the squared error from actual value and bound
-                # due to the computational constraints this penality term is magnified by a factor 2
-                return -((self.__array.coord[inside].shape[0]/self._max_num_dev-1)*200)**2, -1
+                # due to the computational constraints this penality term is
+                # magnified by a factor 2
+                maxdev_error = -((self._array.coord[inside].shape[0] / 
+                                      self._max_num_dev - 1) * 200) ** 2
+                
+                return maxdev_error, -1
+            
             else:
+                
                 if self._debug: module_logger.info("OK constr")
 
                 # solve the array interaction
-                res = self.__hyd_obj.energy(self.__array.coord[inside])
+                res = self._hyd_obj.energy(self._array.coord[inside])
 
-            if self._debug:
-                module_logger.info("Array performance:\nAEP {}\nq-factor {}".format(res.AEP_array, res.q_array))
+            module_logger.info("Number of devices: {} AEP: {} q-factor: "
+                               "{}".format(self._array.coord[inside].shape[0],
+                                           res.AEP_array,
+                                           res.q_array))
 
             if res.q_array >= self._min_q_factor:
-                if self._debug: module_logger.info("Valid config: actual q-factor {} --> min q-factor {}".format(res.q_array, self._min_q_factor))
+                
+                if self._debug:
+                    module_logger.info("Valid config: actual q-factor {} --> "
+                                        "min q-factor {}".format(
+                                                        res.q_array,
+                                                        self._min_q_factor))
+                
                 return res.AEP_array, res.q_array
+            
             else:
+                
                 if self._debug: module_logger.info("Not valid: q < q_min")
+                
                 # return the squared error from actual value and bound
-                return -((res.q_array/self._min_q_factor-1)*100.)**2, res.q_array
+                qfactor_error = -((res.q_array /
+                                   self._min_q_factor - 1) * 100.) ** 2
+                
+                return qfactor_error, res.q_array
 
         else:
-            if self._debug: module_logger.warning('WARNING! For the given configuration no device is inside the active area!\nNo calculation is performed!')
-            return -((self.__array._actual_mindist /self._min_dist-1)*100.)**2, -1
+            
+            if self._debug:
+                module_logger.warning('WARNING! For the given configuration '
+                                      'no device is inside the active area!. '
+                                      'No calculation is performed!')
+            
+            mindist_error = -((self._array._actual_mindist / 
+                                           self._min_dist - 1) * 100.) ** 2
+            
+            return mindist_error, -1
 
 
 
