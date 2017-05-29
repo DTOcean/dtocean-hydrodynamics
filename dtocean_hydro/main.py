@@ -377,7 +377,7 @@ class WP2:
                     
                 dev_depth = get_device_depths(self.iInput.S_data.Bathymetry,
                                               layout)
-                device_average_depth = np.mean(dev_depth) + SSH
+                device_average_depth = -np.mean(dev_depth) + SSH
                                               
                 if (np.any(np.logical_or(bem_depth <= site_depth * 0.99,
                                          bem_depth >= site_depth * 1.01)) or 
