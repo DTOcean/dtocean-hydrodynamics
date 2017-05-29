@@ -24,7 +24,7 @@ from dtocean_wave.WEC import wec
 from dtocean_wave.MultiWEChydro import MultiBody
 from dtocean_tidal.interface import CallTidal
 from dtocean_tidal.submodel.ParametricWake import read_database
-from dtocean_hydro.utils.set_wdirs_multibody import *
+from dtocean_hydro.utils.set_wdirs_multibody import set_wdirs_multibody
 import dtocean_wave.utils.read_bem_solution as read_wec_sol
 
 # Relative imports
@@ -47,34 +47,49 @@ class WP2:
         WP2input (WP2input class): WP2 input class. 
 
     Optional args:
-        Cfit (numpy.ndarray): Only for the wave case. User defined value of the damping. Used in the PM fitting method.
-                                        The input can be used to enter an additional damping in the numerical model
-        Kfit (numpy.ndarray): Only for the wave case. User defined value of the stiffness. Used in the PM fitting method.
-                                        The input can be used to enter an additional stiffness in the numerical model
+        Cfit (numpy.ndarray): Only for the wave case. User defined value of the
+                              damping. Used in the PM fitting method. The input
+                              can be used to enter an additional damping in the
+                              numerical model
+        Kfit (numpy.ndarray): Only for the wave case. User defined value of the
+                              stiffness. Used in the PM fitting method. The
+                              input can be used to enter an additional
+                              stiffness in the numerical model
 
-        NOTE: the Cfit and Kfit are obsolete, they are now specified in the wec_solution.h5 file
+        NOTE: the Cfit and Kfit are obsolete, they are now specified in the
+        wec_solution.h5 file
 
-        debug (boolean): if set to True, plots and additional command line outputs are issued.
+        debug (boolean): if set to True, plots and additional command line
+                         outputs are issued.
      
     Attributes:
-            bin_dir (str): path name of the bin. The directory stores the executable files for the BEM solver.
-            include_dir (str): path name of the include directory. The directory stores the wave and tidal calculation and data
-            tidal_include (str): path name of the tida directory, where the wake database is located.
-            wave_include (str): path name of the wave directory, where the BEM solver results are located.
+            bin_dir (str): path name of the bin. The directory stores the
+                executable files for the BEM solver.
+            include_dir (str): path name of the include directory. The
+                directory stores the wave and tidal calculation and data
+            tidal_include (str): path name of the tida directory, where the
+                wake database is located.
+            wave_include (str): path name of the wave directory, where the BEM
+                solver results are located.
             iInput (WP2input class): copy of the input argument.
-            iArray (Array_pkg class): contains the array related features as lease area, active area, 
-                    and generates the spatial arrangement of the devices.
+            iArray (Array_pkg class): contains the array related features as
+                lease area, active area, and generates the spatial arrangement
+                of the devices.
             iHydro (Hydro_pkg class): hydro class for the different arrays
-            iHydroWEC (Hydro_pkg class): hydro class specific for the isolated WEC (only waves)
-            _debug (boolean): if set to True, plots and additional comand line outputs are issued.
+            iHydroWEC (Hydro_pkg class): hydro class specific for the isolated
+                WEC (only waves)
+            _debug (boolean): if set to True, plots and additional comand line
+                outputs are issued.
             iWEC (WEC class): (only for arrays of WECs). The iWEC class 
-                    containts the hydrodynamic features of the single body evaluated from the BEM solver.
-            iMB (MultiBody class): (only for arrays of WECs ). The IMB class contains all the 
-                    hydrodynamic features of the array, evaluated using the direct matrix method.
+                containts the hydrodynamic features of the single body
+                evaluated from the BEM solver.
+            iMB (MultiBody class): (only for arrays of WECs ). The IMB class
+                contains all the hydrodynamic features of the array, evaluated
+                using the direct matrix method.
     
     Returns:
-        WP2output (WP2output class): the class return an Output object. If no array layout is possible 
-         the returns is -1.
+        WP2output (WP2output class): the class return an Output object. If no
+        array layout is possible the returns is -1.
   
     """
     def __init__(self, WP2input,
@@ -95,8 +110,9 @@ class WP2:
         self._debug = debug
 
         if not WP2input.internalOptim:
-            module_logger.info("The user provided an external map of the hydrodynamic interaction\n"
-                  "No internal model is issued")
+            module_logger.info("The user provided an external map of the "
+                               "hydrodynamic interaction. No internal model "
+                               "is issued")
         else:
             bathy = WP2input.S_data.Bathymetry
 
@@ -113,14 +129,19 @@ class WP2:
 
             else:
                 devType = 'W'
-                freqs = read_wec_sol.read_freq(WP2input.M_data.wave_data_folder)
+                freqs = read_wec_sol.read_freq(
+                                            WP2input.M_data.wave_data_folder)
                 cfreqs = 2.*np.pi*freqs
                 B = WP2input.S_data.MeteoceanConditions['B']
 
                 mA = WP2input.S_data.mainAngle
                 yA = WP2input.M_data.YawAngle
                 specType = WP2input.S_data.MeteoceanConditions['specType']
-                wdirs = set_wdirs_multibody(B.copy(), specType[-1], mA, yA, debug=debug)
+                wdirs = set_wdirs_multibody(B.copy(),
+                                            specType[-1],
+                                            mA,
+                                            yA,
+                                            debug=debug)
 
                 B = WP2input.S_data.MeteoceanConditions['B']
                 Hs = WP2input.S_data.MeteoceanConditions['Hs']
@@ -136,12 +157,22 @@ class WP2:
                 #B_WEC = WP2input.M_data.SingleDevice['z']
                 #ScatDiag_WEC = WP2input.M_data.SingleDevice['Add']['p']
                 #specType_WEC = WP2input.M_data.SingleDevice['Add']['specType']
-                #self.iHydroWEC= Hydro_pkg(devType, B_WEC, Hs_WEC, Tp_WEC, ScatDiag_WEC, wdepth, freqs, wdirs_single, specType_WEC)
+                #self.iHydroWEC= Hydro_pkg(devType, B_WEC, Hs_WEC, Tp_WEC,
+                #     ScatDiag_WEC, wdepth, freqs, wdirs_single, specType_WEC)
                 # Instance of Hydro for array (the only difference is wdirs)
-                self.iHydroMB = Hydro_pkg(devType, B, Hs, Tp, ScatDiag, wdepth, cfreqs, wdirs, specType)
+                self.iHydroMB = Hydro_pkg(devType,
+                                          B,
+                                          Hs,
+                                          Tp,
+                                          ScatDiag,
+                                          wdepth,
+                                          cfreqs,
+                                          wdirs,
+                                          specType)
 
             # for the wave case the single body model need created from the
-            # hydrodynamic data and then compared with the user input power matrix
+            # hydrodynamic data and then compared with the user input power
+            # matrix
             if WP2input.M_data.tidalFlag:
                 # Load the tidal database
                 if WP2input.M_data.tidal_data_folder is None:
@@ -149,30 +180,40 @@ class WP2:
                     path_dict = get_install_paths()
                     self.cfd_data = read_database(path_dict["tidal_include"])
                 else:
-                    self.cfd_data = read_database(WP2input.M_data.tidal_data_folder)
+                    self.cfd_data = read_database(
+                                        WP2input.M_data.tidal_data_folder)
             else:
-                self.iWEC = wec(WP2input.M_data.wave_data_folder,wdepth,debug=False)
+                self.iWEC = wec(WP2input.M_data.wave_data_folder,
+                                wdepth,
+                                debug=False)
                 self.iWEC.load_single_machine_model()
 
-                # for the wave case if any of the array distance is smalled then the
-                # circumscribing cylinder the implemented theory is violated and the
-                # results are unrealistic. The Dmin inputed by the user is therefore
-                # updated
+                # for the wave case if any of the array distance is smalled
+                # than the circumscribing cylinder the implemented theory is
+                # violated and the results are unrealistic. The Dmin inputed by
+                # the user is therefore  updated
                 if min(self.iArray.Dmin)/2. < self.iWEC.radius:
                     Dmin_new = ()
                     for D in self.iArray.Dmin:
                         Dmin_new += (max(D/2,self.iWEC.radius*1.001)*2,)
-                        module_logger.warning("The minimum distance specified by the user does not fit the\n"
-                              "requirements of the interacton theory. The minimum distance is modified.")
-                        module_logger.info("Old input: {}".format(self.iArray.Dmin))
-                        module_logger.info("Interaction theory min requirement: {}".format(self.iWEC.radius*2))
-                        module_logger.info("New min distance: {}".format(Dmin_new))
+                        module_logger.warning("The minimum distance specified "
+                                              "by the user does not fit the "
+                                              "requirements of the interacton "
+                                              "theory. The minimum distance "
+                                              "is modified.")
+                        module_logger.info(
+                                    "Old input: {}".format(self.iArray.Dmin))
+                        module_logger.info(
+                                    "Interaction theory min requirement: "
+                                    "{}".format(self.iWEC.radius*2))
+                        module_logger.info(
+                                    "New min distance: {}".format(Dmin_new))
                     self.iArray.Dmin = Dmin_new
 
     def optimiseExternalTab(self):
         """
-        optimiseExternalTab: reads the array layouts given in the dictionary and return the optimal configuration
-        under the given constraints.
+        optimiseExternalTab: reads the array layouts given in the dictionary
+        and return the optimal configuration under the given constraints.
         
         Returns: 
             Ouput obj
@@ -197,7 +238,8 @@ class WP2:
             self.iArray.checkMinDist()
 
             if self._debug:
-                inside = self.iArray.checkout(nogo_list=self.iInput.S_data.NogoAreas)
+                inside = self.iArray.checkout(
+                                    nogo_list=self.iInput.S_data.NogoAreas)
                 self.iArray.show(inside)
             AEP = userIn[conf]["Annual_Energy_Production_perD"]
 
@@ -232,29 +274,53 @@ class WP2:
                         OptConf["q_factor_Array"],
                         OptConf["TI"])
         else:
-            raise ValueError("No feasible configurations found in the given Result Table")
+            raise ValueError("No feasible configurations found in the given "
+                             "result table")
 
     def optimisationLoop(self):
         """
-        optimisationLoop: the method calls iteratively either the tidal or wave sub-models, 
-            in order to identify the optimal array configuration that satisfy the given constraints.
-            The optimisation criteria is the maximisation of the annual energy production of the 
-            whole array.
+        optimisationLoop: the method calls iteratively either the tidal or wave
+            sub-models, in order to identify the optimal array configuration
+            that satisfy the given constraints. The optimisation criteria is
+            the maximisation of the annual energy production of the whole
+            array.
         
         Note:
-            if the attribute self.internalOptim is False, the WP2 is using a precompiled list of outputs dictionaries
-                and no internal calculation is performed. This option can be actually used to run a batch 
-                run and speed up the overall DTOcean optimisation.
+            if the attribute self.internalOptim is False, the WP2 is using a
+            precompiled list of outputs dictionaries and no internal
+            calculation is performed. This option can be actually used to run
+            a batch run and speed up the overall DTOcean optimisation.
             
-            depending on the self.iInput.M_data.UserArray['Option'] different behavior of the method are 
-            achieved:
-                Opt 1 --> Normal use, optimisation based on the prebuilted parameterised array layouts
-                Opt 2 --> Fixed array layout, no optimisation is done, only the evaluation of the specific array 
-                                layout performance is issued.
-                Opt 3 --> User defined array layout, optimisation of the given layout, by stretching/compressing
-                                of the device position.
+            Depending on the self.iInput.M_data.UserArray['Option'] different
+            behavior of the method are achieved:
+                Opt 1 --> Normal use, optimisation based on the prebuilted
+                          parameterised array layouts
+                Opt 2 --> Fixed array layout, no optimisation is done, only the
+                          evaluation of the specific array layout performance
+                          is issued.
+                Opt 3 --> User defined array layout, optimisation of the given
+                          layout, by stretching/compressing of the device
+                          position.
             
         """
+        
+        warning_str = (
+               'The given BEM solution for the isolated device is calculated '
+               'at a water depth of {}m while the average bathymetry of the '
+               'lease area minus the input nogo-zones is {}m and the average '
+               'installation depth of the different machines with the given '
+               'array layout is {}m. The BEM software should be run with a '
+               'water depth close to the average water depth of the lease '
+               'area to minimise the errors introduced with the flat '
+               'bathymetry approximation. With the actual hydrodynamic model '
+               'the accuracy of the results is reduced. Consider '
+               're-evaluating the hydrodynamic model of the isolated device '
+               'for the actual average bathymetry [{}m]. This value is '
+               'calculated by averaging the bathymetry gridpoints that satify '
+               'the following three conditions:\n'
+               '\t --> point inside the lease area\n'
+               '\t --> point outside the user-given nogo-zones\n'
+               '\t --> point below the considered water level datum.')
 
         if not self.iInput.internalOptim:
             return self.optimiseExternalTab()
@@ -293,6 +359,7 @@ class WP2:
             # regenerate the optimal array layout
 
         if not stopRun:
+            
             module_logger.info('Finishing the WP2 task: Evaluation of the '
                                'final array layout interaction')
             inside = self.iArray.checkout(
@@ -302,55 +369,35 @@ class WP2:
                 return -1
 
             if not self.iInput.M_data.tidalFlag:
+                
                 bem_depth = self.iWEC.water_depth
                 site_depth = self.iWEC.depth
                 layout = self.iArray.coord[inside]
                 SSH = np.mean(self.iInput.S_data.MeteoceanConditions['SSH'])
-                xr = self.iInput.S_data.Bathymetry[:,0]
-                yr = self.iInput.S_data.Bathymetry[:,1]
-                if xr[1]-xr[0] < 1e-6:
-                    xind = np.where(xr!=xr[0])[0][0]
-                    yind = np.where(yr==yr[0])[0][1]
-                    x = xr[::xind]
-                    y = yr[:yind]
-                else:
-                    xind = np.where(xr==xr[0])[0][1]
-                    yind = np.where(yr!=yr[0])[0][0]
-                    x = xr[:xind]
-                    y = yr[::yind]
-
-                dev_depth = []
-                l_sh = layout.shape
-                if len(l_sh)==1:
-                    layout = layout.reshape(-1, 1)
                     
-                
-                for el in range(layout.shape[0]):
-                    xi = np.argmin(np.abs(x-layout[el][0]))
-                    yi = np.argmin(np.abs(y-layout[el][1]))
-                    mask = np.logical_and(xr == x[xi], yr == y[yi])
-                    z = np.abs(self.iInput.S_data.Bathymetry[mask,-1])
-                    dev_depth.append(z)
-
-                device_average_depth = np.mean(dev_depth)+SSH
-                if (np.any(np.logical_or(bem_depth <= site_depth*0.99, bem_depth >= site_depth*1.01))
-                    or np.any(np.logical_or(bem_depth <= device_average_depth*0.99, bem_depth >= device_average_depth*1.01))):
-                    warning_str = ('The given BEM solution for the isolated device is calculated at a water depth of {}m '.format(bem_depth),
-                               'while the average bathymetry of the lease area minus the input nogo-zones is {}m\n'.format(site_depth),
-                               'and the average installation depth of the different machines with the given array layout is {}m.\n '.format(device_average_depth),
-                                'The BEM software should be run with a water depth close to the average water depth of ',
-                                'the lease area to minimise the errors itroduced with the flat bathymetry approximation.\n ',
-                                'With the actual hydrodynamic model the accuracy of the results is reduced. \n',
-                                'Consider to re-evaluate the hydrodynamic model of the isolated device for the actual average bathymetry [{}m]\n'.format(site_depth),                                                                                                                                          
-                                'This value is calculated by averaging the bathymetry gridpoints that satify the following three conditions:\n',
-                                '\t --> point inside the lease area\n',
-                                '\t --> point outside the user-given nogo-zones\n',
-                                '\t --> point below the considered water level datum.')
-                    module_logger.warning(warning_str)
+                dev_depth = get_device_depths(self.iInput.S_data.Bathymetry,
+                                              layout)
+                device_average_depth = np.mean(dev_depth) + SSH
+                                              
+                if (np.any(np.logical_or(bem_depth <= site_depth * 0.99,
+                                         bem_depth >= site_depth * 1.01)) or 
+                    np.any(np.logical_or(bem_depth <=
+                                                 device_average_depth * 0.99,
+                                         bem_depth >=
+                                                 device_average_depth * 1.01))
+                    ):
+                    
+                    module_logger.warning(warning_str.format(
+                                                        bem_depth,
+                                                        site_depth,
+                                                        device_average_depth,
+                                                        site_depth))
 
                 
             # solve the hydrodynamic interaction of the array
             hyd_res = hyd_obj.energy(self.iArray.coord[inside])
+            norm_dir = (self.iInput.S_data.Main_Direction / 
+                            np.linalg.norm(self.iInput.S_data.Main_Direction))
 
             result = WP2output(hyd_res.AEP_array,
                                hyd_res.power_prod_perD_perS,
@@ -364,11 +411,53 @@ class WP2:
                                hyd_res.q_array,
                                hyd_res.TI,
                                hyd_res.power_matrix_machine,
-                               self.iInput.S_data.Main_Direction/np.linalg.norm(self.iInput.S_data.Main_Direction))
+                               norm_dir)
 
             result.remap_res(self.iInput.S_data.electrical_connection_point)
             result.logRes()
+            
         else:
+            
             result = -1
             
         return result
+    
+
+def get_device_depths(bathymetry, layout):
+    
+    if len(layout.shape) != 2:
+        raise IndexError("Layout array does not have two dimensions")
+        
+    if layout.shape[1] != 2:
+        raise IndexError("Layout array second dimension does not have two "
+                         "elements")
+    
+    xr = bathymetry[:,0]
+    yr = bathymetry[:,1]
+    zr = bathymetry[:,2]
+    
+    # Get absolute tolerance for x
+    uniquex = np.unique(xr.round(decimals=4))                
+    dx = uniquex[1] - uniquex[0]
+    xtol = 0.1 * dx
+        
+    dev_depth = []
+    
+    for ndev in range(layout.shape[0]):
+        
+        # Find the nearest matching x value
+        idx = (np.abs(xr - layout[ndev][0])).argmin()
+        x_near = xr[idx]
+        
+        # Find indexes with matching xnear and filter yr & zr
+        xmap = np.isclose(xr, x_near, rtol=0, atol=xtol)
+        yrx = yr[xmap]
+        zrx = zr[xmap]
+        
+        # Find nearest matching y and the depth
+        idx = (np.abs(yrx - layout[ndev][1])).argmin()
+        ndev_depth = zrx[idx]
+        
+        dev_depth.append(ndev_depth)
+        
+    return dev_depth
