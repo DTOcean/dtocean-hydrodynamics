@@ -42,7 +42,7 @@ init:
 
 install:
   - "set PATH=%MINICONDA%;%MINICONDA%\\Scripts;%PATH%"
-  - "set PATH=%MINGW_PATH%\bin;%PATH%"
+  - "set PATH=%MINGW_PATH%\\bin;%PATH%"
   - conda config --set always_yes yes --set changeps1 no
   - conda update --quiet conda
   - conda config --append channels conda-forge
