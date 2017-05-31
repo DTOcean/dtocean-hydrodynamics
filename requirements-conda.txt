@@ -4,11 +4,11 @@
 cma
 descartes
 h5py
-libpython 1.0
+libpython =1.0
 matplotlib
-numpy 1.10.1
+numpy =1.10.1
 pandas
-polite  >=0.9
+polite >=0.9
 pyopengl
 pyqt =4.11.4
 scikit-learn
