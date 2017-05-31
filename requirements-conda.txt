@@ -1,0 +1,19 @@
+# REQUIREMENTS FOR CONDA INSTALLATION
+
+# INSTALLATION REQUIRED DEPENDENCIES
+cma
+descartes
+h5py
+libpython 1.0
+matplotlib
+numpy 1.10.1
+pandas
+polite  >=0.9
+pyopengl
+pyqt =4.11.4
+scikit-learn
+scipy
+shapely
+
+# TEST DEPENDENCIES
+pytest-cov
