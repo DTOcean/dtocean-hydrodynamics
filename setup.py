@@ -103,9 +103,18 @@ class PyTest(TestCommand):
         self.test_suite = True
 
     def run_tests(self):
+    
         #import here, cause outside the eggs aren't loaded
         import pytest
-        errno = pytest.main(self.pytest_args)
+        import shlex
+
+        # Run the tests
+        if self.pytest_args:
+			opts = shlex.split(self.pytest_args)
+        else:
+		    opts = []
+		
+        errno = pytest.main(opts)
         sys.exit(errno)
         
 
