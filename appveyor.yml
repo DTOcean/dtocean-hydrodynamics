@@ -28,11 +28,11 @@ version: 1.1.dev0.build{build}
 environment:
   matrix:
     - PYTHON_VERSION: 2.7
-      MINICONDA: C:\Miniconda
+      MINICONDA: "C:\\Miniconda"
       ARCH: "32"
       
     - PYTHON_VERSION: 2.7
-      MINICONDA: C:\Miniconda-x64
+      MINICONDA: "C:\\Miniconda-x64"
       ARCH: "64"
 
 init:
@@ -47,7 +47,7 @@ install:
   - conda info --all
   - "conda create --quiet --name conda-env-%PYTHON_VERSION%-%ARCH% python=%PYTHON_VERSION% --file requirements-conda.txt"
   - activate conda-env-%PYTHON_VERSION%-%ARCH%
-  - copy conda-env-%PYTHON_VERSION%-%ARCH%\libs\libmsvcr90.a conda-env-%PYTHON_VERSION%-%ARCH%\libs\libmsvcr90d.a
+  - "copy %MINICONDA%\\envs\\conda-env-%PYTHON_VERSION%-%ARCH%\\libs\\libmsvcr90.a %MINICONDA%\\envs\\conda-env-%PYTHON_VERSION%-%ARCH%\\libs\\libmsvcr90d.a"
   - python setup.py bootstrap
   - python setup.py develop
   
