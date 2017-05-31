@@ -39,6 +39,8 @@ init:
   - "ECHO %PYTHON_VERSION% %MINICONDA%"
 
 install:
+  - ps: Start-FileDownload 'https://setis.ec.europa.eu/dt-ocean/download/file/fid/88' 'hydrodynamic_data.exe'
+  - hydrodynamic_data.exe /verysilent
   - "set PATH=%MINICONDA%;%MINICONDA%\\Scripts;%PATH%"
   - conda config --set always_yes yes --set changeps1 no
   - conda update --quiet conda
