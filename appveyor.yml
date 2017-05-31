@@ -29,12 +29,10 @@ environment:
   matrix:
     - PYTHON_VERSION: 2.7
       MINICONDA: C:\Miniconda
-      MINGW_PATH: "C:\\mingw-w64\\i686-6.3.0-posix-dwarf-rt_v5-rev1\\mingw64"
       ARCH: "32"
       
     - PYTHON_VERSION: 2.7
       MINICONDA: C:\Miniconda-x64
-      MINGW_PATH: "C:\\mingw-w64\\x86_64-6.3.0-posix-seh-rt_v5-rev1\\mingw64"
       ARCH: "64"
 
 init:
@@ -42,7 +40,6 @@ init:
 
 install:
   - "set PATH=%MINICONDA%;%MINICONDA%\\Scripts;%PATH%"
-  - "set PATH=%MINGW_PATH%\\bin;%PATH%"
   - conda config --set always_yes yes --set changeps1 no
   - conda update --quiet conda
   - conda config --append channels conda-forge
@@ -50,6 +47,7 @@ install:
   - conda info --all
   - "conda create --quiet --name conda-env-%PYTHON_VERSION%-%ARCH% python=%PYTHON_VERSION% --file requirements-conda.txt"
   - activate conda-env-%PYTHON_VERSION%-%ARCH%
+  - copy conda-env-%PYTHON_VERSION%-%ARCH%\libs\libmsvcr90.a conda-env-%PYTHON_VERSION%-%ARCH%\libs\libmsvcr90d.a
   - python setup.py bootstrap
   - python setup.py develop
   
