@@ -1,3 +1,8 @@
+[![appveyor](https://ci.appveyor.com/api/projects/status/github/DTOcean/dtocean-hydrodynamics?branch=master&svg=true)](https://ci.appveyor.com/project/DTOcean/dtocean-hydrodynamics)
+[![codecov](https://codecov.io/gh/DTOcean/dtocean-hydrodynamics/branch/master/graph/badge.svg)](https://codecov.io/gh/DTOcean/dtocean-hydrodynamics)
+[![Lintly](https://lintly.com/gh/DTOcean/dtocean-hydrodynamics/badge.svg)](https://lintly.com/gh/DTOcean/dtocean-hydrodynamics/)
+[![release](https://img.shields.io/github/release/DTOcean/dtocean-hydrodynamics.svg)](https://github.com/DTOcean/dtocean-hydrodynamics/releases/latest)
+
 # DTOcean Hydrodynamics Module
 
 ## Installation
