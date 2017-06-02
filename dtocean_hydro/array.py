@@ -27,27 +27,43 @@ from dtocean_hydro.utils.Visualise_polygons import *
 
 class Array_pkg(object):
     """
-    Array_pkg: The class is used to generate nodes for the array grid and identify the feasible poisitons
+    Array_pkg: The class is used to generate nodes for the array grid and
+        identify the feasible poisitons
 
     Args:
-        Lease (numpy.ndarray)[m]: lease area (polygon) defined in northing-easting coordinates with mooring contraction strategy upplied
-        Lease_unbuffered (numpy.ndarray)[m]: lease area (polygon) defined in northing-easting coordinates
-        Dmin (tuple)[m]: minimun distance between devices in the x and y directions
+        Lease (numpy.ndarray)[m]: lease area (polygon) defined in
+            northing-easting coordinates with mooring contraction
+            strategy applied
+        Lease_unbuffered (numpy.ndarray)[m]: lease area (polygon) defined in
+            northing-easting coordinates
+        Dmin (tuple)[m]: minimun distance between devices in the x and y
+            directions
         mainAngle (float)[rad]: orientation angle of the array
-        NoGo_bathymetry (shapely Polygon/Multipolygon , optional)[m]: (multi)polygons object describing unfeasible areas for the device positioning
-        debug (boolean, optional): if set to True, plots and additional comand line outputs are issued.
+        NoGo_bathymetry (shapely Polygon/Multipolygon , optional)[m]:
+            (multi)polygons object describing unfeasible areas for the device
+            positioning
+        debug (boolean, optional): if set to True, plots and additional
+            command line outputs are issued.
 
     Attributes:
         same as Args, plus:
-        _lease_P (shapely.polygon): shapely polygon of the lease area verted specified in the Lease attribute
-        minDist_constraint (bool): flag identifying whether the min disance constriant is violated or not
+        _lease_P (shapely.polygon): shapely polygon of the lease area verted
+            specified in the Lease attribute
+        minDist_constraint (bool): flag identifying whether the min disance
+            constriant is violated or not
         centroidLease (numpy.ndarray)[m]: x and y coordiantes of the Lease area centroid
         nogo (list)[m]: list of polygon vertex
         _nogo_P (list): list of shapely polygons
         coord (numpy.ndarray)[m]: x,y coordiantes of the array nodes
 
     """
-    def __init__(self, Lease, Lease_unbuffered, Dmin, mainAngle, NoGo_bathymetry=None, debug=False):
+    def __init__(self, Lease,
+                       Lease_unbuffered,
+                       Dmin,
+                       mainAngle,
+                       NoGo_bathymetry=None,
+                       debug=False):
+        
         dirwise = sum(cross(Lease[1:-1]-Lease[0], Lease[2:]-Lease[0]))
         if dirwise > 0:
             Lease[1:] = Lease[range(-1, -len(Lease), -1)]
@@ -67,7 +83,8 @@ class Array_pkg(object):
 
     def generator(self, NR, NC, IR, IC, beta, psi):
         """
-        generator: Generates coordinates of the grid nodes, in function of the input arguments
+        generator: Generates coordinates of the grid nodes, in function of the
+            input arguments
 
         Args:
             NR (int): number of grid rows
@@ -83,7 +100,8 @@ class Array_pkg(object):
         Note:
             The function update the following class attributes:
                 coord (numpy.ndarray): x,y coordinates of the array nodes
-                minDist_constraint (bool): flag identifying whether the min distance constraint is violated or not
+                minDist_constraint (bool): flag identifying whether the min
+                    distance constraint is violated or not
 
         """
         if not np.all(self.check_grid_distance(IR, IC, beta, psi)):
@@ -93,8 +111,9 @@ class Array_pkg(object):
             
         if not self.minDist_constraint:
         
-            Rz = np.array([[np.cos(self.mainAngle),-np.sin(self.mainAngle)],
-                                [np.sin(self.mainAngle),np.cos(self.mainAngle)]])  # 2D rotation matrix to apply main angle rotation
+            # 2D rotation matrix to apply main angle rotation
+            Rz = np.array([[np.cos(self.mainAngle), -np.sin(self.mainAngle)],
+                           [np.sin(self.mainAngle), np.cos(self.mainAngle)]])
             i, j = np.meshgrid(np.arange(NR), np.arange(NC))
             i -= NR/2
             j -= NC/2
@@ -107,7 +126,8 @@ class Array_pkg(object):
             coord_raw[1,:] = y.ravel()
             coord = np.dot(Rz,coord_raw).T
     
-            self.coord = coord+self.centroidLease  # devices translation up to Lease's centroid
+            # devices translation up to Lease's centroid
+            self.coord = coord + self.centroidLease  
         
         else:
             self.coord = np.zeros((1,2))
@@ -115,8 +135,9 @@ class Array_pkg(object):
     
     def check_grid_distance(self, x1, x2, a1, a2):
         """
-        check_grid_distance: check if the actual layout brake the constraint imposed by Dmin, using an ellipsoid
-                    as base shape.
+        check_grid_distance: check if the actual layout brake the constraint
+            imposed by Dmin, using an ellipsoid as base shape.
+            
         Args:
             x1 (float)[m]: inter-column distance
             x2 (float)[m]: inter-row distance
@@ -145,7 +166,8 @@ class Array_pkg(object):
 
     def checkMinDist(self):
         """
-        checkMinDist: warn the class whether the given grid nodes fulfil the minDist constraints
+        checkMinDist: warn the class whether the given grid nodes fulfil the
+            minDist constraints
 
         Args:
             self: parent class
@@ -155,10 +177,14 @@ class Array_pkg(object):
 
         Note:
             the function update the following class attributes:
-                minDist_constraint (bool): flag identifying whether the min distance constraint is violated or not
+                minDist_constraint (bool): flag identifying whether the min
+                distance constraint is violated or not
         """
         if self.coord is None:
             raise IOError("No coordinates provided")
+        elif len(self.coord) == 1:
+            self.minDist_constraint = False
+            return
 
         def distances(xy1, xy2):
             n = len(xy1)
@@ -173,6 +199,8 @@ class Array_pkg(object):
             self.minDist_constraint = True
         else:
             self.minDist_constraint = False
+            
+        return
 
     def checkout(self, nogo_list=None):
         """
