@@ -367,6 +367,15 @@ class WP2:
             if self._debug: self.iArray.show(inside)
             if not np.any(inside):
                 return -1
+            
+            if Opt == 2 and not inside.all():
+                 exc_strings = ["({}, {})".format(xy[0], xy[1])
+                                     for xy in self.iArray.coord[~inside]]
+                 exc_string = ", ".join(exc_strings)
+                 infoStr = ("Devices at positions {} have been excluded. "
+                            "Check lease area boundary and no-go "
+                            "areas").format(exc_string)
+                 module_logger.info(infoStr)
 
             if not self.iInput.M_data.tidalFlag:
                 
