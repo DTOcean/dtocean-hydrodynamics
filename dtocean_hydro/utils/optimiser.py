@@ -264,9 +264,9 @@ class SearchOptimum(object):
         
         if self._debug:
             es.result_pretty()
-            es.logger.plot_all()
-            pickle.dump(es.archive.data,
-                        open("optimisation_results_cma-es_new.pkl", "wb"))
+#            es.logger.plot_all()
+#            pickle.dump(es.archive.data,
+#                        open("optimisation_results_cma-es_new.pkl", "wb"))
 
         if es.best.f > 0.:
             return -1
@@ -480,6 +480,7 @@ class SearchOptimum(object):
             AEP (float): annual energy production for the given array
             q (float): q factor for the given array
         """
+                
         NR, NC, IR, IC, beta, psi = self.param_conditioning(x)
         
         if beta<0.05 and self._Opt != 3:
@@ -495,8 +496,8 @@ class SearchOptimum(object):
             self._array.generator(NR, NC, IR, IC, beta, psi)
 
         inside = self._array.checkout(nogo_list=self.nogo_areas)
-        if self._debug:
-            self._array.show(inside)
+#        if self._debug:
+#            self._array.show(inside)
         
         module_logger.debug("Array parameters: IC: {} IR: {} beta: {} "
                             "psi: {}".format(IC, IR, beta, psi))

@@ -332,10 +332,10 @@ class WP2:
         # initialise either the tidal or wave object
         if self.iInput.M_data.tidalFlag:
             hyd_obj = CallTidal(self.iHydro,
-                            self.iInput,
-                            self.cfd_data,
-                            debug=self._debug,
-                            debug_plot=self._debug)
+                                self.iInput,
+                                self.cfd_data,
+                                debug=self._debug,
+                                debug_plot=self._debug)
         else:
             hyd_obj = MultiBody(self.iHydroMB,
                                 self.iWEC,

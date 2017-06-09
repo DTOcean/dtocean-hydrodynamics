@@ -297,7 +297,19 @@ class ReducedOutput():
          power_matrix_machine (numpy.ndarray) [WAVE ONLY]: power matrix of the single WEC.
 
     """
-    def __init__(self, aep_ar, aep_dev, q_ar, q_dev, pow_dev, pow_dev_state, nb, pos, res_red, ti, dev_model, power_matrix_machine):
+    def __init__(self, aep_ar,
+                       aep_dev,
+                       q_ar,
+                       q_dev,
+                       pow_dev,
+                       pow_dev_state,
+                       nb,
+                       pos,
+                       res_red,
+                       ti,
+                       dev_model,
+                       power_matrix_machine):
+        
         self.AEP_array = aep_ar
         self.power_prod_perD_perS = pow_dev_state
         self.AEP_perD = aep_dev

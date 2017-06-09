@@ -182,10 +182,11 @@ class Array:
                                                      i,
                                                      debug=debug,
                                                      debug_plot=debug_plot)
+            
             if debug_plot:
                 SLs.plot(self._turbine_count)
-                ax.set_ylabel('Distance (m)', fontsize = 12)
-                ax.set_xlabel('Distance (m)', fontsize = 12)
+                ax.set_ylabel('Distance (m)', fontsize=12)
+                ax.set_xlabel('Distance (m)', fontsize=12)
                 plt.show()
         else:
             if debug: module_logger.info("Single turbine...no streamlines")
@@ -388,7 +389,8 @@ def wp2_tidal(data,
     if debug: module_logger.info("Computing hydrodynamic impacts...")
     # In case there is only one turbine in the array
     if not NbTurb == 1:
-        impacts = HydroImpact(array, hydro,
+        impacts = HydroImpact(array,
+                              hydro,
                               interaction,
                               arrayYield,
                               debug=debug,
