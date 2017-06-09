@@ -63,7 +63,9 @@ class WakeInteraction:
 
         return
 
-    def solv_induction(self, speed_superimpo='renkema', tke_superimpo='max', debug=False):
+    def solv_induction(self, speed_superimpo='renkema',
+                             tke_superimpo='max',
+                             debug=False):
         """
         Compute the induction factor at each turbine hub
         based on each others interactions
