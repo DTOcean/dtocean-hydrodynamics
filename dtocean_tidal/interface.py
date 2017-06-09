@@ -171,8 +171,11 @@ class CallTidal:
         self.__v_mean = self.__V.mean()
         self.n_seastate = len(self.__prob)
 
-        Bathy = WP2Hydro.bathy[:,-1].reshape((ny,nx))
-        Geophy = WP2Input.S_data.Geophysics[:,-1].reshape((ny,nx))
+#        Bathy = WP2Hydro.bathy[:,-1].reshape((ny,nx))
+#        Geophy = WP2Input.S_data.Geophysics[:,-1].reshape((ny,nx))
+
+        Bathy = points_to_grid(WP2Hydro.bathy, x, y).T
+        Geophy = points_to_grid(WP2Input.S_data.Geophysics, x, y).T
 
         # By default the MCT is not considered.
         # patch for the MCT case
@@ -243,6 +246,7 @@ class CallTidal:
                              debug=self.debug,
                              debug_plot=self.debug_plot)
             ti_dev_state.append(ti)
+                        
             for ii in range(nb):
                 pow_perf_dev_state[ii,seastate_id] = sorted(pow_perf_dev.items())[ii][1]
                 pow_perf_dev_state_ni[ii,seastate_id] = sorted(pow_perf_dev_no_int.items())[ii][1]
@@ -257,7 +261,6 @@ class CallTidal:
                                                 pow_perf_dev_state_ni,
                                                 ti_dev_state,
                                                 turb)
-
 
         # adding the results to the class attributes
         pow_perf_DEV = np.sum(pow_perf_dev_state*self.__prob, 1)
@@ -287,11 +290,19 @@ class CallTidal:
             pos = self.__turbines[stro]['position']
             strn = 'Device%d'%jj
             machine.update({strn:(pos[0],pos[1])})
+            
+        year_hours = 365 * 24
+        
+        aep_ar = np.sum(self.power_prod_array * self.__prob) * year_hours
+        q_ar = np.sum(self.power_prod_array) / \
+                                          np.sum(self.power_prod_array_no_int)
+        q_dev = self.power_prod_perD / \
+                        np.sum(self.power_prod_perD_perS_ni * self.__prob, 1)
 
-        res = ReducedOutput(np.sum(self.power_prod_array*self.__prob)*365*24,
-                            self.power_prod_perD*365*24,
-                            np.sum(self.power_prod_array)/np.sum(self.power_prod_array_no_int),
-                            self.power_prod_perD/np.sum(self.power_prod_perD_perS_ni*self.__prob,1),
+        res = ReducedOutput(aep_ar,
+                            self.power_prod_perD * year_hours,
+                            q_ar,
+                            q_dev,
                             self.power_prod_perD,
                             self.power_prod_perD_perS,
                             self.Nbodies,
@@ -300,6 +311,7 @@ class CallTidal:
                             self.TI,
                             None,
                             None)
+        
         return res
 
     def __set_turbine_and_features(self):
@@ -414,6 +426,7 @@ class CallTidal:
 
         return (pow_perf_dev_state, pow_perf_dev_state_ni, ti_dev_state, turbines, nb)
 
+
 # Utilities
 def row_major(nx, ny, q):
     """
@@ -430,3 +443,37 @@ def row_major(nx, ny, q):
         q = q.T
     return q
 
+
+def points_to_grid(points, xs, ys, fill_value=np.nan):
+    
+#    The original reshaping did not take into account the posibility of
+#    non-rectangular domains.
+
+    y_idx = get_indices(points[:, 1], ys)
+    x_idx = get_indices(points[:, 0], xs)
+    
+    grid = np.empty(xs.shape + ys.shape)
+    grid.fill(fill_value)
+        
+    grid[x_idx, y_idx] = points[:, 2]
+              
+    return grid
+
+
+def get_indices(search, base):
+    
+#    test data:
+#        
+#    base = np.array([3,5,7,1,9,8,6,6])
+#    search = np.array([2,1,5,10,100,6])
+    
+    index = np.argsort(base)
+    sorted_base = base[index]
+    sorted_search = np.searchsorted(sorted_base, search)
+
+    searchindex = np.take(index, sorted_search, mode="clip")
+    mask = base[searchindex] != search
+    
+    result = np.ma.array(searchindex, mask=mask)
+        
+    return result
