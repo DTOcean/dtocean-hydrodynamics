@@ -45,6 +45,10 @@ def vvpw(u, v, z, el, h, n, debug=False):
     U = np.sqrt(u**2.0 + v**2.0) # flow speed
     H = (el + h)
     Re = (U * H) / nu
+         
+    # If the Reynolds number is zero return 1.
+    if np.isclose(Re, 0.): return 1.
+         
     m = k * np.sqrt((Re**(1.0/3.0)) / ((n**2.0) * g))  # exponent from Lee et al. 2013
     C = (H**((1.0/m) - 1.0)) / ((1.0/m) + 1.0)
 
@@ -52,6 +56,10 @@ def vvpw(u, v, z, el, h, n, debug=False):
     w = (z / (C * H))**(1.0/m)
     if debug: module_logger.info("....Vertical Velocity Profile Weight = " + str(w) + "...")
     if debug: module_logger.info("...done.")
+    
+    if np.isnan(w):
+        errStr = "Vertical velocity profile weight is NaN"
+        raise ArithmeticError(errStr)
 
     return w
 

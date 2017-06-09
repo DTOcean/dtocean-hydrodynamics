@@ -221,7 +221,7 @@ def transec_surf(hydro, array, debug=False):
             xbM = xM
 
     # define lineString within lease
-    box = hydro.bounding_box
+    box = hydro.lease
     line = LineString([[xbm,ybm],[xbM,ybM]])
     inter_line = box.intersection(line)
 
@@ -235,7 +235,9 @@ def transec_surf(hydro, array, debug=False):
     wh = 0.0  # water column height
     speed = 0.0  # speed over transect
     for pt in pts:
-        [el, h, u, v] = interp_at_point(pt.xy[0], pt.xy[1], hydro.X, hydro.Y, Q)
+        [el, h, u, v] = interp_at_point(pt.x, pt.y, hydro.X, hydro.Y, Q)
+        # Don't allow NaNs
+        if np.isnan([el, h, u, v]).any(): continue
         # quantity formatting
         if h < 0.0: h *= -1.0
         wh += (h + el)
