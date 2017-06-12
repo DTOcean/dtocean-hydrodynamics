@@ -7,12 +7,9 @@ import logging
 module_logger = logging.getLogger(__name__)
 
 import numpy as np
-import matplotlib.pyplot as plt
 
 def distance_from_streamline(streamline,
                              turbine_positions,
-                             n_turbines,
-                             turbine_id,
                              debug=False,
                              debug_plot=True):
     """
@@ -50,14 +47,16 @@ def distance_from_streamline(streamline,
     
     # Create vectors from streamline point n to point n+1
     streamline_vector = np.zeros((len(X) - 1, 2))
-    streamline_vector[:, 0] = X[:-1] - X[1:]
-    streamline_vector[:, 1] = Y[:-1] - Y[1:]
+    streamline_vector[:, 0] = X[1:] - X[:-1]
+    streamline_vector[:, 1] = Y[1:] - Y[:-1]
     
     # filtering Nans
     streamline_vector[~np.isnan(streamline_vector).any(axis=1)]
         
     # Compute angle and length
     turbine_vector = np.zeros(streamline_vector.shape)
+    
+    n_turbines = turbine_positions.shape[0]
 
     for i in range(n_turbines):
         
@@ -116,5 +115,7 @@ def distance_from_streamline(streamline,
         
         turbine_distances[str(i)] = np.array([streamline_distance,
                                               min_dist])
+    
+    if debug: module_logger.info(turbine_distances)
                         
     return turbine_distances
