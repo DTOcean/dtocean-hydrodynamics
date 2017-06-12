@@ -27,8 +27,6 @@ def test_distance_from_streamline():
     assert len(turbine_distances) == 1
     
     dist_array = turbine_distances.values()[0]
-    
-    print turbine_distances
-    
+        
     assert dist_array[0] > 10.
     assert dist_array[1] < 2.

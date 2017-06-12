@@ -446,8 +446,8 @@ def row_major(nx, ny, q):
 
 def points_to_grid(points, xs, ys, fill_value=np.nan):
     
-#    The original reshaping did not take into account the posibility of
-#    non-rectangular domains.
+    #    The original reshaping did not take into account the posibility of
+    #    non-rectangular domains.
 
     y_idx = get_indices(points[:, 1], ys)
     x_idx = get_indices(points[:, 0], xs)
@@ -461,11 +461,6 @@ def points_to_grid(points, xs, ys, fill_value=np.nan):
 
 
 def get_indices(search, base):
-    
-#    test data:
-#        
-#    base = np.array([3,5,7,1,9,8,6,6])
-#    search = np.array([2,1,5,10,100,6])
     
     index = np.argsort(base)
     sorted_base = base[index]

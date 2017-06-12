@@ -8,6 +8,7 @@ module_logger = logging.getLogger(__name__)
 
 import numpy as np
 
+
 def distance_from_streamline(streamline,
                              turbine_positions,
                              debug=False,
@@ -61,12 +62,12 @@ def distance_from_streamline(streamline,
     for i in range(n_turbines):
         
         # Calculate vector from turbine to each streamline point
-        turbine_vector[:,0] = turbine_positions[i, 0] - X[:-1]
-        turbine_vector[:,1] = turbine_positions[i, 1] - Y[:-1]
+        turbine_vector[:, 0] = turbine_positions[i, 0] - X[:-1]
+        turbine_vector[:, 1] = turbine_positions[i, 1] - Y[:-1]
                 
         # Another edge case when the turbine is at the beginning of the
         # streamline
-        if np.isclose(np.sum(turbine_vector[0,:]), 0.): continue
+        if np.isclose(np.sum(turbine_vector[0, :]), 0.): continue
         
         # Inner product of vectors
         inner_product = np.sum(streamline_vector * turbine_vector, 1)
@@ -105,7 +106,7 @@ def distance_from_streamline(streamline,
         min_weight = segment_weights[min_idx]
         
         # Collect segments leading up to nearest
-        where_segments = np.where(streamline_vector==min_segment)
+        where_segments = np.where(streamline_vector == min_segment)
         upto_segments = streamline_vector[:where_segments[0][0], :]
 
         # Find distance along streamline to the nearest point
