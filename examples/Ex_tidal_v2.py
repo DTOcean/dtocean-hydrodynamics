@@ -12,6 +12,10 @@ from dtocean_hydro.input import WP2_SiteData, WP2_MachineData, WP2input
 from dtocean_hydro.main import WP2
 from dtocean_hydro.utils.Coordinates import *
 
+import matplotlib
+
+if matplotlib.is_interactive():
+    matplotlib.pyplot.ioff()
 
 # Start the logging system
 start_logging()
@@ -86,7 +90,7 @@ for multiplier in time_scaled:
 U = np.dstack(u_arrays)
 V = np.dstack(v_arrays)
 SSH = np.dstack(ssh_arrays)
-U = U*0+3
+U = U*0+2
 V = V*0+0
 TI = np.array([0.1])
 p = np.ones(U.shape[-1])
