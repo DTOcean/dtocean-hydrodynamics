@@ -19,7 +19,9 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
   was incorrectly set to the Soulsby type.
 - Fixed bugs in the array layout optimiser code.
 - Fixed bug in calculation of device depths for wave module approximation test.
-- Fixed depreciation warning when sending arguments to setup.py test
+- Fixed depreciation warning when sending arguments to setup.py test.
+- Refactored distance_from_streamline to improve readability.
+- Fixed issues with using non-rectangular domain in the tidal module.
 
 ## [1.0.0] - 2017-01-05
 
