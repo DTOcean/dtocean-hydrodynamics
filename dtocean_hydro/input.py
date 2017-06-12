@@ -671,8 +671,10 @@ class WP2input:
                 # for the tidal case the main direction is given by
                 # the mean stream direction (U,V) of the most representative sea condition
                 ind_max_direction = np.argmax(self.S_data.MeteoceanConditions["p"])
-                U = np.nanmean(self.S_data.MeteoceanConditions["U"][:,:,ind_max_direction])
-                V = np.nanmean(self.S_data.MeteoceanConditions["V"][:,:,ind_max_direction])
+                U = np.nanmean(self.S_data.MeteoceanConditions["U"]
+                                                    [:, :, ind_max_direction])
+                V = np.nanmean(self.S_data.MeteoceanConditions["V"]
+                                                    [:, :, ind_max_direction])
                 self.S_data.Main_Direction = np.array([U,V])
             else:
                 # for the wave case the main direction is given by

@@ -23,5 +23,3 @@ def test_get_indices():
     result = get_indices(search, base)
     
     assert (result == expected).all()
-    
-
