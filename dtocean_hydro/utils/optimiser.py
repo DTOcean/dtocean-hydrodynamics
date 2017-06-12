@@ -259,8 +259,9 @@ class SearchOptimum(object):
             fitness = [(-el[0]) for el in temp]
             es.tell(solutions, fitness)
             
-            es.logger.add()
-            if self._debug: es.disp(10)
+            if self._debug:
+                es.logger.add()
+                es.disp(10)
         
         if self._debug:
             es.result_pretty()

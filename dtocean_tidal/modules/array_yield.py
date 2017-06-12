@@ -87,13 +87,17 @@ class ArrayYield:
             Cp = cp(norm)
             Cpini = cp(normIni)
             if norm < cutIn:
-                module_logger.debug("{}: hub velocity < cut-in --> no power "
-                                    "production".format(key))
+                module_logger.debug("{}: hub velocity: {} < cut-in: {} --> "
+                                    "no power production".format(key,
+                                                                 norm,
+                                                                 cutIn))
                 power = 0.0
             elif norm > cutOut:
                 # power = 0.5*rho*Cp*A*(cutOut**3.0)
-                module_logger.debug("{}: hub velocity > cut-out --> no power "
-                                    "production".format(key))
+                module_logger.debug("{}: hub velocity: {} > cut-out: {} --> "
+                                    "no power production".format(key,
+                                                                 norm,
+                                                                 cutOut))
                 power = 0.0
             else:
                 power = 0.5*rho*Cp*A*(norm**3.0)
