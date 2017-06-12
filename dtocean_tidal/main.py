@@ -178,8 +178,6 @@ class Array:
                 self.distances['turbine' + str(i)] = \
                             distance_from_streamline(streamline,
                                                      positions,
-                                                     self._turbine_count,
-                                                     i,
                                                      debug=debug,
                                                      debug_plot=debug_plot)
             
