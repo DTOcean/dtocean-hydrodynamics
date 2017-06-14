@@ -23,6 +23,11 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 - Refactored distance_from_streamline to improve readability.
 - Fixed issues with using non-rectangular domain in the tidal module.
 
+### Changed
+
+- Changed wave modules mean power output per device to return actual power
+  generated rather than the sum of all powers accross the power matrix.
+
 ## [1.0.0] - 2017-01-05
 
 ### Added
