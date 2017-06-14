@@ -228,7 +228,7 @@ class MultiBody(object):
 
         if self.debug:  # add attributes for inspection
             self.power_prod_perD_perS= Psd.T
-            self.power_prod_perD = Pyradd.sum((1,2,3))
+            self.power_prod_perD = Pyradd.sum((1, 2, 3))
             self.AEP_perD_perS = Pyradd*365*24
             self.AEP_perD = Pyradd.sum((1,2,3))*365*24
             self.AEP_array = aep_dev.sum()
@@ -242,9 +242,9 @@ class MultiBody(object):
 
         res = ReducedOutput(aep_dev.sum(),
                             aep_dev,
-                            aep_dev.sum()/(AEP_single*NBo),
-                            aep_dev/AEP_single,
-                            Pyradd.sum((1,2,3)),
+                            aep_dev.sum() / (AEP_single * NBo),
+                            aep_dev / AEP_single,
+                            Pyradd.sum((1, 2, 3)),
                             Psd.T,
                             NBo,
                             machine,
