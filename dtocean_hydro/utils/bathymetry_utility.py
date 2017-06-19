@@ -2,46 +2,64 @@
 """
 Created on Wed May 04 16:11:29 2016
 
-@author: francesco
+@author: francesco, mtopper
 """
-import numpy as np
+
 import pickle
+import logging
+
+import numpy as np
 from scipy import ndimage
 import matplotlib.pyplot as plt
 from matplotlib import _cntr as cntr
 from shapely.ops import cascaded_union
 from shapely.geometry import Polygon
 
+# Start logging
+module_logger = logging.getLogger(__name__)
 
-def get_unfeasible_regions(xyz, z_bounds, area_thr=100, g_fil=0.5, debug=False, debug_plot=False):
+
+def get_unfeasible_regions(xyz,
+                           z_bounds,
+                           area_thr=100,
+                           g_fil=0.1,
+                           debug=False,
+                           debug_plot=False):
 
     xyz, z_bounds, stat = check_bathymetry_format(xyz, z_bounds)
+    
     if stat == -1:
-        errStr = ("Error[InstalDepth]:\nNo feasible installation area"
-                    "has been found for the device for the given bathymetry.")
+        errStr = ("Error[InstalDepth]: No feasible installation area "
+                  "has been found for the device for the given bathymetry.")
         raise ValueError(errStr)
     elif stat == 1:
-        #module_logger.info("No NOGO areas related to the machine depth"
-        #        "installation constraints have been found.")
-        print("No NOGO areas related to the machine depth"
-                "installation constraints have been found.")
+        module_logger.info("No NOGO areas related to the machine depth "
+                           "installation constraints have been found.")
         return None, False
     
-    dx = np.max(xyz[1:,0]-xyz[:-1,0])
-    dy = np.max(xyz[1:,1]-xyz[:-1,1])
+    dx = np.max(xyz[1:, 0] - xyz[:-1, 0])
+    dy = np.max(xyz[1:, 1] - xyz[:-1, 1])
 
-    X, Y = get_bathymetry_grid(xyz)
-    nx, ny = Y.shape
+    X, Y, Z = get_bathymetry_grid(xyz)
         
-    unfeasible_mask = np.logical_not((xyz[:,2]>=z_bounds[0])*(xyz[:,2]<=z_bounds[1]))
-                     
+    unfeasible_mask = np.logical_not((Z >= z_bounds[0]) * (Z <= z_bounds[1]))
+                         
     # restructure the data in a 2d matrix and binarise the result
-    data = unfeasible_mask.astype(np.int).reshape(nx, ny)
-    label_im, labels = clustering(data, dx*dy, area_thr=area_thr, g_fil=g_fil, debug=debug)
+    data = unfeasible_mask.astype(np.int)
+    label_im, labels = clustering(data,
+                                  dx * dy,
+                                  area_thr=area_thr,
+                                  g_fil=g_fil,
+                                  debug=debug)
     
-    if debug: plt.figure(200), plt.imshow(label_im, cmap=plt.cm.spectral), plt.show()
+    if debug:
+        plt.figure(200)
+        plt.imshow(label_im, cmap=plt.cm.spectral)
+        plt.show()
+
+    result_polys = get_shapely_polygons(X, Y, label_im, labels, debug=debug)
     
-    return get_shapely_polygons(X, Y, label_im, labels, debug=debug), unfeasible_mask 
+    return result_polys, unfeasible_mask
     
 
 def get_shapely_polygons(X, Y, label_im, labels, debug=False):
@@ -62,8 +80,14 @@ def get_shapely_polygons(X, Y, label_im, labels, debug=False):
         if not len(segments) == 1:
             for iel in range(1,len(segments)):
                 false_unfeasible.append(Polygon(segments[iel]))
+
+    mp = None
     
-    mp = cascaded_union(multi_polygon)-cascaded_union(false_unfeasible)
+    if multi_polygon:
+        mp = cascaded_union(multi_polygon)
+        
+    if false_unfeasible:
+        mp -= cascaded_union(false_unfeasible)
     
     return mp
     
@@ -95,26 +119,32 @@ def clustering(im, pixel_area, area_thr=10, g_fil=0.5, debug=False):
     
     return label_im, labels
 
+
 def get_bathymetry_grid(xyz):
-    if xyz[0,0]==xyz[1,0]:
-        # search in x
-        index = 0
-    elif xyz[0,1]==xyz[1,1]:
-        # search in y
-        index = 1
-    old = xyz[0,index]
-    ind = 0
-    for ii in range(1,len(xyz)):
-        if old == xyz[ii,index]:
-            ind += 1
-        else:
-            break
     
-    Y = np.reshape(xyz[:,1], (-1, ind+1))
-    y = Y[0,:]
-    X = np.reshape(xyz[:,0], (-1, y.shape[0]))
+    # Get coordinates
+    xi = np.unique(xyz[:, 0])
+    yj = np.unique(xyz[:, 1])
     
-    return X, Y
+    # Build default grids
+    X, Y = np.meshgrid(xi, yj, indexing="ij")
+    Z = np.zeros([len(xi), len(yj)]) * np.nan
+    
+    # Fill in the depth values
+    for record in xyz:
+        
+        xidxs = np.where(xi == record[0])[0]
+        assert len(xidxs) == 1
+        xidx = xidxs[0]
+
+        yidxs = np.where(yj == record[1])[0]
+        assert len(yidxs) == 1
+        yidx = yidxs[0]
+
+        Z[xidx, yidx] = record[2]
+    
+    return X, Y, Z
+
 
 def check_bathymetry_format(xyz, bound):
     status = 0  # bathymetry constraints active
