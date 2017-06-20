@@ -22,6 +22,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 - Fixed depreciation warning when sending arguments to setup.py test.
 - Refactored distance_from_streamline to improve readability.
 - Fixed issues with using non-rectangular domain in the tidal module.
+- Fixed issues determining depth excluded zones with non-rectangular domains.
 
 ### Changed
 
