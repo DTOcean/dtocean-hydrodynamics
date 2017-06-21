@@ -33,6 +33,7 @@ def test_distance_from_streamline():
     assert dist_array[0] > 10.
     assert dist_array[1] < 2.
 
+
 @pytest.mark.parametrize("test_x, test_y, expected", [
     (4.5, 1, 0),
     (3.5, 1, -0.5),
