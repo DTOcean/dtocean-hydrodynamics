@@ -23,6 +23,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 - Refactored distance_from_streamline to improve readability.
 - Fixed issues with using non-rectangular domain in the tidal module.
 - Fixed issues determining depth excluded zones with non-rectangular domains.
+- NaNs are now set to zero in interp_at_point and edge cases are better
+  handled.
 
 ### Changed
 
