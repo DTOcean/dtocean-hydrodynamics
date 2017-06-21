@@ -1,14 +1,15 @@
-#!/usr/bin/python2.7
 # encoding: utf-8
 from __future__ import division
 
-# Start logging
 import logging
-module_logger = logging.getLogger(__name__)
 
 import numpy as np
 import scipy.spatial
 from scipy.interpolate import LinearNDInterpolator
+
+# Start logging
+module_logger = logging.getLogger(__name__)
+
 
 def interp_at_point(x, y, X, Y, Q):
     """
@@ -29,9 +30,10 @@ def interp_at_point(x, y, X, Y, Q):
     xDist = x-X
     i = np.argmin(np.abs(xDist))
     try:
-        if not np.sign(xDist[i+1]) == np.sign(xDist[i]):
+        if np.sign(xDist[i]) < 0. and i - 1 < 0: raise IndexError
+        if np.abs(xDist[i + 1]) < np.abs(xDist[i - 1]):
             i2 = i + 1
-        if not np.sign(xDist[i-1]) == np.sign(xDist[i]):
+        else:
             i2 = i - 1
         # computes weight
         dist = np.abs(xDist[i]) + np.abs(xDist[i2])
@@ -44,9 +46,10 @@ def interp_at_point(x, y, X, Y, Q):
     yDist = y-Y
     j = np.argmin(np.abs(yDist))
     try:
-        if not np.sign(yDist[j+1]) == np.sign(yDist[j]):
+        if np.sign(yDist[j]) < 0. and j - 1 < 0: raise IndexError
+        if np.abs(yDist[j + 1]) < np.abs(yDist[j - 1]):
             j2 = j + 1
-        if not np.sign(yDist[j-1]) == np.sign(yDist[j]):
+        else:
             j2 = j - 1
         # computes weight
         dist = np.abs(yDist[j]) + np.abs(yDist[j2])
@@ -59,14 +62,21 @@ def interp_at_point(x, y, X, Y, Q):
 
     # Bilinear interpolation
     qi = []
+    
     for q in Q:
-        bi = (q[j ,i ] * aj * ai  +
-              q[j ,i2] * aj * ai2 +
-              q[j2,i ] * aj2* ai  +
-              q[j2,i2] * ai2* aj2 )
+        
+        # Don't allow NaN values
+        bi = 0
+
+        if not np.isnan(q[j, i]): bi += q[j, i] * aj * ai
+        if not np.isnan(q[j, i2]): bi += q[j, i2] * aj * ai2
+        if not np.isnan(q[j2, i]): bi += q[j2, i] * aj2 * ai
+        if not np.isnan(q[j2, i2]): bi += q[j2, i2] * ai2 * aj2
+
         qi.append(bi)
 
     return qi
+
 
 def volume_under_plane(x,y,z, debug=False):
     """
