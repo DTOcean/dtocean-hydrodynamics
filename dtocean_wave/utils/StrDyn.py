@@ -44,7 +44,7 @@ def MotionFreq(Mass, Damping, Stiffness, Force, freq):
             
         then the equation of motion in frequency domain is:
             
-        X= H\Force, where H=-freq**2*Mass+i*freq*Damping+Stiffness    
+        X= H\Force, where H=-freq**2*Mass+i*freq*Damping+Stiffness
     """
         
     H = -freq ** 2 * Mass + 1j * freq * Damping + Stiffness
@@ -165,18 +165,18 @@ def EnergyProduction(NBodies,
     ndof = len(Khyd[0, :])
     
     # convert the tuple to numpy.ndarray to ease calculations
-    dirs = np.array(dirs) 
+    dirs = np.array(dirs)
     prob_occ = scatterdiagram_threshold(ScatDiag[0])
     
     # initialize spectrum
-    df = np.abs(1. / period[1:] -1. / period[:-1])
+    df = np.abs(1. / period[1:] - 1. / period[:-1])
     fr = 1. / period
     
     Spec_ = wave_spec(fr, 1, 1)
     Spec_.s = ScatDiag[1][2]
     
-     # is s=0 or s=30 there is no need for directional spreading.
-    if Spec_.s <= 0 or Spec_.s > 30: 
+    # is s=0 or s=30 there is no need for directional spreading.
+    if Spec_.s <= 0 or Spec_.s > 30:
         Nd_subset = 1
     else:
         Nd_subset = 3
@@ -265,12 +265,12 @@ def EnergyProduction(NBodies,
                 Spec_.add_spectrum()
                 
                 # integrate over frequencies
-                I = 2. * Spec_.specs[0][2].T * powfun # a**2 = 2*Spec_val*df
-                I = .5 * ((I[:, :, 1:] + I[:, :, :-1]) * df).sum(axis=-1) 
+                I = 2. * Spec_.specs[0][2].T * powfun  # a**2 = 2*Spec_val*df
+                I = .5 * ((I[:, :, 1:] + I[:, :, :-1]) * df).sum(axis=-1)
                 
                 # integrate over directions
                 if Nd_subset > 1:
-                    I = .5 * ((I[:, 1:] + I[:, :-1]) * Spec_.dth).sum(axis=-1) 
+                    I = .5 * ((I[:, 1:] + I[:, :-1]) * Spec_.dth).sum(axis=-1)
                 
                 P_dev[:, i_Tp, i_Hs, i_Dir] = I.reshape(-1)
                 
@@ -282,7 +282,7 @@ def EnergyProduction(NBodies,
     
     return Pyr, P_dev
 
-#if __name__ == "__main__":
+# if __name__ == "__main__":
 #
 #    NBo=1
 #    B= np.array([0,180.])/180.*np.pi
