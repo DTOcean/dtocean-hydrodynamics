@@ -30,6 +30,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 - Changed wave modules mean power output per device to return actual power
   generated rather than the sum of all powers accross the power matrix.
+- Optimised EnergyProduction function by reducing number of calls to
+  block_diag. This has provided a one third reduction in run times.
 
 ## [1.0.0] - 2017-01-05
 
