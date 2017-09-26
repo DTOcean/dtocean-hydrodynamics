@@ -242,7 +242,8 @@ class SearchOptimum(object):
         es = cma.CMAEvolutionStrategy(
                         x0,
                         2,
-                        {'bounds': [self._min_bound,self._max_bound]})
+                        {'bounds': [self._min_bound,self._max_bound],
+                         'verb_disp': 0})
         
         es.opts.set('tolfun', tolfun)
         es.opts.set('tolx', tolx)
@@ -335,7 +336,7 @@ class SearchOptimum(object):
                 return remap(val, sc, IR, IC, beta, psi)
             return (X_norm, sc)
             
-        module_logger.info("\nEstimating the optimisation starting point:")
+        module_logger.info("Estimating the optimisation starting point")
         max_eval = 100
         
         # arrange a fake staggered grid for full array case
