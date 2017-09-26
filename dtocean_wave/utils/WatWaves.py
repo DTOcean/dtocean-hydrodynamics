@@ -10,19 +10,35 @@ This module provides several methods which are recurrently used to solve the wat
 .. moduleauthor:: Pau Mercadez Ruiz <pmr@civil.aau.dk>
 """
 
-# Start logging
-import logging
-module_logger = logging.getLogger(__name__)
-
-from math import tanh, tan, cos, pi, log10
-from numpy import array, zeros, ones, meshgrid, where, sqrt, arctan2, real, exp, cosh,\
-NaN, float64, int32, ceil, conj
-from scipy.special import jv, yv
-import subprocess
 import os
+import logging
+import subprocess
+from math import tanh, tan, cos, pi, log10
+
+import numpy as np
+from numpy import (array,
+                   zeros,
+                   ones,
+                   meshgrid,
+                   where,
+                   sqrt,
+                   arctan2,
+                   real,
+                   exp,
+                   cosh,
+                   NaN,
+                   float64,
+                   int32,
+                   ceil,
+                   conj)
+from scipy.special import jv, yv
+
+# Start logging
+module_logger = logging.getLogger(__name__)
 
 ro = 1000
 g = 9.81
+
 
 def Dispersion_T(L, const):
     """
@@ -148,7 +164,7 @@ def CylWaveField(X, Y, Z, amplitudes, freq, wnumber, wdepth, Bodiescoord, disreg
     Nm= (len2(amplitudes)/NumBodies-1)/2
     mode= range(-Nm,Nm+1)
     XX, YY= meshgrid(X, Y, indexing='ij', sparse=True)
-    Phii= zeros((NumBodies,XX.shape[0],YY.shape[1]), dtype=complex)
+    Phii= zeros((NumBodies,XX.shape[0],YY.shape[1]), dtype=np.complex64)
     for i in range(NumBodies):
         Xi, Yi= Bodiescoord[i]
         ri= sqrt((XX-Xi)**2+(YY-Yi)**2)
@@ -170,7 +186,8 @@ def CylWaveField(X, Y, Z, amplitudes, freq, wnumber, wdepth, Bodiescoord, disreg
         return cosh(wnumber*(Z+wdepth))/cosh(wnumber*wdepth)*Phii
     else :
         "Velocity potential"
-        return array([cosh(wnumber*(z+wdepth))/cosh(wnumber*wdepth)*Phii for z in Z], dtype=complex)
+        vels = [cosh(wnumber*(z+wdepth))/cosh(wnumber*wdepth)*Phii for z in Z]
+        return array(vels, dtype=np.complex64)
             
 def NearNeighb(A, MatBool, itemax = 20):    
     """
@@ -181,17 +198,17 @@ def NearNeighb(A, MatBool, itemax = 20):
     bins = array(where(MatBool))
     lens4dim=  A.shape    
     dims, Nbins = bins.shape
-    ok = ones((2,dims,Nbins),dtype=int)
-    neighb = zeros((2,dims,Nbins),dtype=int)
+    ok = ones((2,dims,Nbins), dtype=int)
+    neighb = zeros((2,dims,Nbins), dtype=int)
     
     " Identify the type of data you will be playing with "
     datatype = type(A[[[0] for i in range(dims)]][0])
     if datatype == int32 or datatype == int:
-        choice = zeros((2,dims,Nbins),dtype=int)
+        choice = zeros((2,dims,Nbins), dtype=int)
     elif datatype == float64 or datatype == float:
-        choice = zeros((2,dims,Nbins),dtype=int)
+        choice = zeros((2,dims,Nbins), dtype=int)
     else :
-        choice = zeros((2,dims,Nbins),dtype=complex)
+        choice = zeros((2,dims,Nbins), dtype=np.complex64)
     
     for n in [0,1]:
         
