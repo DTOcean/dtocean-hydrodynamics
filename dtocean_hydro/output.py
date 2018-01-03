@@ -257,19 +257,26 @@ class ReducedOutput():
     ReducedOutput: class used to interface the wave and tidal module to the WP2 Output class
     Args:
          aep_ar (float)[Wh]: annual energy production of the whole array
-         pow_dev_state (numpy.ndarray)[W]: average power production
-           of each device within the array for each sea state
          aep_dev (numpy.ndarray)[Wh]: annual energy production of each device
            within the array
+         q_dev (numpy.ndarray)[]: q-factor for each device, calculated as
+           energy produced by the device within the array over the energy
+           produced by the device without interaction
+         q_ar (float)[]: q-factor for the array, calculated as energy
+           produced by the array over the energy produced by the device without
+           interaction times the number of devices.
          pow_dev (numpy.ndarray)[W]: average power production of each
            device within the array
+         pow_dev_state (numpy.ndarray)[W]: average power production
+           of each device within the array for each sea state
+         nb (float)[]: number of devices in the array
          pos (numpy.ndarray)[m]: UTM coordinates of each device in
            the array. NOTE: the UTM coordinates do not consider different UTM
            zones. The maping in the real UTM coordinates is done at a higher
            level.
-         nb (float)[]: number of devices in the array
          res_red (float)[]: ratio between absorbed and incoming
            energy.
+         ti (float)[TIDAL ONLY]: turbulence intensity within the array
          dev_model (dictionary)[WAVE ONLY]: Simplified model of the wave
            energy converter. The dictionary keys are:
                 wave_fr (numpy.ndarray)[Hz]: wave frequencies used to
@@ -287,14 +294,9 @@ class ReducedOutput():
                                         intended for the whole array, which
                                         is considered as a single body with
                                         several dofs.
-         q_dev (numpy.ndarray)[]: q-factor for each device, calculated as
-           energy produced by the device within the array over the energy
-           produced by the device without interaction
-         q_ar (float)[]: q-factor for the array, calculated as energy
-           produced by the array over the energy produced by the device without
-           interaction times the number of devices.
-         ti (float)[TIDAL ONLY]: turbulence intensity within the array
          power_matrix_machine (numpy.ndarray) [WAVE ONLY]: power matrix of the single WEC.
+         power_matrix_dims (numpy.ndarray) [WAVE ONLY]:
+             dimensions for the power matrix of the single WEC.
 
     """
     def __init__(self, aep_ar,
@@ -306,9 +308,10 @@ class ReducedOutput():
                        nb,
                        pos,
                        res_red,
-                       ti,
-                       dev_model,
-                       power_matrix_machine):
+                       ti=None,
+                       dev_model=None,
+                       power_matrix_machine=None,
+                       power_matrix_dims=None):
         
         self.AEP_array = aep_ar
         self.power_prod_perD_perS = pow_dev_state
@@ -322,4 +325,5 @@ class ReducedOutput():
         self.q_array = q_ar
         self.TI = ti
         self.power_matrix_machine = power_matrix_machine
+        self.power_matrix_dims = power_matrix_dims
         

@@ -293,6 +293,10 @@ class MultiBody(object):
             self.Device_Position = machine
             self.Resource_reduction = energy_balance
             self.TI = []
+            
+        power_matrix_dims = {"tp": self.iwec.w_tp,
+                             "hm0": self.iwec.w_hm0,
+                             "dirs": self.iwec.w_dirs}
 
         res = ReducedOutput(aep_dev.sum(),
                             aep_dev,
@@ -305,7 +309,8 @@ class MultiBody(object):
                             energy_balance,
                             None,
                             device_model,
-                            self.iwec.power_matrix)
+                            self.iwec.power_matrix,
+                            power_matrix_dims)
         
         return res
 
