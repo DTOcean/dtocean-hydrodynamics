@@ -308,9 +308,7 @@ class CallTidal:
                             self.Nbodies,
                             machine,
                             self.Resource_reduction,
-                            self.TI,
-                            None,
-                            None)
+                            self.TI)
         
         return res
 
