@@ -418,9 +418,10 @@ class WP2:
                                hyd_res.Device_Model,
                                hyd_res.q_perD,
                                hyd_res.q_array,
+                               norm_dir,
                                hyd_res.TI,
                                hyd_res.power_matrix_machine,
-                               norm_dir)
+                               hyd_res.power_matrix_dims)
 
             result.remap_res(self.iInput.S_data.electrical_connection_point)
             result.logRes()
