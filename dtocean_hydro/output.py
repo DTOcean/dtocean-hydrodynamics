@@ -81,10 +81,11 @@ class WP2output(object):
                  Resource_reduction,
                  Device_Model,
                  q_perD,
-                 q_array,
-                 TI,
-                 power_matrix_machine, 
-                 main_direction):
+                 q_array, 
+                 main_direction,
+                 TI=None,
+                 power_matrix_machine=None,
+                 power_matrix_dims=None):
 
         self.Annual_Energy_Production_Array = AEP_array
         self.power_prod_perD_perS = power_prod_perD_perS
@@ -96,9 +97,10 @@ class WP2output(object):
         self.Hydrodynamic_Parameters = Device_Model
         self.q_factor_Per_Device = q_perD
         self.q_factor_Array = q_array
+        self.main_direction = main_direction
         self.TI = TI
         self.power_matrix_machine = power_matrix_machine
-        self.main_direction = main_direction
+        self.power_matrix_dims = power_matrix_dims
 
     def remap_res(self, connection_point):
         def get_first_element(pcc, xy2):
