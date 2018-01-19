@@ -238,7 +238,7 @@ class RunNemoh(QWidget, Ui_T2):
         
 
     def check_body_data(self):
-        mesh_body = self.mesh_f_t2.text()
+        mesh_body = str(self.mesh_f_t2.text())
         if not os.path.isfile(mesh_body):
             mesh_body = os.path.join(self._prj, self._raw, os.path.basename(mesh_body))
         
