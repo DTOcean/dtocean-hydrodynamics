@@ -240,7 +240,7 @@ class Array:
             turbDir = deg360_to_radpi(self.features['turbine' + str(i)]['OA'])
             turbSpan = np.abs(
                     np.radians(self.features['turbine' + str(i)]['HAS']))/2.0
-            if not turbSpan == 180.0:  # case where turbine rotates 360.0 degrees
+            if turbSpan < np.pi:  # case where turbine rotates 360.0 degrees
                 # angle between -pi and pi
                 turbDir = pi2pi(turbDir)
                 # define intervals
@@ -272,7 +272,7 @@ class Array:
                 if self.features['turbine' + str(i)]['2way']:
                     bounds = np.hstack((bounds, np.array(inter2).flatten()))
                 #  find closest bound
-                ry = bounds - absAngle
+                ry = self._diff_rads(absAngle, bounds)
                 self.features['turbine' + str(i)]['RY'] = np.degrees(ry.min())  # relative yaw angle in deg., RY
             if debug:
                 logMsg = ("Relative yawing angle for turbine{} = "
@@ -301,6 +301,20 @@ class Array:
             inter1 = [np.array([-np.pi, turbDir + turbSpan]),
                      np.array([(turbDir - turbSpan) + 2.0*np.pi, np.pi])]
         return inter1
+    
+    def _diff_rads(self, angle1, angles):
+        
+        if angle1 < 0: angle1 += 2 * np.pi
+        
+        diff = []
+        
+        for angle2 in angles:
+            
+            if angle2 < 0: angle2 += 2 * np.pi
+            diff.append(abs(angle1 - angle2))
+        
+        return np.array(diff)
+
 
 ###Functions definitions###
 def wp2_tidal(data,
