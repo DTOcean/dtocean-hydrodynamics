@@ -167,8 +167,8 @@ class CallTidal:
         PLE = WP2Input.S_data.VelocityShear
         self.__prob = WP2Hydro.p
         
-        self.__u_mean = self.__U.mean()
-        self.__v_mean = self.__V.mean()
+        self.__u_mean = np.nanmean(self.__U)
+        self.__v_mean = np.nanmean(self.__V)
         self.n_seastate = len(self.__prob)
 
 #        Bathy = WP2Hydro.bathy[:,-1].reshape((ny,nx))
