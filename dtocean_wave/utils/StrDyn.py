@@ -104,7 +104,8 @@ def EnergyProduction(NBodies,
                      Khyd,
                      Fex,
                      Kfit,
-                     Cfit):
+                     Cfit,
+                     RatedPower):
     
     """
     EnergyProduction: calculates the energy production for the given sea
@@ -272,7 +273,12 @@ def EnergyProduction(NBodies,
                 if Nd_subset > 1:
                     I = .5 * ((I[:, 1:] + I[:, :-1]) * Spec_.dth).sum(axis=-1)
                 
-                P_dev[:, i_Tp, i_Hs, i_Dir] = I.reshape(-1)
+                free_power = I.reshape(-1)
+                
+                if (free_power > RatedPower).any():
+                    free_power = np.clip(free_power, None, RatedPower)
+                    
+                P_dev[:, i_Tp, i_Hs, i_Dir] = free_power
                 
                 ## Compute yearly power production (Site dependent)
                 powprob = prob_occ[i_Tp, i_Hs, i_Dir]

@@ -185,6 +185,7 @@ class WP2:
             else:
                 self.iWEC = wec(WP2input.M_data.wave_data_folder,
                                 wdepth,
+                                self.iInput.M_data.RatedPowerDevice,
                                 debug=False)
                 self.iWEC.load_single_machine_model()
 

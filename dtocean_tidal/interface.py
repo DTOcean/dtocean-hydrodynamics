@@ -197,9 +197,15 @@ class CallTidal:
 
         del TI, PLE, SSH
 
-        self.__base_feature = {'Ct': Ct, 'Cp': Cp, 'Diam': Diam,
-                                'cutIO': cutIO, 'floating': floaT,
-                                'HAS': HAS, 'OA': OA, '2way': Bidirection}
+        self.__base_feature = {'Ct': Ct,
+                               'Cp': Cp,
+                               'Diam': Diam,
+                               'cutIO': cutIO,
+                               'floating': floaT,
+                               'HAS': HAS,
+                               'OA': OA,
+                               '2way': Bidirection,
+                               'Rating': WP2Input.M_data.RatedPowerDevice}
 
         self.__data = {'U': None, 'V': None, 'TI': None,
                             'PLE': None, 'SSH': None, 'bathy': Bathy,
