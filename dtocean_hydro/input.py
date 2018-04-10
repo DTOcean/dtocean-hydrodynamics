@@ -810,9 +810,9 @@ class WP2input:
         if rated_power < machine_power:
             strPowerWarning = ("The rated power specified ({} W) "
                                "is smaller than the rated power calculated "
-                               "from the machine data ({} W) This situation "
-                               "can lead to unexpected/unrealistic high "
-                               "yield.").format(rated_power,
+                               "from the machine data ({} W). The power will "
+                               "be truncated at the rated "
+                               "value.").format(rated_power,
                                                 machine_power)
             module_logger.warning(strPowerWarning)
         

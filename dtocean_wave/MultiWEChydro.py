@@ -196,7 +196,8 @@ class MultiBody(object):
                                       self.iwec.Khyd,
                                       self.Fex,
                                       self.kfit,
-                                      self.cfit)
+                                      self.cfit,
+                                      self.iwec.rated_power)
 
             # Excitation Force isolated WEC
             (mths,mode) = meshgrid(ths, Nm, indexing='ij')
@@ -226,7 +227,8 @@ class MultiBody(object):
                                             self.iwec.Khyd,
                                             Fex_iso,
                                             self.kfit,
-                                            self.cfit)
+                                            self.cfit,
+                                            self.iwec.rated_power)
 
             Pyradd += Pyr
             Padd += P

@@ -67,10 +67,12 @@ class wec(object):
     def __init__(self,
                  FilesPath,
                  water_depth,
+                 rated_power,
                  debug=False):
 
         self.pathname = FilesPath
         self.depth = water_depth
+        self.rated_power = rated_power
         self._debug = debug
 
         # the following input are populated using the given BEM solution
@@ -112,10 +114,14 @@ class wec(object):
          self.w_hm0,
          self.w_dirs,
          self.scatter_diagram, 
-         self.power_matrix ) = reader.read_performancefit_solution(self.pathname)
+         self.power_matrix) = reader.read_performancefit_solution(
+                                                             self.pathname)
                 
         # Calculate Tp values for power matrix
         self.w_tp = convert_te2tp(self.w_te, specType[0], specType[1])
+        
+        # Clip any values above rated power in power matrix
+        self.power_matrix = np.clip(self.power_matrix, None, self.rated_power)
          
 #        This check has been moved in the main file and it will trigger a warning to be exposed to the user.
 #        if not np.allclose(self.water_depth, self.depth):

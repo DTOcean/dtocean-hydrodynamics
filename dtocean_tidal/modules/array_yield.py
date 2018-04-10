@@ -69,7 +69,8 @@ class ArrayYield:
             cutIn = self._array.features[key]['cutIO'][0]
             cutOut = self._array.features[key]['cutIO'][1]
             ry = self._array.features[key]['RY']  # relative yawing angle
-            A = np.pi * ((diam/2.0)**2.0) * np.cos(np.radians(ry))  # ellipse area
+            rating = self._array.features[key]['Rating']
+            A = np.pi * ((diam/2.0)**2.0) * np.cos(np.radians(ry))  # ellipse area            
             if np.abs(ry) > 89:
                 A=0  # patch to avoid negative power production. Probably also the disk model should be modified but it is not yet.
             #Flow speed at hub           
@@ -111,6 +112,14 @@ class ArrayYield:
                 powerIni = 0.0
             else:
                 powerIni = 0.5*rho*Cpini*A*(normIni**3.0)
+            
+            # Clip power to the power rating
+            if power > rating:
+                power = rating
+                
+            if powerIni > rating:
+                powerIni = rating
+                
             turbGene[i] = power
             turbGeneIni[i] = powerIni
             turbID.append(key)
