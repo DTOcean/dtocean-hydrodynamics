@@ -231,8 +231,8 @@ class WP2_MachineData:
         self.tidal_velocity_curve = tidal_velocity_curve
         self.UserArray = UserArray
         self.RatedPowerArray = RatedPowerArray
-        self.RatedPowerDevice= RatedPowerDevice
-        self.MaxNumDevices = int(RatedPowerArray/RatedPowerDevice)
+        self.RatedPowerDevice = RatedPowerDevice
+        self.MaxNumDevices = int(RatedPowerArray / RatedPowerDevice)
         self.UserOutputTable = UserOutputTable
                     
     def printInput(self, indent=4):
@@ -730,21 +730,6 @@ class WP2input:
         old_beta_array = self.S_data.MeteoceanConditions['B']
         new_beta_array = convertangle(old_beta_array)
         self.S_data.MeteoceanConditions['B'] = new_beta_array
-    
-    def convert_te2tp(self):
-        coeff = np.array([[  1.22139232e+00],
-                                [ -7.26257028e-02],
-                                [  1.74397331e-02],
-                                [ -2.19288663e-03],
-                                [  1.07357912e-04]])
-        # convert Te to Tp for the Metocean condition relative to the deployment site
-        conversion_factor = 1.16450471
-        if self.S_data.MeteoceanConditions['specType'][0] == 'Jonswap':
-            gamma = self.S_data.MeteoceanConditions['specType'][1]
-            if gamma > 7 or gamma < 1:
-                module_logger.warning('The gamma value of the JONSWAP spectrum in the metocean data specification is out of the confident range [1-7].')
-            conversion_factor = coeff[0] + coeff[1] * gamma + coeff[2] * gamma**2 + coeff[3] * gamma**3 + coeff[4] * gamma**4
-        self.S_data.MeteoceanConditions['Tp'] *= conversion_factor
 
     def compress_lease_area(self):
         

@@ -64,7 +64,15 @@ def read_performancefit_solution(data_folder):
     scatter_diagram = dic['scatter_diagram']
     power_matrix = dic['power_matrix']
 
-    return (c_fit+c_ext, k_fit+k_ext, c_pto, k_mooring, tp, hm0, wave_dir, scatter_diagram, power_matrix)
+    return (c_fit+c_ext,
+            k_fit+k_ext,
+            c_pto,
+            k_mooring,
+            te,
+            hm0,
+            wave_dir,
+            scatter_diagram,
+            power_matrix)
 
 
 def __check_filename(data_folder, fn="wec_solution.h5"):

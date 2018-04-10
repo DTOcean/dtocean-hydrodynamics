@@ -226,19 +226,22 @@ class PowerPerformance(QWidget, Ui_Fit):
         mooring = mooring_data(dat4, ndof)
         ext_d = ext_damping_data(dat5, ndof)
         ext_k = ext_stiffness_data(dat6, ndof)
+                
+        machine_spec = {'c_pto': pto,
+                        'k_mooring': mooring,
+                        'yaw': self.__yaw / 180.0 * np.pi,
+                        'power_matrix': pm,
+                        'ext_d': ext_d,
+                        'ext_k': ext_k}
         
-        self.__spectrum =  str(self.uiSpectrum.currentText())
-        machine_spec = {'c_pto': pto, 'k_mooring': mooring,
-                           'yaw': self.__yaw/180.0*np.pi, 'power_matrix': pm, 'ext_d': ext_d, 'ext_k': ext_k}
+        site_spec = {'spec_spreading':self.__spreading,
+                     'te': t,
+                     'hm0': h,
+                     'wave_angles': a / 180.0 * np.pi,
+                     'probability_of_occurence': sd}
         
-        site_spec = {'spec_shape':self.__spectrum}
-        site_spec['spec_gamma'] = self.__gamma
-        site_spec['spec_spreading'] = self.__spreading
-        site_spec['te'] = t
-        site_spec['hm0'] = h
-        site_spec['wave_angles'] = a/180.0*np.pi
-        site_spec['probability_of_occurence'] = sd
         stat = check_data_sanity(ndof, machine_spec, site_spec)
+        
         if stat:
             print(stat)
             self.btn_fitting.setEnabled(False)

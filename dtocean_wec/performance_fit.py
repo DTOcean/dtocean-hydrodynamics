@@ -79,6 +79,7 @@ class Ui_Form(object):
         self.gridLayout.addWidget(self.btn_fitting, 3, 3, 1, 3)
         self.gridLayout_2 = QtGui.QGridLayout()
         self.gridLayout_2.setSizeConstraint(QtGui.QLayout.SetMinimumSize)
+        self.gridLayout_2.setContentsMargins(-1, -1, -1, 10)
         self.gridLayout_2.setSpacing(0)
         self.gridLayout_2.setObjectName(_fromUtf8("gridLayout_2"))
         self.label_2 = QtGui.QLabel(Form)
@@ -157,8 +158,8 @@ class Ui_Form(object):
         self.btn_load_pfit.setText(_translate("Form", "load data", None))
         self.btn_browse_pfit.setText(_translate("Form", "browse", None))
         self.btn_fitting.setText(_translate("Form", "Power Matrix Fitting", None))
-        self.label_2.setText(_translate("Form", "Weatherwane angle semi-span [deg] \n"
-" The full angle span i considered 2x the given value ", None))
+        self.label_2.setText(_translate("Form", "Device yaw angle semi-span [deg] \n"
+" The full yaw is twice the given value", None))
         self.label_3.setText(_translate("Form", "Spectrum type", None))
         self.label_4.setText(_translate("Form", "Peak Enhancement Factor (only used in the Jonswap spectrum type)", None))
         self.uiSpectrum.setItemText(0, _translate("Form", "Jonswap", None))
@@ -167,6 +168,7 @@ class Ui_Form(object):
         self.uiSpectrum.setItemText(3, _translate("Form", "Modified_Bretschneider Mitsuyasu", None))
         self.uiSpectrum.setItemText(4, _translate("Form", "Psc Swell", None))
         self.uiSpectrum.setItemText(5, _translate("Form", "Regular", None))
-        self.label_5.setText(_translate("Form", "Spreading Paremeter", None))
+        self.label_5.setText(_translate("Form", "Wave Directional Spreading Paremeter, \"s\" \n"
+" (s=1 ~ 90° and s=30 ~ 5°)", None))
         self.btn_skip_fit.setText(_translate("Form", "Skip Power Matrix Fitting", None))
 

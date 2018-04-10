@@ -89,23 +89,6 @@ def convert_te2tp(te, spec_type, gamma):
     
     return tp
 
-def convert_tp2te(tp, spec_type, gamma):
-    coeff = np.array([[  1.22139232e+00],
-                            [ -7.26257028e-02],
-                            [  1.74397331e-02],
-                            [ -2.19288663e-03],
-                            [  1.07357912e-04]])
-    # convert Te to Tp for the Metocean condition relative to the deployment site
-    conversion_factor = 1.16450471
-    if spec_type == 'Jonswap':
-        if gamma > 7 or gamma < 1:
-            print("warning: gamma value outside the range of confidence")
-            #module_logger.warning('The gamma value of the JONSWAP spectrum in the metocean data specification is out of the confident range [1-7].')
-        conversion_factor = coeff[0] + coeff[1] * gamma + coeff[2] * gamma**2 + coeff[3] * gamma**3 + coeff[4] * gamma**4
-    te = tp/conversion_factor
-    
-    return te
-
 
 def set_wdirs_with_yaw(B, s, mA, yA, debug=False):
     """

@@ -138,8 +138,8 @@ def interpol_scatter2grid(x, y, z, xn, yn, debug=True):
     ymax = y.max()
     dx = (xmax - xmin) / (xn - 1)
     dy = (ymax - ymin) / (yn - 1)
-    xi = np.arange(xmin, xmax+dx, dx)
-    yi = np.arange(ymin, ymax+dy, dy)
+    xi = np.arange(xmin, xmax + dx, dx)
+    yi = np.arange(ymin, ymax + dy, dy)
 
     X, Y = np.meshgrid(xi, yi)
     orig = np.vstack((x, y)).T

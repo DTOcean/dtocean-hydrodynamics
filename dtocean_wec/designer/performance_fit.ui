@@ -120,6 +120,9 @@
      <property name="sizeConstraint">
       <enum>QLayout::SetMinimumSize</enum>
      </property>
+     <property name="bottomMargin">
+      <number>10</number>
+     </property>
      <property name="spacing">
       <number>0</number>
      </property>
@@ -149,8 +152,8 @@
         </font>
        </property>
        <property name="text">
-        <string>Weatherwane angle semi-span [deg] 
- The full angle span i considered 2x the given value </string>
+        <string>Device yaw angle semi-span [deg]
+The full yaw is twice the given value</string>
        </property>
       </widget>
      </item>
@@ -240,7 +243,8 @@
      <item row="3" column="0">
       <widget class="QLabel" name="label_5">
        <property name="text">
-        <string>Spreading Paremeter</string>
+        <string>Wave Directional Spreading Paremeter, &quot;s&quot;
+(s=1 ~ 90° and s=30 ~ 5°)</string>
        </property>
       </widget>
      </item>

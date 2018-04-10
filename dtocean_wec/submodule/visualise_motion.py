@@ -280,7 +280,7 @@ class Visualiser():
         for (i, j), z in np.ndenumerate(power_matrix.T):
             ax.text(j, i, '{:.0f}'.format(z), ha='center', va='center')
         ax.set_xticks(range(dofi))
-        ax.set_xticklabels(['{:.1f}'.format(tp) for tp in self._data_p['tp']], fontsize = sz_ticks)
+        ax.set_xticklabels(['{:.1f}'.format(te) for te in self._data_p['te']], fontsize = sz_ticks)
         ax.set_xlabel('Te ', fontsize = sz_labels)
         ax.xaxis.set_label_position('top')
         ax.set_yticks(range(dofj))
@@ -307,7 +307,7 @@ class Visualiser():
         for (i, j), z in np.ndenumerate(power_matrix.T):
             ax.text(j, i, '{:.0f}'.format(z), ha='center', va='center')
         ax.set_xticks(range(dofi))
-        ax.set_xticklabels(['{:.1f}'.format(tp) for tp in self._data_p['tp']], fontsize = sz_ticks)
+        ax.set_xticklabels(['{:.1f}'.format(te) for te in self._data_p['te']], fontsize = sz_ticks)
         ax.set_xlabel('Te ', fontsize = sz_labels)
         ax.xaxis.set_label_position('top')
         ax.set_yticks(range(dofj))
@@ -334,7 +334,7 @@ class Visualiser():
         for (i, j), z in np.ndenumerate(power_matrix.T):
             ax.text(j, i, '{:.0f}'.format(z), ha='center', va='center')
         ax.set_xticks(range(dofi))
-        ax.set_xticklabels(['{:.1f}'.format(tp) for tp in self._data_p['tp']], fontsize = sz_ticks)
+        ax.set_xticklabels(['{:.1f}'.format(te) for te in self._data_p['te']], fontsize = sz_ticks)
         ax.set_xlabel('Te ', fontsize = sz_labels)
         ax.xaxis.set_label_position('top')
         ax.set_yticks(range(dofj))

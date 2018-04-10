@@ -187,7 +187,8 @@ class WP2:
                                 wdepth,
                                 self.iInput.M_data.RatedPowerDevice,
                                 debug=False)
-                self.iWEC.load_single_machine_model()
+                self.iWEC.load_single_machine_model(
+                        WP2input.S_data.MeteoceanConditions['specType'])
 
                 # for the wave case if any of the array distance is smalled
                 # than the circumscribing cylinder the implemented theory is

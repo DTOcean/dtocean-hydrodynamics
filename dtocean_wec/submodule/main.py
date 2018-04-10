@@ -169,28 +169,7 @@ class BemSolution(object):
 
         self.per_fit = per_fit
         
-    
-    def _get_power_matrix(self):
-        # Run EnergyProduction
-        
-        (Pyr_i, P_i) = EnergyProduction(1,
-                                        self.per_fit.wave_dir,
-                                        self.per_fit.hm0,
-                                        self.per_fit.tp,
-                                        self.reader.directions,
-                                        self.reader.periods,
-                                        [self.per_fit.scatter_diagram, self.per_fit.scatter_diagram_spec],
-                                        self.reader.m_m,
-                                        self.reader.m_add,
-                                        self.per_fit.c_pto,
-                                        self.reader.c_rad,
-                                        self.per_fit.k_mooring,
-                                        self.reader.k_hst,
-                                        self.reader.f_ex,
-                                        self.per_fit.k_fit,
-                                        self.per_fit.c_fit)
-        return P_i[:,:,:,0].transpose(1,2,0)
-        
+        return
 
     def generate_outputs(self):
         # writing to a ASCII files is not really usefull.
