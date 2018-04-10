@@ -166,9 +166,6 @@ class Array:
             #Relative distance from streamlines
             self.streamlines={}
             self.distances={}
-            if debug_plot:
-                fig = plt.figure(figsize=(18,10))
-                ax = fig.add_subplot(1,1,1)
 
             for i in range(self._turbine_count):
                 if debug:
@@ -183,10 +180,9 @@ class Array:
             
             if debug_plot:
                 SLs.plot(self._turbine_count)
-                ax.set_ylabel('Distance (m)', fontsize=12)
-                ax.set_xlabel('Distance (m)', fontsize=12)
-                plt.show()
+                
         else:
+            
             if debug: module_logger.info("Single turbine...no streamlines")
 
         # Velocity and TI at hub
