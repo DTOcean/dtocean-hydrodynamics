@@ -294,7 +294,7 @@ class MultiBody(object):
             self.Resource_reduction = energy_balance
             self.TI = []
             
-        power_matrix_dims = {"tp": self.iwec.w_tp,
+        power_matrix_dims = {"te": self.iwec.w_te,
                              "hm0": self.iwec.w_hm0,
                              "dirs": self.iwec.w_dirs}
 

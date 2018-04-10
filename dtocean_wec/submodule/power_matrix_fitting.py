@@ -62,8 +62,8 @@ class PowerMatrixFit():
         self.k_mooring = None
         self.c_fit = None
         self.k_fit = None
-        self._te = None
         self.tp = None
+        self.te = None
         self.hm0 = None
         self.wave_dir = None
         self.scatter_diagram = None
@@ -81,8 +81,8 @@ class PowerMatrixFit():
         self.k_fit = dic['k_fit']
         self.c_pto = dic['c_pto']
         self.k_mooring = dic['k_mooring']
-        self._te = dic['te']
-        self.tp = convert_te2tp(self._te.copy())
+        self.te = dic['te']
+        self.tp = convert_te2tp(self.te.copy())
         self.hm0 = dic['hm0']
         self.wave_dir = convert_angle(dic['wave_dir'].copy())
         self.scatter_diagram = dic['scatter_diagram']
@@ -137,8 +137,8 @@ class PowerMatrixFit():
 
         wdirs_yaw = set_wdirs_with_yaw(wave_angles.copy(), sp_spreading, m_angle, y_angle_range)
 
-        self._te = te
         self.tp = tp
+        self.te = te
         self.hm0 = hm0
         self.wave_dir = wave_angles
         self.scatter_diagram = sp_distr
@@ -262,7 +262,7 @@ class PowerMatrixFit():
         if no_yaw:
             x_scale = 0.0
             for h_ind in range(len(self.hm0)):
-                for t_ind in range(len(self._te)):
+                for t_ind in range(len(self.te)):
                     for d_ind in range(len(self.wave_dir)):
                         ind = np.argmin(np.abs(self.wave_dir[d_ind]-self.directions))
                         f_ex = self._fex[:,ind,:].reshape((len(self.periods), 1, self.n_dof))
@@ -277,7 +277,7 @@ class PowerMatrixFit():
             x_scale = 1.0
             if skip_fit: x_scale = 0.0;
             for h_ind in range(len(self.hm0)):
-                for t_ind in range(len(self._te)):
+                for t_ind in range(len(self.te)):
                     for d_ind in range(len(self.wave_dir)):
                         for orient, thetas in zip(wdirs_yaw[::2], wdirs_yaw[1::2]):
                             if not self.wave_dir[d_ind] in thetas: continue
