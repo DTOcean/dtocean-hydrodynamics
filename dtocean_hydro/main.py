@@ -382,7 +382,7 @@ class WP2:
                 bem_depth = self.iWEC.water_depth
                 site_depth = self.iWEC.depth
                 layout = self.iArray.coord[inside]
-                SSH = np.mean(self.iInput.S_data.MeteoceanConditions['SSH'])
+                SSH = np.nanmean(self.iInput.S_data.MeteoceanConditions['SSH'])
                     
                 dev_depth = get_device_depths(self.iInput.S_data.Bathymetry,
                                               layout)

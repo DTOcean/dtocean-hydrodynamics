@@ -561,22 +561,28 @@ class WP2input:
                               "The execution is terminated")
 
     def __curl_2d(self, uu, vv, x, y):
-        u = uu.copy()-uu.min()
-        if u.max(): u /= u.max()
-        u -= u.mean()
+        
+        u = uu.copy() - np.nanmin(uu)
+        if np.nanmax(u): u /= np.nanmax(u)
+        u -= np.nanmean(u)
     
-        v = vv.copy()-vv.min()
-        if v.max(): v /= v.max()
-        v -= v.mean()
+        v = vv.copy() - np.nanmin(vv)
+        if np.nanmax(v): v /= np.nanmax(v)
+        v -= np.nanmean(v)
     
         dx = np.mean(x[1:]-x[:-1])
         dy = np.mean(y[1:]-y[:-1])
+        
+        u = np.nan_to_num(u)
+        v = np.nan_to_num(v)
+                
         x_var = interpolate.interp2d(x, y, u.T, 'cubic')
         y_var = interpolate.interp2d(x, y, v.T, 'cubic')
-        dvdx = (y_var(x+dx, y)-y_var(x-dx, y))/(2*dx)
-        dudy = (x_var(x, y+dy)-x_var(x, y-dy))/(2*dy)
-    
-        return dvdx-dudy
+
+        dvdx = (y_var(x + dx, y) - y_var(x - dx, y)) / (2 * dx)
+        dudy = (x_var(x, y + dy) - x_var(x, y - dy)) / (2 * dy)
+            
+        return dvdx - dudy
         
     def getInstallationAreaConstraints(self):
         """
