@@ -80,7 +80,7 @@ class wec(object):
         self.wnumber = None
         self.dir = None
 
-    def load_single_machine_model(self, pickup=True):
+    def load_single_machine_model(self, specType, pickup=True):
         """
         load_single_machine_model: loads the hydrodynamic model of the single machine passed by the user.
         Args (optional):
@@ -103,8 +103,7 @@ class wec(object):
         self.radius,
         self.modes,
         self.order,
-        self.truncorder
-        ) = reader.read_hydrodynamic_solution(self.pathname)
+        self.truncorder) = reader.read_hydrodynamic_solution(self.pathname)
 
         (self.Cfit,
          self.Kfit,
@@ -139,11 +138,24 @@ class wec(object):
 
         NBo = 1  # Number of bodies
 
-        (Pyr, P, RAO) = EnergyProduction(NBo, hydro_mb.B, hydro_mb.Hs, hydro_mb.Tp,
-                                         self.directions, self.period, [hydro_mb.ScatDiag,hydro_mb.specType],
-                                         self.M, self.Madd, self.CPTO,
-                                         self.Crad, self.Kmooring, self.Khyd, self.Fex,
-                                         self.Kfit, self.Cfit)
+        (Pyr, P, RAO) = EnergyProduction(NBo,
+                                         hydro_mb.B,
+                                         hydro_mb.Hs,
+                                         hydro_mb.Tp,
+                                         self.directions,
+                                         self.period,
+                                         [hydro_mb.ScatDiag,
+                                          hydro_mb.specType],
+                                         self.M,
+                                         self.Madd,
+                                         self.CPTO,
+                                         self.Crad,
+                                         self.Kmooring,
+                                         self.Khyd,
+                                         self.Fex,
+                                         self.Kfit,
+                                         self.Cfit,
+                                         self.rated_power)
 
         self.energyproduction = Pyr
         self.power= P

@@ -135,7 +135,10 @@ class PowerMatrixFit():
         y_angle_range = machine_spec['yaw']
         m_angle = wave_angles[sp_distr.sum((0,1)).argmax()]
 
-        wdirs_yaw = set_wdirs_with_yaw(wave_angles.copy(), sp_spreading, m_angle, y_angle_range)
+        wdirs_yaw = set_wdirs_with_yaw(wave_angles.copy(),
+                                       sp_spreading,
+                                       m_angle,
+                                       y_angle_range)
 
         self.tp = tp
         self.te = te

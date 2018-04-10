@@ -114,8 +114,11 @@ class Streamlines:
         for streamline in self.streamlines:
             if (len(streamline[0]) > 1) or (len(streamline[1]) > 1):
                 path = mpl.path.Path(np.asarray((streamline[0], streamline[1])).T)
-                patch = mpl.patches.FancyArrowPatch(path=path, arrowstyle='->',
-                                                    mutation_scale=size, lw=lw)
+                patch = mpl.patches.FancyArrowPatch(path=path,
+                                                    arrowstyle='->',
+                                                    mutation_scale=size,
+                                                    lw=lw,
+                                                    color='k')
                 ax.add_patch(patch)
 
         ax.axis('tight')
