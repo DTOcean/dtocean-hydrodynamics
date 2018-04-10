@@ -58,7 +58,7 @@ def read_performancefit_solution(data_folder):
     k_fit = dic['k_fit']
     c_pto = dic['c_pto']
     k_mooring = dic['k_mooring']
-    tp = dic['tp']
+    te = dic['te']
     hm0 = dic['hm0']
     wave_dir = dic['wave_dir']
     scatter_diagram = dic['scatter_diagram']

@@ -53,7 +53,7 @@ class WP2_SiteData:
         MeteoceanConditions (dict): dictionary gathering all the information related to the metocean conditions 
                                     of the site. The dictionary is different for wave and tidal cases:
                                     Wave keys:
-                                       'Tp' (numpy.ndarray)[s]: Vector containing the wave energy periods 
+                                        'Te' (numpy.ndarray)[s]: Vector containing the wave energy periods 
                                         'Hs' (numpy.ndarray)[m]: Vector containing the significant wave height
                                         'dir' (numpy.ndarray)[rad]: Vector containing the wave direction
                                         'p' (numpy.ndarray)[-]: Probability of occurence of the sea state
@@ -317,8 +317,17 @@ class WP2input:
             raise ValueError(errStr)
 
         if not self.M_data.tidalFlag:
-            self.change_angle_convention()  # convert the scatter diagram angle convention to fit the East-North convention
-            self.convert_te2tp()  # convert the Te given in the scatter diagram into Tp for later use
+            
+            # convert the scatter diagram angle convention to fit the
+            # East-North convention
+            self.change_angle_convention()  
+            
+            # convert the Te given in the scatter diagram into Tp for later use
+            self.S_data.MeteoceanConditions['Tp'] = convert_te2tp(
+                            self.S_data.MeteoceanConditions['Te'],
+                            self.S_data.MeteoceanConditions['specType'][0],
+                            self.S_data.MeteoceanConditions['specType'][1])
+            
         self.getMainAngle()  # identify the main angle (reference) of the array
 
         # InstallationDepth
@@ -782,12 +791,13 @@ class WP2input:
              Kfit,
              CPTO,
              Kmooring,
-             w_tp,
+             w_te,
              w_hm0,
              w_dirs,
              scatter_diagram, 
              power_matrix ) = reader.read_performancefit_solution(
                                                 self.M_data.wave_data_folder)
+            
              
             machine_power = power_matrix.max()
              
@@ -806,12 +816,17 @@ class WP2input:
              Kfit,
              CPTO,
              Kmooring,
-             w_tp,
+             w_te,
              w_hm0,
              w_dirs,
              scatter_diagram, 
              power_matrix ) = reader.read_performancefit_solution(
                                                 self.M_data.wave_data_folder)
+            
+            w_tp = convert_te2tp(
+                            w_te,
+                            self.S_data.MeteoceanConditions['specType'][0],
+                            self.S_data.MeteoceanConditions['specType'][1])
              
             site = self.S_data.MeteoceanConditions
             s_tp = site['Tp']
@@ -835,3 +850,31 @@ class WP2input:
                                 "does not cover the given site",
                                 "Due to the model linearity, this situation can bring unexpected/unrealistic results")
                 module_logger.warning(strDirsWarning)
+    
+             
+def convert_te2tp(te, specType, gamma):
+    
+    coeff = np.array([[  1.22139232e+00],
+                      [ -7.26257028e-02],
+                      [  1.74397331e-02],
+                      [ -2.19288663e-03],
+                      [  1.07357912e-04]])
+                    
+    # convert Te to Tp for the Metocean condition relative to the deployment site
+    conversion_factor = 1.16450471
+    
+    if specType == 'Jonswap':
+        if gamma > 7 or gamma < 1:
+            module_logger.warning('The gamma value of the JONSWAP spectrum '
+                                  'in the metocean data specification is out '
+                                  'of the confident range [1-7].')
+        
+        conversion_factor = coeff[0] + \
+                            coeff[1] * gamma + \
+                            coeff[2] * gamma**2 + \
+                            coeff[3] * gamma**3 + \
+                            coeff[4] * gamma**4
+                            
+    tp = te * conversion_factor
+    
+    return tp

@@ -222,7 +222,7 @@ class BemSolution(object):
                     'k_fit': self.per_fit.k_fit,
                     'c_pto': self.per_fit.c_pto,
                     'k_mooring': self.per_fit.k_mooring,
-                    'tp': self.per_fit.tp,
+                    'te': self.per_fit.te,
                     'hm0': self.per_fit.hm0,
                     'wave_dir': self.per_fit.wave_dir,
                     'scatter_diagram': self.per_fit.scatter_diagram,

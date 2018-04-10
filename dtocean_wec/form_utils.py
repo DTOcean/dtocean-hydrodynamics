@@ -113,7 +113,6 @@ def convert_dtoceandata_to_gui_format(data_gui, data_dtocean):
                     'k_fit': data_dtocean['k_fit'],
                     'c_pto': data_dtocean['c_pto'],
                     'k_mooring': data_dtocean['k_mooring'],
-                    'tp': data_dtocean['tp'],
                     'hm0': data_dtocean['hm0'],
                     'wave_dir': data_dtocean['wave_dir'],
                     'scatter_diagram': data_dtocean['scatter_diagram'],
@@ -133,7 +132,7 @@ def final_data_check(dic):
                     'force_tr_mat','amplitude_coefficient_radiation','water_depth','cyl_radius',
                     'modes','max_order','truncation_order','mooring_dof',
                     'pto_dof']
-    requirements_pfit = ['c_ext','k_ext','c_fit','k_fit','c_pto','k_mooring','tp',
+    requirements_pfit = ['c_ext','k_ext','c_fit','k_fit','c_pto','k_mooring','te',
                          'hm0','wave_dir','scatter_diagram']
                          
     ind_key = [iel for iel, el in enumerate(requirements_hyd) if not el in dic['hyd'].keys()]
@@ -152,7 +151,7 @@ def _dtocean_data_check(dic):
     requirements = ['m_m','m_add','c_rad','f_ex','periods','directions','k_hst','diffraction_tr_mat',
                     'force_tr_mat','amplitude_coefficient_radiation','water_depth','cyl_radius',
                     'modes','max_order','truncation_order','mooring_dof',
-                    'pto_dof', 'c_ext','k_ext','c_fit','k_fit','c_pto','k_mooring','tp',
+                    'pto_dof', 'c_ext','k_ext','c_fit','k_fit','c_pto','k_mooring','te',
                          'hm0','wave_dir','scatter_diagram', 'power_matrix']
                          
     ind_key = [iel for iel, el in enumerate(requirements) if not el in dic.keys()]
