@@ -234,7 +234,9 @@ class PowerPerformance(QWidget, Ui_Fit):
                         'ext_d': ext_d,
                         'ext_k': ext_k}
         
-        site_spec = {'spec_spreading':self.__spreading,
+        site_spec = {'spec_shape': 'Jonswap',
+                     'spec_gamma': self.__gamma,
+                     'spec_spreading': self.__spreading,
                      'te': t,
                      'hm0': h,
                      'wave_angles': a / 180.0 * np.pi,
