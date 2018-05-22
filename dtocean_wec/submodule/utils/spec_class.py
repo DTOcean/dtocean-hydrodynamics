@@ -431,12 +431,12 @@ class wave_spec():
             help1=help1/np.pi
             help2=np.abs(np.cos((self.t-self.t_mean)/2))**(2*self.s)
             hdir = help1*help2
-            self.dth
 
         if len(hdir) > 1:
             hdir /= np.sum(.5*(hdir[1:]+hdir[:-1])*self.dth)
 
         return np.outer(S,hdir)
+
 
 if __name__ == "__main__":
     Nf = 10
