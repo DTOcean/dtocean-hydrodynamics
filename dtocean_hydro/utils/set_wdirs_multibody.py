@@ -68,7 +68,7 @@ def convertangle(angle):
 
     """
 
-    return anglewrap(-(angle+np.pi/2),'r2r')
+    return anglewrap(-(angle+90),'d2r')
 
 
 def set_wdirs_multibody(B, s, mA, yA, debug=False):
