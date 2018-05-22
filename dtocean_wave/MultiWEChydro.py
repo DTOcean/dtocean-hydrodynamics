@@ -142,10 +142,13 @@ class MultiBody(object):
         energy: calculates the energy production of the given array layout
 
         Args:
-            coordinates (numpy.ndarray): UTM coordinates (Easting-Northing) describing the array layout.
+            coordinates (numpy.ndarray):
+                UTM coordinates (Easting-Northing) describing the array layout.
 
         Returns:
-            res (ReducedOutput class): contains the minimum set of information required by the WP2Output class.
+            res (ReducedOutput class):
+                contains the minimum set of information required by the
+                WP2Output class.
         """
         self.coord = coord
 
@@ -295,10 +298,6 @@ class MultiBody(object):
             self.Device_Position = machine
             self.Resource_reduction = energy_balance
             self.TI = []
-            
-        power_matrix_dims = {"te": self.iwec.w_te,
-                             "hm0": self.iwec.w_hm0,
-                             "dirs": self.iwec.w_dirs}
 
         res = ReducedOutput(aep_dev.sum(),
                             aep_dev,
@@ -311,8 +310,8 @@ class MultiBody(object):
                             energy_balance,
                             None,
                             device_model,
-                            self.iwec.power_matrix,
-                            power_matrix_dims)
+                            PaddWEC[0,:,:,:],
+                            None)
         
         return res
 
