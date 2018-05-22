@@ -429,13 +429,14 @@ class wave_spec():
         else:
             help1=np.exp((2*self.s-1)*np.log(2)+2.*LnGamma(self.s+1)-LnGamma(2.*self.s+1))
             help1=help1/np.pi
-            help2=np.cos((self.t-self.t_mean)/2)**(2*self.s)
+            help2=np.abs(np.cos((self.t-self.t_mean)/2))**(2*self.s)
             hdir = help1*help2
-            self.dth 
-            
-        hdir = hdir/np.sum(hdir*self.dth)
+
+        if len(hdir) > 1:
+            hdir /= np.sum(.5*(hdir[1:]+hdir[:-1])*self.dth)
 
         return np.outer(S,hdir)
+
         
 if __name__ == "__main__":
     Nf = 10
