@@ -217,7 +217,7 @@ def EnergyProduction(NBodies,
                 ## Compute power function (Device dependent)
                 powfun = np.zeros((NBodies, Nd_subset, Np), dtype=float)
                 
-                if np.isclose(prob_occ[i_Tp, i_Hs, i_Dir], 0): continue
+#                if np.isclose(prob_occ[i_Tp, i_Hs, i_Dir], 0): continue
             
                 # time saving for MotionFreq call
                 block2 = block_diag(*[CPTO[i_Tp, i_Hs, i_Dir] +
