@@ -11,8 +11,10 @@ by Thomas Roc (ITPower).
 .. moduleauthor:: Francesco Ferri <ff@civil.aau.dk>
 """
 import numpy as np
-from .main import wp2_tidal
 from dtocean_hydro.output import ReducedOutput
+
+from .main import wp2_tidal
+from .utils.misc import radians_to_bearing
 
 
 class CallTidal:
@@ -148,7 +150,7 @@ class CallTidal:
         Diam = char_len[0]
         
         # mapping the orientation angle in agreement with the tidal convention
-        OA = (WP2Input.S_data.mainAngle*180/np.pi + 90) -180
+        OA = radians_to_bearing(WP2Input.S_data.mainAngle)
         cutIO = WP2Input.M_data.tidal_cutinout
         floaT = WP2Input.M_data.Floatflag
         HAS = 2*WP2Input.M_data.YawAngle*180/np.pi  # the factor 2 is 
