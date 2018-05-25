@@ -403,17 +403,20 @@ class WP2:
                                                         site_depth,
                                                         device_average_depth,
                                                         site_depth))
-
+                    
+                power_matrix_dims = {
+                       "te": self.iInput.S_data.MeteoceanConditions['Te'],
+                       "hm0": self.iInput.S_data.MeteoceanConditions['Hs'],
+                       "dirs":  self.iInput.S_data.MeteoceanConditions['B']}
+                
+            else:
+                
+                power_matrix_dims = None
                 
             # solve the hydrodynamic interaction of the array
             hyd_res = hyd_obj.energy(self.iArray.coord[inside])
             norm_dir = (self.iInput.S_data.Main_Direction / 
                             np.linalg.norm(self.iInput.S_data.Main_Direction))
-            
-            power_matrix_dims = {
-                       "te": self.iInput.S_data.MeteoceanConditions['Te'],
-                       "hm0": self.iInput.S_data.MeteoceanConditions['Hs'],
-                       "dirs":  self.iInput.S_data.MeteoceanConditions['B']}
 
             result = WP2output(hyd_res.AEP_array,
                                hyd_res.power_prod_perD_perS,
