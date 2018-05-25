@@ -2,17 +2,19 @@
 # encoding: utf-8
 from __future__ import division
 
-# Start logging
-import logging
-module_logger = logging.getLogger(__name__)
+import re
+import math
 
 import numpy as np
-import re
-from shapely.geometry import LineString
 from numpy.linalg import LinAlgError
+from shapely.geometry import LineString
 
 # local imports
 from dtocean_tidal.utils.interpolation import interp_at_point
+
+# Start logging
+import logging
+module_logger = logging.getLogger(__name__)
 
 
 def closest_point( pt, pts, debug=False):
@@ -105,26 +107,42 @@ def natural_sort(l):
     return sorted(l, key = alphanum_key)
 
 
-def pi2pi(dir):
+def radians_to_bearing(x):
+
+    initial_bearing = 90 - math.degrees(x)
+    compass_bearing = (initial_bearing + 360) % 360
+
+    return compass_bearing
+
+
+def vector_to_bearing(x, y):
+
+    initial_bearing = math.atan2(y, x)
+    compass_bearing = radians_to_bearing(initial_bearing)
+
+    return compass_bearing
+
+
+def pi2pi(angle):
     """ keeps angle between -pi and pi
 
     Args:
-      dir (float): angle in radian
+      angle (float): angle in radian
 
     Returns:
       newDir (float): angle in radian between -pi and pi
     """
-    if dir > np.pi:
-        newDir = (dir-np.pi)-np.pi
-    elif dir < -np.pi:
-        newDir = (dir+np.pi)+np.pi
-    else :
-        newDir = dir
-    return newDir
+    if angle > np.pi:
+        angle -= 2 * np.pi
+    elif angle < -np.pi:
+        angle += 2 * np.pi
+
+    return angle
 
 
-def deg360_to_radpi(dir):
-    """converts from 0-to-360 deg (North = 0, East = 90) to -pi-to-pi radian (North = pi/2; East = 0)
+def deg360_to_radpi(bearing):
+    """converts from 0-to-360 deg (North = 0, East = 90) to -pi-to-pi radian
+    (North = pi/2; East = 0)
 
     Args:
       dir (float): angle in degree
@@ -133,9 +151,10 @@ def deg360_to_radpi(dir):
       newDir (float): angle in radian
 
     """
-    dir = np.radians(np.mod(dir - 90, 360))
-    newDir = pi2pi(dir)
-    return newDir
+    angle = np.radians(np.mod(90 - bearing, 360))
+    angle = pi2pi(angle)
+    
+    return angle
 
 
 def transec_surf(hydro, array, debug=False):

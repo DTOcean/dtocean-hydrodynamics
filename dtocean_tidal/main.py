@@ -14,7 +14,7 @@ import matplotlib.pyplot as plt
 # Local import
 from .utils import distance_from_streamline
 from .utils.interpolation import interpol_scatter2grid, interp_at_point
-from .utils.misc import pi2pi, deg360_to_radpi
+from .utils.misc import pi2pi, deg360_to_radpi, vector_to_bearing
 from .modules.vertical_velocity_profile import vvpw
 # TR: alternative using Soulsby formulation
 #from .modules.vertical_velocity_profile import vvpw_soulsby
@@ -231,7 +231,8 @@ class Array:
         if debug: module_logger.info("Computing yawing angles...")
         for i in range(self._turbine_count):
             # absolute angle
-            absAngle = pi2pi(np.arctan2(v,u) - np.pi)
+            bearing = vector_to_bearing(u, v)
+            absAngle = pi2pi(deg360_to_radpi(bearing) - np.pi)
             # -pi in order to test turbine aligned with flow rather than facing flow
             turbDir = deg360_to_radpi(self.features['turbine' + str(i)]['OA'])
             turbSpan = np.abs(
@@ -269,7 +270,8 @@ class Array:
                     bounds = np.hstack((bounds, np.array(inter2).flatten()))
                 #  find closest bound
                 ry = self._diff_rads(absAngle, bounds)
-                self.features['turbine' + str(i)]['RY'] = np.degrees(ry.min())  # relative yaw angle in deg., RY
+                # relative yaw angle in deg., RY
+                self.features['turbine' + str(i)]['RY'] = np.degrees(ry.min())
             if debug:
                 logMsg = ("Relative yawing angle for turbine{} = "
                           "{}").format(i, 
