@@ -149,6 +149,9 @@ def EnergyProduction(NBodies,
         Fex (numpy.ndarray):
             Cumulative excitation force matrix of the array, function of the
             dofs, directions and wave frequencies
+        RatedPower (float) [W]:
+            Rated power of the device. Any values recorded above this are
+            truncated.
 
     Returns:
         Pyr (numpy.ndarray):

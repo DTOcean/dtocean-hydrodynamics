@@ -27,6 +27,7 @@ def test_EnergyProduction():
     Fex = np.ones((50, 30, 3))
     Kfit = np.array([[[np.eye(3)] * 2] * 4] * 7)
     Cfit = np.array([[[np.eye(3)] * 2] * 4] * 7)
+    RatedPower = 1e6
 
     Pyr, P_dev = EnergyProduction(NBo,
                                   B,
@@ -43,7 +44,8 @@ def test_EnergyProduction():
                                   Khyd,
                                   Fex,
                                   Kfit,
-                                  Cfit)
+                                  Cfit,
+                                  RatedPower)
 
     assert Pyr.shape == (1L, 7L, 4L, 2L)
     assert P_dev.shape == (1L, 7L, 4L, 2L)
