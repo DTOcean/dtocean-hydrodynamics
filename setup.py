@@ -10,18 +10,21 @@ from setuptools import Command, find_packages, setup
 from setuptools.command.test import test as TestCommand
 
 local_dir = os.path.abspath(os.path.dirname(__file__))
-
+mingw_dlls = ['libgcc_s_seh-1.dll',
+              'libgfortran-4.dll',
+              'libquadmath-0.dll',
+              'libwinpthread-1.dll']
+              
 tidal_data = []
 
 if not platform.system()=='Windows':
-            
     tidal_data.append('submodel/ParametricWake/*.so')
-
 else:
-
     tidal_data.append('submodel/ParametricWake/*.pyd')
+    tidal_data.append('submodel/ParametricWake/*.dll')
 
-wec_db_files = []    
+wec_db_files = []
+
 for root, directories, filenames in os.walk("dtocean_wec\src"):
     for filename in filenames:
         file_path = os.path.join(root,filename)
@@ -47,33 +50,45 @@ class Bootstrap(Command):
     
         # Clean libraries
         clean = Cleaner("library files",
-                        ['.pyd', '.so'])
+                        ['.pyd', '.so', '.dll'])
         clean()
         
         # Setup paths
         start_dir = os.getcwd()
         temp_dir = tempfile.mkdtemp()
         mod_root = 'read_db_mod'
+        
+        src_file_path = os.path.join(local_dir, 'src', 'read_db.f90')
         dst_dir = os.path.join(local_dir,
                                "dtocean_tidal/submodel/ParametricWake")
         
         if not platform.system() == 'Windows':
             
+            # Prepare build command
             build_file_name = "{}.so".format(mod_root)
-            src_file_path = os.path.join(local_dir, 'src', 'read_db.f90')
-            # Build the file
             system_call = ("f2py -c {} -m {}").format(src_file_path,
                                                       mod_root)
 
         else:
+        
+            # Get mingw path from MINGW_BIN_PATH environment variable
+            mingw_bin_path = os.getenv('MINGW_BIN_PATH')
+            
+            if mingw_bin_path is None:
+                errStr = ("Environment variable MINGW_BIN_PATH must contain "
+                          "path to folder containing mingw binaries")
+                raise ValueError(errStr)
 
+            # Add mingw to the path
+            os.environ["PATH"] += os.pathsep + mingw_bin_path
+
+            # Prepare build command
             build_file_name = "{}.pyd".format(mod_root)
-            src_file_path = os.path.join(local_dir, 'src', 'read_db.f90')
-            # Build the file
             system_call = ("f2py -c {} -m {} "
                            "--compiler=mingw32").format(src_file_path,
                                                         mod_root)
 
+        # Build the file
         os.chdir(temp_dir)
         os.system(system_call)
         os.chdir(start_dir)
@@ -82,6 +97,12 @@ class Bootstrap(Command):
         build_file_path = os.path.join(temp_dir, build_file_name)
         dst_file_path = os.path.join(dst_dir, build_file_name)
         shutil.move(build_file_path, dst_file_path)
+                
+        # On Windows copy DLLs 
+        if platform.system() == 'Windows': 
+            for dll in mingw_dlls:
+                dll_path = os.path.join(mingw_bin_path, dll)
+                shutil.copy(dll_path, dst_dir)
 
         # Clean up the directory 
         os.removedirs(temp_dir)
