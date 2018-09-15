@@ -7,7 +7,6 @@ h5py
 matplotlib <5
 numpy
 pandas
-polite >=0.9
 pyopengl
 pyqt <5
 scikit-learn
