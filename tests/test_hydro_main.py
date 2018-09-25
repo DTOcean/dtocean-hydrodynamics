@@ -2,7 +2,8 @@
 import pytest
 import numpy as np
 
-from dtocean_hydro.main import get_device_depths
+from dtocean_hydro.input import WP2input, WP2_MachineData, WP2_SiteData
+from dtocean_hydro.main import get_device_depths, WP2
 
 def test_get_device_depths():
 
@@ -46,3 +47,52 @@ def test_get_device_depths_bad_layout2():
     
     with pytest.raises(IndexError):
         get_device_depths(bathy, layout)
+
+
+def test_WP2_init_wave(wavesite, wave, wave_data_folder):
+    
+    site = WP2_SiteData(*wavesite)
+    machine = WP2_MachineData(*wave,
+                              wave_data_folder=wave_data_folder)
+    
+    test = WP2input(machine, site)
+    WP2(test)
+    
+    assert True
+    
+    
+def test_WP2_init_tidal(tidalsite, tidal, tidal_kwargs):
+    
+    site = WP2_SiteData(*tidalsite)
+    machine = WP2_MachineData(*tidal, **tidal_kwargs)
+    
+    test = WP2input(machine, site)
+    WP2(test)
+    
+    assert True
+    
+
+def test_WP2_optimisationLoop_wave(wavesite, wave, wave_data_folder):
+    
+    site = WP2_SiteData(*wavesite)
+    machine = WP2_MachineData(*wave,
+                              wave_data_folder=wave_data_folder)
+    
+    data = WP2input(machine, site)
+    test = WP2(data)
+    result  = test.optimisationLoop()
+    
+    assert result
+
+
+def test_WP2_optimisationLoop_tidal(tidalsite, tidal, tidal_kwargs):
+    
+    site = WP2_SiteData(*tidalsite)
+    machine = WP2_MachineData(*tidal, **tidal_kwargs)
+    
+    data = WP2input(machine, site)
+    test = WP2(data)
+    result  = test.optimisationLoop()
+    
+    assert result
+
