@@ -193,26 +193,25 @@ class WP2_MachineData:
                                         and the machine rated power
     """
     
-    def __init__(self,Type,
-                      lCS,
-                      Clen,
-                      YawAngle,
-                      Float_flag,
-                      InstalDepth,
-                      MinDist,
-                      OpThreshold,
-                      UserArray,
-                      RatedPowerArray,
-                      RatedPowerDevice,
-                      UserOutputTable=None,
-                      wave_data_folder=None,
-                      tidal_power_curve=None,
-                      tidal_thrust_curve=None,
-                      tidal_velocity_curve=None,
-                      tidal_cutinout=None,
-                      tidal_bidirectional=None,
-                      tidal_data_folder=None
-                      ):
+    def __init__(self, Type,
+                       lCS,
+                       Clen,
+                       YawAngle,
+                       Float_flag,
+                       InstalDepth,
+                       MinDist,
+                       OpThreshold,
+                       UserArray,
+                       RatedPowerArray,
+                       RatedPowerDevice,
+                       UserOutputTable=None,
+                       wave_data_folder=None,
+                       tidal_power_curve=None,
+                       tidal_thrust_curve=None,
+                       tidal_velocity_curve=None,
+                       tidal_cutinout=None,
+                       tidal_bidirectional=None,
+                       tidal_data_folder=None):
         
         self.Type = Type
         self.lCS = lCS
