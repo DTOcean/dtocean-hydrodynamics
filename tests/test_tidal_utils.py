@@ -12,6 +12,7 @@ import numpy as np
 from dtocean_tidal.utils.distance_from_streamline import (
                                                 distance_from_streamline)
 from dtocean_tidal.utils.interpolation import interp_at_point
+from dtocean_tidal.utils.misc import pi2pi
 
 
 def test_distance_from_streamline():
@@ -59,3 +60,23 @@ def test_interp_at_point(test_x, test_y, expected):
     result = interp_at_point(test_x, test_y, X, Y, Q)
     
     assert np.isclose(result[0], expected)
+
+
+@pytest.mark.parametrize("A, B", [
+    (3, 1),
+    (2, 0),
+    (3. / 2, -1. / 2),
+    (1, 1),
+    (1. / 2, 1. / 2),
+    (0, 0),
+    (-1. / 2, -1. / 2),
+    (-1, 1),
+    (-3. / 2, 1. / 2),
+    (-2, 0),
+    (-3, 1)
+    ])
+def test_pi2pi(A, B):
+    
+    result = pi2pi(A * np.pi)
+    
+    assert np.isclose(result, B * np.pi)

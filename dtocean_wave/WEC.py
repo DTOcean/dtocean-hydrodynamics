@@ -12,9 +12,15 @@ This module contains the class used to describe the behavior of the single WEC
 .. moduleauthor::Pau Mercadez Ruiz <pmr@civil.aau.dk>
 """
 
+import logging
+
 import numpy as np
+
 from utils.StrDyn import EnergyProduction
 import utils.read_bem_solution as reader
+
+module_logger = logging.getLogger(__name__)
+
 
 class wec(object):
     """

@@ -124,18 +124,28 @@ def vector_to_bearing(x, y):
 
 
 def pi2pi(angle):
-    """ keeps angle between -pi and pi
+    """ Ensures angle is in the interval (-pi, pi]
 
     Args:
-      angle (float): angle in radian
+      angle (float): angle in radians
 
     Returns:
-      newDir (float): angle in radian between -pi and pi
+      newDir (float): angle in radians in interval (-pi, pi]
     """
-    if angle > np.pi:
-        angle -= 2 * np.pi
-    elif angle < -np.pi:
-        angle += 2 * np.pi
+    
+    while True:
+        
+        if angle > np.pi:
+            
+            angle -= 2 * np.pi
+            continue
+        
+        elif angle < -np.pi or np.isclose(angle, -np.pi):
+            
+            angle += 2 * np.pi
+            continue
+        
+        break
 
     return angle
 

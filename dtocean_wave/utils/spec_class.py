@@ -222,11 +222,14 @@ class wave_spec():
         ETA = np.fft.fft(eta)
         S_ss = 2.*(f[1]-f[0])*np.abs(ETA[0:NFFT_ny])
         spec_v = np.zeros(NFFT_ny)
-        index = (f > np.max((CutOffFreqLowBound,fp*CutOffFactorLowBound))) * (f<np.min((CutOffFreqTopBound,fp*CutOffFactorTopBound)))
+        index = (f > np.max((CutOffFreqLowBound,
+                             self.fp * CutOffFactorLowBound))) * \
+                (f < np.min((CutOffFreqTopBound,
+                             self.fp * CutOffFactorTopBound)))
         
         for ifr in range(NFFT_ny):
             if index[ifr]:
-                spec_v[ifr] = S_ss[ifr]
+                spec_v[ifr] = -S_ss[ifr]
         
         return [f,spec_v]
                 
@@ -398,44 +401,49 @@ class wave_spec():
                 
         return [f,spec_v]
 
-    def Directional(self,S):
+    def Directional(self, S):
         """
-        Directional: distribute the spectral energy along the given direction, given the spectral parameter
+        Directional: distribute the spectral energy along the given direction,
+        given the spectral parameter
 
         Args:
             S (numpy.ndarray): power spectral density distribution
 
         Returns:
-            S_d (numpy.ndarray): power spectral density distributed along the different directions
+            S_d (numpy.ndarray):
+                power spectral density distributed along the different
+                directions
         """
             
         def LnGamma(X):
-            xx=X-1.0
-            tmp= xx+5.5
-            tmp= (xx+0.5)*np.log(tmp)-tmp
-            h1=  1.0+76.18009173/(xx+1)
-            h2= -86.50532033/(xx+2)
-            h3=  24.01409822/(xx+3)
-            h4= -1.231739516/(xx+4)
-            h5=  0.120858003e-2/(xx+5)
-            h6= -0.536382e-5/(xx+6)
-            ser= h1+h2+h3+h4+h5+h6
-            return tmp+np.log(2.50662827465*ser)
+            xx = X - 1.0
+            tmp = xx + 5.5
+            tmp = (xx + 0.5) * np.log(tmp) - tmp
+            h1=  1.0+ 76.18009173 / (xx + 1)
+            h2= -86.50532033 / (xx + 2)
+            h3=  24.01409822 / (xx + 3)
+            h4= -1.231739516 / (xx + 4)
+            h5=  0.120858003e-2 / (xx + 5)
+            h6= -0.536382e-5 / (xx + 6)
+            ser= h1 + h2 + h3 + h4 + h5 + h6
+            return tmp + np.log(2.50662827465 * ser)
         
         if self.s <= 0 or self.s >= 30 or not self.t.shape[0] > 1:
             hdir = np.zeros(np.shape(self.t))
             hdir[np.argmin(np.abs(self.t-self.t_mean))] = 1.
             self.dth = 1.
         else:
-            help1=np.exp((2*self.s-1)*np.log(2)+2.*LnGamma(self.s+1)-LnGamma(2.*self.s+1))
-            help1=help1/np.pi
-            help2=np.abs(np.cos((self.t-self.t_mean)/2))**(2*self.s)
-            hdir = help1*help2
+            help1 = np.exp((2 * self.s - 1) * np.log(2) +
+                           2. * LnGamma(self.s + 1) -
+                           LnGamma(2. * self.s + 1))
+            help1  =help1 / np.pi
+            help2 = np.abs(np.cos((self.t - self.t_mean) / 2)) ** (2 * self.s)
+            hdir = help1 * help2
 
         if len(hdir) > 1:
-            hdir /= np.sum(.5*(hdir[1:]+hdir[:-1])*self.dth)
-
-        return np.outer(S,hdir)
+            hdir /= np.sum(.5 * (hdir[1:] + hdir[:-1]) * self.dth)
+        
+        return np.outer(S, hdir)
 
         
 if __name__ == "__main__":

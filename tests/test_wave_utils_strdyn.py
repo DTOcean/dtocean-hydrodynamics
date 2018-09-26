@@ -27,7 +27,7 @@ def test_EnergyProduction():
     Fex = np.ones((50, 30, 3))
     Kfit = np.array([[[np.eye(3)] * 2] * 4] * 7)
     Cfit = np.array([[[np.eye(3)] * 2] * 4] * 7)
-    RatedPower = 1e6
+    RatedPower = 0.05
 
     Pyr, P_dev = EnergyProduction(NBo,
                                   B,
