@@ -41,8 +41,10 @@ def get_unfeasible_regions(xyz,
     dy = np.max(xyz[1:, 1] - xyz[:-1, 1])
 
     X, Y, Z = get_bathymetry_grid(xyz)
+    safe_Z = np.nan_to_num(Z)
         
-    unfeasible_mask = np.logical_not((Z >= z_bounds[0]) * (Z <= z_bounds[1]))
+    unfeasible_mask = np.logical_not((safe_Z >= z_bounds[0]) *
+                                                     (safe_Z <= z_bounds[1]))
                          
     # restructure the data in a 2d matrix and binarise the result
     data = unfeasible_mask.astype(np.int)

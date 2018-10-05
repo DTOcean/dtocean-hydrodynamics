@@ -456,14 +456,14 @@ class MultiBody(object):
                 
         for i in xrange(length_of_L): # We will construct T[i,j] and T[j,i] at the same time so we just need len2(L)
             
-            row = dim * ij0[i]
-            col = dim * ij1[i]
+            row = int(dim * ij0[i])
+            col = int(dim * ij1[i])
             
             # " Assembling Tij and Tji "
             Tij = si * H[:,:,i][indp, abs(ind)] * exp(ind * alf[i] * 1j)
             
-            row_end = row + dim
-            col_end = col + dim
+            row_end = int(row + dim)
+            col_end = int(col + dim)
             
             T[:, row:row_end, col:col_end] = Tij[:,:,:] # Tij
             T[:, col:col_end, row:row_end] = Tij[:,:,:] * exp(ind * pi * 1j) # Tji
