@@ -1,18 +1,35 @@
 # -*- coding: utf-8 -*-
+
+#    Copyright (C) 2016 Francesco Ferri
+#
+#    This program is free software: you can redistribute it and/or modify
+#    it under the terms of the GNU General Public License as published by
+#    the Free Software Foundation, either version 3 of the License, or
+#    (at your option) any later version.
+#
+#    This program is distributed in the hope that it will be useful,
+#    but WITHOUT ANY WARRANTY; without even the implied warranty of
+#    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+#    GNU General Public License for more details.
+#
+#    You should have received a copy of the GNU General Public License
+#    along with this program.  If not, see <http://www.gnu.org/licenses/>.
+
 """
 Created on Wed Jun 15 09:16:39 2016
 
-@author: francesco
+.. moduleauthor:: Francesco Ferri <ff@civil.aau.dk>
 """
-from read_db_form import Ui_Form as Ui_T1
+import os
+
 from PyQt4.QtCore import *
 from PyQt4.QtGui import *
 
-import os
+import dtocean_wave.utils.hdf5_interface as h5i
 
-from form_utils import *
+from .form_utils import *
+from .read_db_form import Ui_Form as Ui_T1
 
-import utils.hdf5_interface as h5i 
 
 class ReadDb(QWidget, Ui_T1):
     trigger_results = pyqtSignal([dict])

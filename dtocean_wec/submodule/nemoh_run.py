@@ -1,5 +1,21 @@
-#!/usr/bin/python2.7
-# encoding: utf-8
+# -*- coding: utf-8 -*-
+
+#    Copyright (C) 2016 Pau Mercadez Ruiz
+#    Copyright (C) 2017-2018 Mathew Topper
+#
+#    This program is free software: you can redistribute it and/or modify
+#    it under the terms of the GNU General Public License as published by
+#    the Free Software Foundation, either version 3 of the License, or
+#    (at your option) any later version.
+#
+#    This program is distributed in the hope that it will be useful,
+#    but WITHOUT ANY WARRANTY; without even the implied warranty of
+#    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+#    GNU General Public License for more details.
+#
+#    You should have received a copy of the GNU General Public License
+#    along with this program.  If not, see <http://www.gnu.org/licenses/>.
+
 """
 This module contains the class used to generate the numerical model of the WEC
 using the Nemoh software.
@@ -9,45 +25,21 @@ using the Nemoh software.
    :synopsis: Numerical model of WEC builder
 
 .. moduleauthor:: Pau Mercadez Ruiz <pmr@civil.aau.dk>
+.. moduleauthor:: Mathew Topper <mathew.topper@dataonlygreater.com>
 """
-### temp
-#import sys
-# the mock-0.3.1 dir contains testcase.py, testutils.py & mock.py
-#sys.path.append( r'C:\Users\francesco\Documents\standalonewec\utils')
-#sys.path.append( r'C:\Users\francesco\Desktop\test_multibody\apply_mapping\hydrostatics\modules')
-### temp
 
 import os
-import shutil
-import numpy as np
+import logging
 import subprocess
+
+import numpy as np
 
 from hydrostatics import Hydrostatics_Nemohcal
 from utils.mesh_util import MeshBem
-from utils.WatWaves import execute
-import utils.file_utilities as f_util
-
 from utils.multibody_analysis import MultiBodyAnalysis
-from utils.general import block_diag
-        
-        
-# Start logging
-import logging
-module_logger = logging.getLogger(__name__)
-"""
-#from numpy import array, zeros, genfromtxt, exp, transpose, pi, conj, \
-real, imag, ones, mean, sqrt
 
-from utils.mesh_util import Mesh_BEM
-from utils.WatWaves import ro, g, execute
-from utils.MultibodyDyn import Multibody_mapping
-import subprocess
-import time
-from math import ceil
-from distutils.util import strtobool
-import sys
-#import numpy as np
-"""
+# Start logging
+module_logger = logging.getLogger(__name__)
 
 
 class NemohExecute():
@@ -392,11 +384,37 @@ def rot_matrix(ang):
     
     return Rz(ang[2])*Ry(ang[1])*Rx(ang[0])
 
+def execute(command):
+    """
+    unused TBD
+    """
+    import sys
+
+    process = subprocess.Popen(command, stdout=subprocess.PIPE)
+    for c in iter(lambda: process.stdout.read(1), ''):
+        sys.stdout.write(c)
+#    process = subprocess.Popen(command, shell=True, stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
+#    output = ''
+#
+#    # Poll process for new output until finished
+#    for line in iter(process.stdout.readline, ""):
+#        module_logger.info(line),
+#        output += line
+#
+#
+#    process.wait()
+#    exitCode = process.returncode
+#
+#    if (exitCode == 0):
+#        return output
+#    else:
+#        raise Exception(command, exitCode, output)
+
 if __name__ == "__main__":
     import sys
     sys.path.append(r"C:\Users\francesco\Desktop\test_gui\utils")
     from data_interface import DataStructure
-    import hdf5_interface as h5i
+    import dtocean_wave.utils.hdf5_interface as h5i
     data = h5i.load_dict_from_hdf5(r"C:\Users\francesco\Desktop\test_gui\test_prj\test_prj_data_collection.hdf5")
     
     dataobj = DataStructure(data)
@@ -413,3 +431,4 @@ if __name__ == "__main__":
     bem_obj.gen_hdyn_files()
     bem_obj.run_nemoh()
     bem_obj.run_hst()
+    

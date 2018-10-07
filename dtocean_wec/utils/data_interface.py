@@ -193,7 +193,7 @@ class DataStructure():
     
 
 if __name__ == "__main__":
-    import hdf5_interface as h5i
+    import dtocean_wave.utils.hdf5_interface as h5i
     data = h5i.load_dict_from_hdf5(r"C:\Users\francesco\Desktop\test_gui\test_prj\test_prj_data_collection.hdf5")
     
     dataobj = DataStructure(data)

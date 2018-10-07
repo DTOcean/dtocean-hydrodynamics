@@ -1,38 +1,48 @@
 # -*- coding: utf-8 -*-
+
+#    Copyright (C) 2016 Francesco Ferri, Mathew Topper
+#
+#    This program is free software: you can redistribute it and/or modify
+#    it under the terms of the GNU General Public License as published by
+#    the Free Software Foundation, either version 3 of the License, or
+#    (at your option) any later version.
+#
+#    This program is distributed in the hope that it will be useful,
+#    but WITHOUT ANY WARRANTY; without even the implied warranty of
+#    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+#    GNU General Public License for more details.
+#
+#    You should have received a copy of the GNU General Public License
+#    along with this program.  If not, see <http://www.gnu.org/licenses/>.
+
 """
 Created on Fri Jun 10 11:22:25 2016
 
-@author: francesco
+.. moduleauthor:: Francesco Ferri <ff@civil.aau.dk>
+.. moduleauthor:: Mathew Topper <mathew.topper@dataonlygreater.com>
 """
-# This is only needed for Python v2 but is harmless for Python v3.
-#import sip
-#sip.setapi('QVariant', 2)
-#sip.setapi("QString", 2)
 
-import sys
 import os
+import sys
+import logging
+
 from PyQt4.QtCore import *
 from PyQt4.QtGui import *
 
 from dtocean_hydro.configure import get_install_paths
+import dtocean_wave.utils.hdf5_interface as h5i
 
-from mdi_layout import Ui_MainWindow
-from new_selection import Ui_Form as Ui_NP
-from load_new import Ui_Form as Ui_LN
-
-from tab1 import ReadDb
-from tab2 import RunNemoh
-from tab3 import ReadNemoh
-from tab4 import ReadWamit
-from pfit_form import PowerPerformance
-from plot_form import Plotter
-
-from form_utils import *
-
-import utils.hdf5_interface as h5i 
-import logging
-
-from utils.mesh_plotter import PythonQtOpenGLMeshViewer
+from .form_utils import *
+from .load_new import Ui_Form as Ui_LN
+from .mdi_layout import Ui_MainWindow
+from .new_selection import Ui_Form as Ui_NP
+from .pfit_form import PowerPerformance
+from .plot_form import Plotter
+from .tab1 import ReadDb
+from .tab2 import RunNemoh
+from .tab3 import ReadNemoh
+from .tab4 import ReadWamit
+from .utils.mesh_plotter import PythonQtOpenGLMeshViewer
 
 
 class QtHandler(logging.Handler):

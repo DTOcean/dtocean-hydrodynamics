@@ -1,5 +1,21 @@
-#!/usr/bin/python2.7
-# encoding: utf-8
+# -*- coding: utf-8 -*-
+
+#    Copyright (C) 2016 Pau Mercadez Ruiz
+#    Copyright (C) 2017-2018 Mathew Topper
+#
+#    This program is free software: you can redistribute it and/or modify
+#    it under the terms of the GNU General Public License as published by
+#    the Free Software Foundation, either version 3 of the License, or
+#    (at your option) any later version.
+#
+#    This program is distributed in the hope that it will be useful,
+#    but WITHOUT ANY WARRANTY; without even the implied warranty of
+#    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+#    GNU General Public License for more details.
+#
+#    You should have received a copy of the GNU General Public License
+#    along with this program.  If not, see <http://www.gnu.org/licenses/>.
+
 """
 This module provides several methods which are recurrently used to solve the water-wave problems
 
@@ -8,6 +24,7 @@ This module provides several methods which are recurrently used to solve the wat
    :synopsis: Wave Dynamics Solver
 
 .. moduleauthor:: Pau Mercadez Ruiz <pmr@civil.aau.dk>
+.. moduleauthor:: Mathew Topper <mathew.topper@dataonlygreater.com>
 """
 
 import os
@@ -252,28 +269,8 @@ def NearNeighb(A, MatBool, itemax = 20):
     - ok == 1 : itemax's been reached without finding a non-nan neighbour.
     """           
     return choice, neighb, bins, ok
-    
-def execute(command):
-    """
-    unused TBD
-    """
-    process = subprocess.Popen(command, shell=True, stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
-    output = ''
-
-    # Poll process for new output until finished
-    for line in iter(process.stdout.readline, ""):
-        module_logger.info(line),
-        output += line
 
 
-    process.wait()
-    exitCode = process.returncode
-
-    if (exitCode == 0):
-        return output
-    else:
-        raise Exception(command, exitCode, output)
-        
 def nfr(path, DOF, Nd) :
     """
     unused TBD
