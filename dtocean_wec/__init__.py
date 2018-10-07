@@ -1,3 +1,21 @@
+# -*- coding: utf-8 -*-
+
+#    Copyright (C) 2016 Francesco Ferri
+#    Copyright (C) 2017-2018 Mathew Topper
+#
+#    This program is free software: you can redistribute it and/or modify
+#    it under the terms of the GNU General Public License as published by
+#    the Free Software Foundation, either version 3 of the License, or
+#    (at your option) any later version.
+#
+#    This program is distributed in the hope that it will be useful,
+#    but WITHOUT ANY WARRANTY; without even the implied warranty of
+#    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+#    GNU General Public License for more details.
+#
+#    You should have received a copy of the GNU General Public License
+#    along with this program.  If not, see <http://www.gnu.org/licenses/>.
+
 import os
 import sys
 import argparse
@@ -7,7 +25,7 @@ from main import MainWindow
 
 module_path = os.path.realpath(__file__)
 
-def main(debug=False):
+def main():
 
     app = QtGui.QApplication(sys.argv)
     ex = MainWindow()
@@ -15,10 +33,11 @@ def main(debug=False):
     sys.exit(app.exec_())
     
     return
-    
+
+
 def gui_interface():
 
-    '''Command line interface for dtocean-gui.
+    '''Command line interface for dtocean WEC pre-processor.
     
     Example:
     
@@ -28,21 +47,14 @@ def gui_interface():
             
     '''
     
-    epiStr = ('''AAU (c) 2016.''')
-              
+    epiStr = 'AAU (c) 2016.'
     desStr = "Run the WEC standalone GUI."
 
     parser = argparse.ArgumentParser(description=desStr,
                                      epilog=epiStr)
-
-    parser.add_argument("--debug",
-                        help=("disable stream redirection"),
-                        action='store_true')
-                                     
-    args = parser.parse_args()
-    debug = args.debug
-        
-    main(debug)
+    parser.parse_args()
+    
+    main()
 
     return
 

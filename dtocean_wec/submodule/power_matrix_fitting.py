@@ -1,5 +1,21 @@
-#!/usr/bin/python2.7
-# encoding: utf-8
+# -*- coding: utf-8 -*-
+
+#    Copyright (C) 2016 Francesco Ferri
+#    Copyright (C) 2017-2018 Mathew Topper
+#
+#    This program is free software: you can redistribute it and/or modify
+#    it under the terms of the GNU General Public License as published by
+#    the Free Software Foundation, either version 3 of the License, or
+#    (at your option) any later version.
+#
+#    This program is distributed in the hope that it will be useful,
+#    but WITHOUT ANY WARRANTY; without even the implied warranty of
+#    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+#    GNU General Public License for more details.
+#
+#    You should have received a copy of the GNU General Public License
+#    along with this program.  If not, see <http://www.gnu.org/licenses/>.
+
 """
 This module contains the main classes used to obtain the solution of the hydrodynamic problem for a given wave energy converter
 
@@ -8,17 +24,18 @@ This module contains the main classes used to obtain the solution of the hydrody
    :synopsis: wec_external_module module to DTOcean
 
 .. moduleauthor:: Francesco Ferri <ff@civil.aau.dk>
+.. moduleauthor:: Mathew Topper <mathew.topper@dataonlygreater.com>
 """
-# External Package
+import os
+
 import numpy as np
 from scipy import optimize
 
-from utils.spec_class import wave_spec
-from utils.StrDyn import EnergyProduction
-import utils.hdf5_interface as h5i
-import os
+import dtocean_wave.utils.hdf5_interface as h5i
+from dtocean_wave.utils.StrDyn import EnergyProduction
+from dtocean_wave.utils.WatWaves import len2
+
 from utils.conversion_utils import *
-from utils.WatWaves import len2
 
 
 class PowerMatrixFit():

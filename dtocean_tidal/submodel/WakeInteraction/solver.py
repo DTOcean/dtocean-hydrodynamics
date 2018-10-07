@@ -1,20 +1,36 @@
-#!/usr/bin/python2.7
-# encoding: utf-8
+# -*- coding: utf-8 -*-
+
+#    Copyright (C) 2016 Thomas Roc
+#    Copyright (C) 2017-2018 Mathew Topper
+#
+#    This program is free software: you can redistribute it and/or modify
+#    it under the terms of the GNU General Public License as published by
+#    the Free Software Foundation, either version 3 of the License, or
+#    (at your option) any later version.
+#
+#    This program is distributed in the hope that it will be useful,
+#    but WITHOUT ANY WARRANTY; without even the implied warranty of
+#    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+#    GNU General Public License for more details.
+#
+#    You should have received a copy of the GNU General Public License
+#    along with this program.  If not, see <http://www.gnu.org/licenses/>.
+
 from __future__ import division
 
-# Start logging
-import logging
-module_logger = logging.getLogger(__name__)
-
 import time
+import logging
+
 import numpy as np
 import matplotlib.pyplot as plt
-import os
 from descartes import PolygonPatch
 
 # Local import
 from dtocean_tidal.submodel.ParametricWake import WakeShape, Wake
 from dtocean_tidal.modules.blockage_ratio import blockage_ratio
+
+# Start logging
+module_logger = logging.getLogger(__name__)
 
 
 class WakeInteraction:

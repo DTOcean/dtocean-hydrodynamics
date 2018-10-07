@@ -1,5 +1,21 @@
-#!/usr/bin/python2.7
-# encoding: utf-8
+# -*- coding: utf-8 -*-
+
+#    Copyright (C) 2016 Francesco Ferri
+#    Copyright (C) 2017-2018 Mathew Topper
+#
+#    This program is free software: you can redistribute it and/or modify
+#    it under the terms of the GNU General Public License as published by
+#    the Free Software Foundation, either version 3 of the License, or
+#    (at your option) any later version.
+#
+#    This program is distributed in the hope that it will be useful,
+#    but WITHOUT ANY WARRANTY; without even the implied warranty of
+#    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+#    GNU General Public License for more details.
+#
+#    You should have received a copy of the GNU General Public License
+#    along with this program.  If not, see <http://www.gnu.org/licenses/>.
+
 """
 This module contains the main classes used to obtain the solution of the hydrodynamic problem for a given wave energy converter
 
@@ -8,26 +24,22 @@ This module contains the main classes used to obtain the solution of the hydrody
    :synopsis: wec_external_module module to DTOcean
 
 .. moduleauthor:: Francesco Ferri <ff@civil.aau.dk>
+.. moduleauthor:: Mathew Topper <mathew.topper@dataonlygreater.com>
  """
-# External Package
+
 import os
 
 import numpy as np
+
+import dtocean_wave.utils.hdf5_interface as h5i
 
 from .nemoh_reader import NemohReader
 from .wamit_reader import WamitReader
 from .db_reader import DbReader
 from .nemoh_run import NemohExecute
 from .power_matrix_fitting import PowerMatrixFit
-
 from .utils.write_results import write_to_raw_results
-from .utils.StrDyn import MotionFreq, EnergyProduction
-from .utils.file_utilities import query_yes_no, clean_prj_folder
-import utils.input_control as in_ck
-import utils.hdf5_interface as h5i
 
-
-import matplotlib.pyplot as plt
 
 class BemSolution(object):
     """
@@ -221,7 +233,6 @@ if __name__ == "__main__":
     sys.path.append(r"C:\Users\francesco\Desktop\test_gui\utils")
     
     from data_interface import DataStructure
-    import hdf5_interface as h5i
     data = h5i.load_dict_from_hdf5(r"C:\Users\francesco\Desktop\test_gui\test_prj\test_prj_data_collection.hdf5")
     data['inputs_hydrodynamic']['general_input']['data_folder'] = r"C:\Users\francesco\Desktop\test_gui\mtatest\hydrodynamic"
     dataobj = DataStructure(data)

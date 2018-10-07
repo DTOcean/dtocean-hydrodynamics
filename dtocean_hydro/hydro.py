@@ -1,5 +1,20 @@
-#!/usr/bin/python2.7
-# encoding: utf-8
+# -*- coding: utf-8 -*-
+
+#    Copyright (C) 2016 Francesco Ferri
+#
+#    This program is free software: you can redistribute it and/or modify
+#    it under the terms of the GNU General Public License as published by
+#    the Free Software Foundation, either version 3 of the License, or
+#    (at your option) any later version.
+#
+#    This program is distributed in the hope that it will be useful,
+#    but WITHOUT ANY WARRANTY; without even the implied warranty of
+#    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+#    GNU General Public License for more details.
+#
+#    You should have received a copy of the GNU General Public License
+#    along with this program.  If not, see <http://www.gnu.org/licenses/>.
+
 """
 This module contains the class used to collect the parameters used in the
 creation of the tidal or wave numerical models, and characterisaiton of the sea conditions
@@ -12,7 +27,6 @@ creation of the tidal or wave numerical models, and characterisaiton of the sea 
 """
 
 from math import pi
-from numpy import linspace, array, sort
 from dtocean_wave.utils.WatWaves import WNumber
 
 
@@ -76,7 +90,3 @@ class Hydro_pkg(object):
             self.bathy = arg[8]        
         else:
             raise IOError('ERROR: Invalid input list to the Hydro class.')
-            
- 
-        
-    

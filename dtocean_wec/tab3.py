@@ -1,24 +1,37 @@
 # -*- coding: utf-8 -*-
+
+#    Copyright (C) 2016 Francesco Ferri
+#
+#    This program is free software: you can redistribute it and/or modify
+#    it under the terms of the GNU General Public License as published by
+#    the Free Software Foundation, either version 3 of the License, or
+#    (at your option) any later version.
+#
+#    This program is distributed in the hope that it will be useful,
+#    but WITHOUT ANY WARRANTY; without even the implied warranty of
+#    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+#    GNU General Public License for more details.
+#
+#    You should have received a copy of the GNU General Public License
+#    along with this program.  If not, see <http://www.gnu.org/licenses/>.
+
 """
 Created on Wed Jun 15 09:15:29 2016
 
-@author: francesco
+.. moduleauthor:: Francesco Ferri <ff@civil.aau.dk>
 """
+import os
+import shutil
+
 from PyQt4.QtCore import *
 from PyQt4.QtGui import *
 
-from read_nemoh_form import Ui_Form as Ui_T3
-
-from form_utils import *
-
-import os
-from utils.file_utilities import split_string, split_string_multilist
 import utils.data_check as dck
+from .form_utils import *
+from .read_nemoh_form import Ui_Form as Ui_T3
+from .submodule.utils import input_control as in_ck
+from .utils.file_utilities import split_string, split_string_multilist
 
-from submodule.utils import input_control as in_ck
-import utils.hdf5_interface as h5i 
-
-import shutil
 
 class ReadNemoh(QWidget, Ui_T3):
     trigger_results = pyqtSignal([dict])

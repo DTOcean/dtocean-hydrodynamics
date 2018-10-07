@@ -1,8 +1,9 @@
-#!/usr/bin/python2.7
-# encoding: utf-8
-# Based on Raymond Speth code:
-#
+# -*- coding: utf-8 -*-
+
 # Copyright (c) 2011 Raymond Speth.
+# Copyright (C) 2016 Thomas Roc
+# Copyright (C) 2017-2018 Mathew Topper
+
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
 # in the Software without restriction, including without limitation the rights

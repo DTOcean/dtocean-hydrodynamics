@@ -1,5 +1,20 @@
-#!/usr/bin/python2.7
-# encoding: utf-8
+# -*- coding: utf-8 -*-
+
+#    Copyright (C) 2016 Francesco Ferri
+#
+#    This program is free software: you can redistribute it and/or modify
+#    it under the terms of the GNU General Public License as published by
+#    the Free Software Foundation, either version 3 of the License, or
+#    (at your option) any later version.
+#
+#    This program is distributed in the hope that it will be useful,
+#    but WITHOUT ANY WARRANTY; without even the implied warranty of
+#    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+#    GNU General Public License for more details.
+#
+#    You should have received a copy of the GNU General Public License
+#    along with this program.  If not, see <http://www.gnu.org/licenses/>.
+
 """
 This module contains the classes used map the loose dofs into the generalised dof space
 
@@ -10,13 +25,14 @@ This module contains the classes used map the loose dofs into the generalised do
 .. moduleauthor:: Francesco Ferri <ff@civil.aau.dk>
 """
 
-# Start module_logger
 import logging
-module_logger = logging.getLogger(__name__)
 
-from scipy.linalg import block_diag,expm3,norm
 import numpy as np
 import utils.eom_multibody as eom_mb
+
+# Start module_logger
+module_logger = logging.getLogger(__name__)
+
 
 class MultibodyMapping():
     """
