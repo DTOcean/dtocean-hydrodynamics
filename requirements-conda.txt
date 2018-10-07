@@ -4,7 +4,7 @@
 cma
 descartes
 h5py
-matplotlib <5
+matplotlib <2
 numpy
 pandas
 polite >=0.9
