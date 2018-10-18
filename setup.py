@@ -131,13 +131,13 @@ class PyTest(TestCommand):
 
         # Run the tests
         if self.pytest_args:
-			opts = shlex.split(self.pytest_args)
+            opts = shlex.split(self.pytest_args)
         else:
-		    opts = []
-		
+            opts = []
+        
         errno = pytest.main(opts)
         sys.exit(errno)
-        
+
 
 class CleanTest(Command):
 
@@ -217,7 +217,7 @@ setup(name='dtocean-hydrodynamics',
                     'damm_horse@yahoo.co.uk, ' 
                     'ccchart@sandia.gov'),
       license = "GPLv3",
-      setup_requires=['numpy', 'shapely'],
+      setup_requires=['numpy'],
       packages=find_packages(),
       install_requires=['cma',
                         'descartes',
@@ -227,10 +227,11 @@ setup(name='dtocean-hydrodynamics',
                         'pandas',
                         'polite>=0.9',
                         'pyopengl',
+#                        'PyQt4',
                         'scikit-learn',
                         'scipy',
-                        'shapely',
-#                        'PyQt4'
+                        'setuptools',
+                        'shapely'
                         ],
       package_data=packageData,
       entry_points={
@@ -244,4 +245,4 @@ setup(name='dtocean-hydrodynamics',
                 'test': PyTest,
                 'cleantest': CleanTest}
       )
-      
+

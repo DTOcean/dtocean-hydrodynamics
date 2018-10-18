@@ -11,6 +11,7 @@ pyopengl
 pyqt <5
 scikit-learn
 scipy
+setuptools
 shapely
 
 # TEST DEPENDENCIES
