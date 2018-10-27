@@ -3,7 +3,7 @@
 
 #define MyAppName "DTOcean Hydrodynamic Data"
 #define MyAppNameSafe "dtocean-hydrodynamic-data"
-#define MyAppVersion "1.0.0"
+#define MyAppVersion "2.0"
 #define MyAppPublisher "DTOcean"
 #define MyAppURL "http://www.dtocean.eu/"
 #define BinPath "bin"
@@ -34,6 +34,7 @@ Compression=lzma
 SolidCompression=yes
 PrivilegesRequired=lowest
 UninstallFilesDir={commonappdata}\{#MyAppPublisher}\{#MyAppName}
+SetupLogging=yes
 
 [Languages]
 Name: "english"; MessagesFile: "compiler:Default.isl"
@@ -54,21 +55,28 @@ Filename: "{commonappdata}\{#MyAppPublisher}\{#IniDirName}\install.ini"; Section
 Filename: "{commonappdata}\{#MyAppPublisher}\{#IniDirName}\install.ini"; Section: "dtocean_wec"; Key: "include_path"; String: "{code:GetPath}\{#WaveIncludePath}";
 
 [Code]
-function GetPath(Value: String): String;
-var
-  OrigPath: string;
-begin
-  if RegQueryStringValue(HKCU, 'Software\DTOcean', 'INSTALL_DIR', OrigPath) then
-    Result := OrigPath
-  else
-    MsgBox('DTOcean installation directory not found!', mbError, MB_OK);
-end;
-
 const
   BN_CLICKED = 0;
   WM_COMMAND = $0111;
   CN_BASE = $BC00;
   CN_COMMAND = CN_BASE + WM_COMMAND;
+
+procedure ExitProcess(exitCode:integer);
+  external 'ExitProcess@kernel32.dll stdcall';
+
+function GetPath(Value: String): String;
+var
+  OrigPath: string;
+begin
+  if RegQueryStringValue(HKCU, 'Software\DTOcean', 'InstallDir', OrigPath) then
+    Result := OrigPath
+  else
+    begin
+      MsgBox('DTOcean installation directory not found!', mbError, MB_OK);
+      DelTree(ExpandConstant('{tmp}'), True, True, True);
+      ExitProcess(0);
+    end;
+end;
 
 procedure CurPageChanged(CurPageID: Integer);
 var
