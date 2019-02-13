@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 
 #    Copyright (C) 2016 Francesco Ferri
-#    Copyright (C) 2017-2018 Mathew Topper
+#    Copyright (C) 2017-2019 Mathew Topper
 #
 #    This program is free software: you can redistribute it and/or modify
 #    it under the terms of the GNU General Public License as published by
@@ -260,21 +260,38 @@ class PowerMatrixFit():
             (float): square error between user given and calculated power associated with the current sea state
         """
         Nx = len(x)/2
-        ##
+        
         ScatDiag_mod = [np.ones((1,1,1)), self.scatter_diagram_spec]
         Cpto_mod = self.c_pto[seastate_id[0], seastate_id[1], seastate_id[2]].reshape((1, 1, 1, Nx, Nx))
         Kmoor_mod = self.k_mooring[seastate_id[0], seastate_id[1], seastate_id[2]].reshape((1, 1, 1, Nx, Nx))
         
         Kext_mod = self.k_ext[seastate_id[0], seastate_id[1], seastate_id[2]].reshape((1, 1, 1, Nx, Nx))
         Cext_mod = self.c_ext[seastate_id[0], seastate_id[1], seastate_id[2]].reshape((1, 1, 1, Nx, Nx))
-        ##
-        c_fit = x[:Nx]  # normalised by Cpto
-        k_fit = x[Nx:]  # normalised by Khst
-        abs_power = EnergyProduction(1, [self.wave_dir[seastate_id[2]]], [self.hm0[seastate_id[1]]],
-                                     [self.tp[seastate_id[0]]], thetas, self.periods, ScatDiag_mod,
-                                     self.m_m, self.m_add, Cpto_mod, self.c_rad, Kmoor_mod, self.k_hst, f_ex,
-                                     np.diag(k_fit).reshape(Cpto_mod.shape)+Kext_mod,
-                                     np.diag(c_fit).reshape(Cpto_mod.shape)+Cext_mod)[1]
+        
+        # normalised by Khst
+        k_fit = x[Nx:]
+        k_fit = np.diag(k_fit).reshape(Cpto_mod.shape) + Kext_mod
+        
+        # normalised by Cpto
+        c_fit = x[:Nx]
+        c_fit = np.diag(c_fit).reshape(Cpto_mod.shape) + Cext_mod
+        
+        _, abs_power = EnergyProduction(1,
+                                        [self.wave_dir[seastate_id[2]]],
+                                        [self.hm0[seastate_id[1]]],
+                                        [self.tp[seastate_id[0]]],
+                                         thetas,
+                                         self.periods,
+                                         ScatDiag_mod,
+                                         self.m_m,
+                                         self.m_add,
+                                         Cpto_mod,
+                                         self.c_rad,
+                                         Kmoor_mod,
+                                         self.k_hst,
+                                         f_ex,
+                                         k_fit,
+                                         c_fit)
        
         return ((target_pow - abs_power[0,0,0,0]))**2
 
