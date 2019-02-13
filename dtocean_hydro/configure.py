@@ -15,8 +15,8 @@
 #    You should have received a copy of the GNU General Public License
 #    along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-"""
-"""
+# Standard Library
+import logging
 
 # Helpers for configuration files
 from polite.paths import (ObjDirectory,
@@ -25,7 +25,11 @@ from polite.paths import (ObjDirectory,
                           DirectoryMap)
 from polite.configuration import ReadINI
 
-def get_install_paths(install_config_name="install.ini"):
+# Start logging
+module_logger = logging.getLogger(__name__)
+
+
+def get_install_paths():
     
     """Pick the necessary paths to configure the external files for the wave
     and tidal packages."""
@@ -33,13 +37,26 @@ def get_install_paths(install_config_name="install.ini"):
     source_dir = ObjDirectory(__name__, "config")
     user_data = UserDataDirectory("dtocean_hydro", "DTOcean", "config")
     user_data_map = DirectoryMap(user_data, source_dir)
-    user_data_map.safe_copy_file(install_config_name,
-                                 "{}.txt".format(install_config_name))
-    user_ini_reader = ReadINI(user_data_map, install_config_name)
+    
+    install_src_name = "install.ini"
+    
+    # Check for bundled indicator file
+    if source_dir.isfile(".bundled"):
+        install_dst_name = "install_bundled.ini"
+    else:
+        install_dst_name = "install.ini"
+    
+    log_msg = ("Install configuration file name set to "
+               "'{}'").format(install_dst_name)
+    module_logger.debug(log_msg)
+    
+    user_data_map.safe_copy_file(install_src_name,
+                                 "{}.txt".format(install_dst_name))
+    user_ini_reader = ReadINI(user_data_map, install_dst_name)
     
     # Get the root path from the site data path.
     site_data = SiteDataDirectory("DTOcean Hydrodynamics", "DTOcean")
-    site_ini_reader = ReadINI(site_data, install_config_name)
+    site_ini_reader = ReadINI(site_data, install_dst_name)
     
     if user_ini_reader.config_exists():
         config = user_ini_reader.get_config()
