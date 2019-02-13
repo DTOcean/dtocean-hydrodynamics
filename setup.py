@@ -23,19 +23,12 @@ else:
     tidal_data.append('submodel/ParametricWake/*.pyd')
     tidal_data.append('submodel/ParametricWake/*.dll')
 
-wec_db_files = []
+packageData = {'dtocean_tidal': tidal_data,
+               'dtocean_hydro': ['config/*.ini',
+                                 'config/*.yaml',
+                                 'config/.bundled']}
 
-for root, directories, filenames in os.walk("dtocean_wec\src"):
-    for filename in filenames:
-        file_path = os.path.join(root,filename)
-        wec_db_files.append(file_path.replace("dtocean_wec\\", ""))
-                                  
-packageData={'dtocean_tidal': tidal_data,
-             'dtocean_hydro': ['config/*.ini',
-                               'config/*.yaml'],
-             'dtocean_wec'  : wec_db_files}
-                               
-                               
+
 class Bootstrap(Command):
     
     user_options = []
