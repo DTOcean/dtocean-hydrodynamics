@@ -29,9 +29,8 @@ calls the tidal and wave submodule.
 """
 from __future__ import division
 
-# Start logging
+# Standard Library
 import logging
-module_logger = logging.getLogger(__name__)
 
 # External Package
 import numpy as np
@@ -50,6 +49,9 @@ from .array import Array_pkg
 from .output import WP2output
 from .utils import optimiser
 from .configure import get_install_paths
+
+# Start logging
+module_logger = logging.getLogger(__name__)
 
 
 class WP2:

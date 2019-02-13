@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 
 #    Copyright (C) 2016 Pau Mercadez Ruiz
-#    Copyright (C) 2017-2018 Mathew Topper
+#    Copyright (C) 2017-2019 Mathew Topper
 #
 #    This program is free software: you can redistribute it and/or modify
 #    it under the terms of the GNU General Public License as published by
@@ -121,7 +121,7 @@ def EnergyProduction(NBodies,
                      Fex,
                      Kfit,
                      Cfit,
-                     RatedPower):
+                     RatedPower=None):
     
     """
     EnergyProduction: calculates the energy production for the given sea
@@ -165,7 +165,7 @@ def EnergyProduction(NBodies,
         Fex (numpy.ndarray):
             Cumulative excitation force matrix of the array, function of the
             dofs, directions and wave frequencies
-        RatedPower (float) [W]:
+        RatedPower (float, optional) [W]:
             Rated power of the device. Any values recorded above this are
             truncated.
 
@@ -183,6 +183,7 @@ def EnergyProduction(NBodies,
     NTp = len2(Tp)
     Np = len2(period)
     ndof = len(Khyd[0, :])
+    if RatedPower is None: RatedPower = np.inf
     
     # convert the tuple to numpy.ndarray to ease calculations
     dirs = np.array(dirs)
