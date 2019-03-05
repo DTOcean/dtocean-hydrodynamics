@@ -62,7 +62,7 @@ specType = ('Jonswap',3.3,0)
 "END of Statistical analysis generation"
 "---------------------------------------"
 
-Meteocean_wave = {'Tp':T,'Hs':H,'B':B,'p':p,'specType':specType,'SSH':SSH}
+Meteocean_wave = {'Te':T,'Hs':H,'B':B,'p':p,'specType':specType,'SSH':SSH}
 VelocityShear_tidal =  np.empty(0)
 MainDirection = None
 

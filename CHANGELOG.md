@@ -5,7 +5,7 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](http://keepachangelog.com/)
 and this project adheres to [Semantic Versioning](http://semver.org/).
 
-## [Unreleased]
+## [2.0.0] - 2019-03-05
 
 ### Added
 
@@ -23,6 +23,9 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 - Reduce memory consumption of wave calculations by using single precision 
   complex numpy arrays. This is necessary for solving large OEC farms with 8MB
   RAM.
+- A alternative configuration file is now used for the location of the
+  hydrodynamic data files if the module is bundled into the installer or if
+  installed from source.
 
 ### Removed
 
@@ -30,6 +33,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
   setup.py, which now requires MinGW to be installed separately. Note that PyQt 
   and matplotlib must still be pinned due to incompatibility of later versions 
   with Python 2.
+- Removed installer code and data provided in the DTOcean data package.
 
 ### Fixed
 

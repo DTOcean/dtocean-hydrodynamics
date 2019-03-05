@@ -197,18 +197,10 @@ class Cleaner(object):
 
 ## Proceed to standard setup
 setup(name='dtocean-hydrodynamics',
-      version='1.1.dev0',
+      version='2.0.0',
       description='Hydrodynamics module for the DTOcean tools',
-      author=('Francesco Ferri, '
-              'Pau Mercade, '
-              'Thomas Roc, '
-              'Mathew Topper, '
-              'Chris Chartrand'),
-      author_email=('ff@civil.aau.dk, '
-                    'pmr@civil.aau.dk, '
-                    'thomas.roc@itpower.co.uk, '
-                    'damm_horse@yahoo.co.uk, ' 
-                    'ccchart@sandia.gov'),
+      maintainer='Mathew Topper',
+      maintainer_email='mathew.topper@dataonlygreater.com',
       license = "GPLv3",
       setup_requires=['numpy'],
       packages=find_packages(),
@@ -238,4 +230,3 @@ setup(name='dtocean-hydrodynamics',
                 'test': PyTest,
                 'cleantest': CleanTest}
       )
-

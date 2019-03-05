@@ -1,7 +1,0 @@
-lintly:
-  bot: DTOcean-CI-Bot
-notifications:
-  commit_status:
-    enabled: true
-  pr_comments:
-    enabled: true
