@@ -23,7 +23,7 @@ skip_commits:
     - dtocean_hydro/config/
 
 # version format
-version: 1.1.dev0.build{build}
+version: 2.0.0.build{build}
 
 environment:
   matrix:
@@ -39,19 +39,22 @@ init:
   - "ECHO %PYTHON_VERSION% %MINICONDA%"
 
 install:
-  - ps: Start-FileDownload 'https://setis.ec.europa.eu/dt-ocean/download/file/fid/88' 'hydrodynamic_data.exe'
-  - hydrodynamic_data.exe /verysilent
+  - ps: Start-FileDownload 'https://github.com/DTOcean/dtocean-hydrodynamics/releases/download/v1.0.0/dtocean-hydrodynamic-data-1_0-standalone_0.exe' 'dtocean-hydrodynamic-data-1_0-standalone_0.exe'
+  - dtocean-hydrodynamic-data-1_0-standalone_0.exe /verysilent
   - "set PATH=%MINICONDA%;%MINICONDA%\\Scripts;%PATH%"
+  - "set MINGW_BIN_PATH=C:\\mingw-w64\\x86_64-6.3.0-posix-seh-rt_v5-rev1\\bin"
   - conda config --set always_yes yes --set changeps1 no
   - conda update --quiet conda
-  - conda config --append channels conda-forge
-  - conda config --append channels dataonlygreater
   - conda info --all
-  - "conda create --quiet --name conda-env-%PYTHON_VERSION%-%ARCH% python=%PYTHON_VERSION% --file requirements-conda.txt"
-  - activate conda-env-%PYTHON_VERSION%-%ARCH%
-  - "copy %MINICONDA%\\envs\\conda-env-%PYTHON_VERSION%-%ARCH%\\libs\\libmsvcr90.a %MINICONDA%\\envs\\conda-env-%PYTHON_VERSION%-%ARCH%\\libs\\libmsvcr90d.a"
+  - conda create -n _dtocean_hydro python=2.7 pip
+  - activate _dtocean_hydro
+  - copy .condarc %CONDA_PREFIX%
+#  - "copy %MINICONDA%\\envs\\conda-env-%PYTHON_VERSION%-%ARCH%\\libs\\libmsvcr90.a %MINICONDA%\\envs\\conda-env-%PYTHON_VERSION%-%ARCH%\\libs\\libmsvcr90d.a"
+  - conda install polite=0.10.0
   - python setup.py bootstrap
-  - python setup.py develop
+  - conda install --file requirements-conda-dev.txt
+  - pip install -e .
+  - conda install pytest pytest-cov
   
 build: off
   

@@ -1,96 +1,194 @@
 [![appveyor](https://ci.appveyor.com/api/projects/status/github/DTOcean/dtocean-hydrodynamics?branch=master&svg=true)](https://ci.appveyor.com/project/DTOcean/dtocean-hydrodynamics)
 [![codecov](https://codecov.io/gh/DTOcean/dtocean-hydrodynamics/branch/master/graph/badge.svg)](https://codecov.io/gh/DTOcean/dtocean-hydrodynamics)
-[![Lintly](https://lintly.com/gh/DTOcean/dtocean-hydrodynamics/badge.svg)](https://lintly.com/gh/DTOcean/dtocean-hydrodynamics/)
+[![Codacy Badge](https://api.codacy.com/project/badge/Grade/bb34506cc82f4df883178a6e64619eaf)](https://www.codacy.com/project/H0R5E/dtocean-hydrodynamics/dashboard?utm_source=github.com&amp;utm_medium=referral&amp;utm_content=DTOcean/dtocean-hydrodynamics&amp;utm_campaign=Badge_Grade_Dashboard&amp;branchId=8410911)
 [![release](https://img.shields.io/github/release/DTOcean/dtocean-hydrodynamics.svg)](https://github.com/DTOcean/dtocean-hydrodynamics/releases/latest)
 
 # DTOcean Hydrodynamics Module
 
+This package provides the Hydrodynamics design module for the DTOcean tools.
+It can calculate the energy output of arrays of fixed or floating wave or tidal
+ocean energy converters, including the effect of interactions. It can optimise
+the position of the devices for maximum energy yield, constrained by the given 
+environment.
+
+See [dtocean-app](https://github.com/DTOcean/dtocean-app) or [dtocean-core](
+https://github.com/DTOcean/dtocean-app) to use this package within the DTOcean
+ecosystem.
+
+* For python 2.7 only.
+
 ## Installation
 
-### Install Data Package
+Installation and development of dtocean-hydrodynamics uses the [Anaconda 
+Distribution](https://www.anaconda.com/distribution/) (Python 2.7)
 
-The hydrodynamic data package can be downloaded from
-[SETIS](https://setis.ec.europa.eu/dt-ocean/).
+These installation instructions are for WINDOWS ONLY.
 
-Once downloaded execute the file to install. Remember to uninstall any old
-versions first using the uninstaller in the DTOcean Hydrodynamics start menu
-program folder.
+### Data Package (Required for ALL installation Methods)
 
-### Set up an Anaconda environment
+The hydrodynamic data package must be installed and can be downloaded from
+[Github](https://setis.ec.europa.eu/dt-ocean/).
 
-Using a windows command prompt enter the following commands:
+Once downloaded execute the file to install. If upgrading from version 1,
+uninstall the old version first from the Windows start menu program folder,
+or using the control panel. For version 2 and beyond, the uninstaller will
+automatically remove the older version.
 
-```
-conda create -n dtocean python pip pytest ipython-notebook
-```
+### Conda Package
 
-then
-
-```
-activate dtocean
-```
-
-or
+To install:
 
 ```
-C:\Anaconda\Scripts\activate.bat dtocean
+$ conda install -c dataonlygreater dtocean-hydrodynamics
 ```
 
-### Add public Anaconda Cloud channel
+### Source Code
+
+Conda can be used to install dependencies into a dedicated environment from
+the source code root directory:
 
 ```
-conda config --add channels https://conda.anaconda.org/topper
+conda create -n _dtocean_hydro python=2.7 pip
 ```
 
-### Install the dependencies
+Activate the environment, then copy the `.condrc` file to store installation  
+channels:
 
 ```
-conda install configobj cma descartes h5py libpython=1.0 matplotlib numpy=1.10.1 pandas pyopengl pyqt=4.11.4 pyyaml scikit-learn scipy shapely-win-py27
+$ conda activate _dtocean_hydro
+$ copy .condarc %CONDA_PREFIX%
 ```
 
-The package "polite" can be downloaded from [SETIS](https://setis.ec.europa.eu/dt-ocean/).
+Install [polite](https://github.com/DTOcean/polite) into the environment. For 
+example, if installing it from source:
 
 ```
-cd path\to\polite
-winmake.bat install
+$ cd \\path\\to\\polite
+$ conda install --file requirements-conda-dev.txt
+$ pip install -e .
 ```
 
-### Install the hydrodynamics package
+Some modules in dtocean-hydrodynamics must be compiled before installation.
+These instructions use [mingw-w64](https://mingw-w64.org), which should be
+installed first. When ready, set the MINGW_BIN_PATH environment variable to
+the "bin" folder of the mingw-w64 installation. For example:
 
 ```
-cd path\to\dtocean-hydrodynamics
-winmake.bat bootstrap
+$ SET MINGW_BIN_PATH=C:\mingw\mingw64\bin
 ```
 
-### Testing
+Check that the variable is set correctly:
 
 ```
-cd ..\examples
-python Ex_tidal.py
+$ echo %MINGW_BIN_PATH%
+C:\mingw\mingw64\bin
 ```
 
-## DTOcean Tidal Array Submodule
+Now compile the modules:
 
-### Introduction
+```
+$ cd \\path\\to\\dtocean-hydrodynamics
+$ python setup.py bootstrap
+```
 
-The main aim of this tool is to take the hydrodynamic scenarios forward
-to the succeeding WPs through resource assessment and definition of the
-array layouts and the parameters in play for the array optimization. It
-focuses on the hydrodynamic interaction between the individual devices
-in the array, how this affects the resource, power performance, cost
-uncertainties and environmental impact.
+Finally, install dtocean-hydrodynamics and its dependencies using conda and pip:
 
-### Contacts
+```
+$ conda install --file requirements-conda-dev.txt
+$ pip install -e .
+```
 
-- Thomas Roc: thomas.roc@itpower.co.uk
-- Vincent Neary: vsneary@sandia.gov
-- Chris Chartrand: ccchart@sandia.gov
-- Budi Gunawan: bgunawa@sandia.gov
-- Jesse Roberts: jdrober@sandia.gov
-- Jean-Francois Filipot: jean.francois.filipot@france-energies-
-  marines.org
+To deactivate the conda environment:
 
-## DTOcean Project
+```
+$ conda deactivate
+```
 
-DTOcean - "Optimal Design Tools for Ocean Energy Arrays" is funded by the 
-European Commission’s 7th Framework Programme. Grant agreement number: 608597
+### Tests
+
+A test suite is provided with the source code that uses [pytest](
+https://docs.pytest.org).
+
+If not already active, activate the conda environment set up in the [Source 
+Code](#source-code) section:
+
+```
+$ conda activate _dtocean_hydro
+```
+
+Install pytest to the environment (one time only):
+
+```
+$ conda install -y pytest
+```
+
+Run the tests:
+
+``` 
+$ py.test tests
+```
+
+### Uninstall
+
+To uninstall the conda package:
+
+```
+$ conda remove dtocean-hydrodynamics
+```
+
+To uninstall the source code and its conda environment:
+
+```
+$ conda remove --name _dtocean-hydro --all
+```
+
+To uninstall the data package use the link in the Windows start menu program
+folder, or use the control panel.
+
+## Usage
+
+Example scripts are available in the "examples" folder of the source code.
+
+For tidal energy converters:
+
+```
+cd examples
+python Ex_tidal_v2.py
+```
+
+For wave energy converters:
+
+```
+cd examples
+python Ex_wave_v2.py
+```
+
+## Contributing
+
+Pull requests are welcome. For major changes, please open an issue first to
+discuss what you would like to change.
+
+See [this blog post](
+https://www.dataonlygreater.com/latest/professional/2017/03/09/dtocean-development-change-management/)
+for information regarding development of the DTOcean ecosystem.
+
+Please make sure to update tests as appropriate.
+
+## Credits
+
+This package was initially created as part of the [EU DTOcean project](
+https://www.dtoceanplus.eu/About-DTOceanPlus/History) by:
+
+ * Mathew Topper at [TECNALIA](https://www.tecnalia.com)
+ * Vincenzo Nava at [TECNALIA](https://www.tecnalia.com)
+ * Adam Colin at [the University of Edinburgh](https://www.ed.ac.uk/)
+ * David Bould at [the University of Edinburgh](https://www.ed.ac.uk/)
+ * Rui Duarte at [France Energies Marines](https://www.france-energies-marines.org/)
+ * Francesco Ferri at [Aalborg University](https://www.en.aau.dk/)
+
+It is now maintained by Mathew Topper at [Data Only Greater](
+https://www.dataonlygreater.com/).
+
+## License
+
+[GPL-3.0](https://choosealicense.com/licenses/gpl-3.0/)

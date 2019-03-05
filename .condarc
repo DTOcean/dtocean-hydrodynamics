@@ -1,0 +1,8 @@
+pinned_packages:
+  - python=2
+  - pyqt=4
+
+channels:
+  - defaults
+  - conda-forge
+  - dataonlygreater
