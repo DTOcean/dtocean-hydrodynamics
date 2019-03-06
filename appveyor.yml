@@ -52,6 +52,7 @@ install:
   - copy .condarc %CONDA_PREFIX%
 #  - "copy %MINICONDA%\\envs\\conda-env-%PYTHON_VERSION%-%ARCH%\\libs\\libmsvcr90.a %MINICONDA%\\envs\\conda-env-%PYTHON_VERSION%-%ARCH%\\libs\\libmsvcr90d.a"
   - conda install polite=0.10.0
+  - conda install numpy libpython
   - python setup.py bootstrap
   - conda install --file requirements-conda-dev.txt
   - pip install -e .

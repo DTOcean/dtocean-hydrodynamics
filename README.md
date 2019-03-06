@@ -84,6 +84,12 @@ $ echo %MINGW_BIN_PATH%
 C:\mingw\mingw64\bin
 ```
 
+The numpy and libpython packages are also required for compilation:
+
+```
+$ conda install -y numpy libpython
+```
+
 Now compile the modules:
 
 ```
