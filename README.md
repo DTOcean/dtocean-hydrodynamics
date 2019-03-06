@@ -179,12 +179,13 @@ Please make sure to update tests as appropriate.
 This package was initially created as part of the [EU DTOcean project](
 https://www.dtoceanplus.eu/About-DTOceanPlus/History) by:
 
- * Mathew Topper at [TECNALIA](https://www.tecnalia.com)
- * Vincenzo Nava at [TECNALIA](https://www.tecnalia.com)
- * Adam Colin at [the University of Edinburgh](https://www.ed.ac.uk/)
- * David Bould at [the University of Edinburgh](https://www.ed.ac.uk/)
- * Rui Duarte at [France Energies Marines](https://www.france-energies-marines.org/)
  * Francesco Ferri at [Aalborg University](https://www.en.aau.dk/)
+ * Pau Mercade Ruiz at [Aalborg University](https://www.en.aau.dk/)
+ * Thomas Roc at IT Power (now [ITPEnergised](http://www.itpenergised.com/))
+ * Chris Chartrand at [Sandia National Labs](https://www.sandia.gov/)
+ * Jean-Francois Filipot at [France Energies Marines](https://www.france-energies-marines.org/)
+ * Rui Duarte at [France Energies Marines](https://www.france-energies-marines.org/)
+ * Mathew Topper at [TECNALIA](https://www.tecnalia.com)
 
 It is now maintained by Mathew Topper at [Data Only Greater](
 https://www.dataonlygreater.com/).

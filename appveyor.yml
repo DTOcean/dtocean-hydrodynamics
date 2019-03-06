@@ -29,10 +29,12 @@ environment:
   matrix:
     - PYTHON_VERSION: 2.7
       MINICONDA: "C:\\Miniconda"
+      MINGW_BIN_PATH: "C:\\mingw-w64\\i686-6.3.0-posix-dwarf-rt_v5-rev1\\mingw32\\bin"
       ARCH: "32"
       
     - PYTHON_VERSION: 2.7
       MINICONDA: "C:\\Miniconda-x64"
+      MINGW_BIN_PATH: "C:\\mingw-w64\\x86_64-6.3.0-posix-seh-rt_v5-rev1\\mingw64\\bin"
       ARCH: "64"
 
 init:
@@ -42,11 +44,10 @@ install:
   - ps: Start-FileDownload 'https://github.com/DTOcean/dtocean-hydrodynamics/releases/download/v1.0.0/dtocean-hydrodynamic-data-1_0-standalone_0.exe' 'dtocean-hydrodynamic-data-1_0-standalone_0.exe'
   - dtocean-hydrodynamic-data-1_0-standalone_0.exe /verysilent
   - "set PATH=%MINICONDA%;%MINICONDA%\\Scripts;%PATH%"
-  - "set MINGW_BIN_PATH=C:\\mingw-w64\\x86_64-6.3.0-posix-seh-rt_v5-rev1\\bin"
   - conda config --set always_yes yes --set changeps1 no
   - conda update --quiet conda
   - conda info --all
-  - conda create -n _dtocean_hydro python=2.7 pip
+  - conda create -n _dtocean_hydro python=%PYTHON_VERSION% pip
   - activate _dtocean_hydro
   - copy .condarc %CONDA_PREFIX%
 #  - "copy %MINICONDA%\\envs\\conda-env-%PYTHON_VERSION%-%ARCH%\\libs\\libmsvcr90.a %MINICONDA%\\envs\\conda-env-%PYTHON_VERSION%-%ARCH%\\libs\\libmsvcr90d.a"
