@@ -10,11 +10,17 @@ from setuptools import Command, find_packages, setup
 from setuptools.command.test import test as TestCommand
 
 local_dir = os.path.abspath(os.path.dirname(__file__))
-mingw_dlls = ['libgcc_s_seh-1.dll',
-              'libgfortran-4.dll',
-              'libquadmath-0.dll',
-              'libwinpthread-1.dll']
-              
+
+# Assumes mingw-w64 6.3.0
+if platform.architecture()[0] == "64bit":
+    mingw_dlls = ['libgcc_s_seh-1.dll']
+else:
+    mingw_dlls = ['libgcc_s_dw2-1.dll']
+
+mingw_dlls += ['libgfortran-3.dll',
+               'libquadmath-0.dll',
+               'libwinpthread-1.dll']
+
 tidal_data = []
 
 if not platform.system()=='Windows':
