@@ -20,7 +20,7 @@ else:
 mingw_dlls += ['libgfortran-3.dll',
                'libquadmath-0.dll',
                'libwinpthread-1.dll']
-
+              
 tidal_data = []
 
 if not platform.system()=='Windows':
@@ -79,7 +79,8 @@ class Bootstrap(Command):
                 raise ValueError(errStr)
 
             # Add mingw to the path
-            os.environ["PATH"] += os.pathsep + mingw_bin_path
+            os.environ["PATH"] = mingw_bin_path + os.pathsep + \
+                                                        os.environ["PATH"]
 
             # Prepare build command
             build_file_name = "{}.pyd".format(mod_root)

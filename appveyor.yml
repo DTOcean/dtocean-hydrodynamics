@@ -50,7 +50,6 @@ install:
   - conda create -n _dtocean_hydro python=%PYTHON_VERSION% pip
   - activate _dtocean_hydro
   - copy .condarc %CONDA_PREFIX%
-#  - "copy %MINICONDA%\\envs\\conda-env-%PYTHON_VERSION%-%ARCH%\\libs\\libmsvcr90.a %MINICONDA%\\envs\\conda-env-%PYTHON_VERSION%-%ARCH%\\libs\\libmsvcr90d.a"
   - conda install polite=0.10.0
   - conda install numpy libpython
   - python setup.py bootstrap
