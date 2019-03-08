@@ -5,5 +5,4 @@ pinned_packages:
 
 channels:
   - defaults
-  - conda-forge
   - dataonlygreater
