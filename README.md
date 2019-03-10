@@ -153,20 +153,32 @@ folder, or use the control panel.
 
 ## Usage
 
+### Examples
+
 Example scripts are available in the "examples" folder of the source code.
 
 For tidal energy converters:
 
 ```
-cd examples
-python Ex_tidal_v2.py
+$ cd examples
+$ python Ex_tidal_v2.py
 ```
 
 For wave energy converters:
 
 ```
-cd examples
-python Ex_wave_v2.py
+$ cd examples
+$ python Ex_wave_v2.py
+```
+
+### Command Line Tools
+
+A graphical user interface to the WEC analysis tool is provided. This tool is a 
+required pre-processing step for analysing the interactions of wave energy 
+converters. To get help: 
+
+```
+$ dtocean-wec -h
 ```
 
 ## Contributing
