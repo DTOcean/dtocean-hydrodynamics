@@ -1,6 +1,6 @@
 [![appveyor](https://ci.appveyor.com/api/projects/status/github/DTOcean/dtocean-hydrodynamics?branch=master&svg=true)](https://ci.appveyor.com/project/DTOcean/dtocean-hydrodynamics)
 [![codecov](https://codecov.io/gh/DTOcean/dtocean-hydrodynamics/branch/master/graph/badge.svg)](https://codecov.io/gh/DTOcean/dtocean-hydrodynamics)
-[![Codacy Badge](https://api.codacy.com/project/badge/Grade/bb34506cc82f4df883178a6e64619eaf)](https://www.codacy.com/project/H0R5E/dtocean-hydrodynamics/dashboard?utm_source=github.com&amp;utm_medium=referral&amp;utm_content=DTOcean/dtocean-hydrodynamics&amp;utm_campaign=Badge_Grade_Dashboard&amp;branchId=8410911)
+[![Codacy Badge](https://api.codacy.com/project/badge/Grade/f96b19d24ee9465899a888515c9bdade)](https://www.codacy.com/project/H0R5E/dtocean-hydrodynamics/dashboard?utm_source=github.com&amp;utm_medium=referral&amp;utm_content=DTOcean/dtocean-hydrodynamics&amp;utm_campaign=Badge_Grade_Dashboard&amp;branchId=11701799)
 [![release](https://img.shields.io/github/release/DTOcean/dtocean-hydrodynamics.svg)](https://github.com/DTOcean/dtocean-hydrodynamics/releases/latest)
 
 # DTOcean Hydrodynamics Module
@@ -26,8 +26,10 @@ These installation instructions are for WINDOWS ONLY.
 
 ### Data Package (Required for ALL installation Methods)
 
-The hydrodynamic data package must be installed and can be downloaded from
-[Github](https://setis.ec.europa.eu/dt-ocean/).
+The latest version of the hydrodynamic data package 
+(`dtocean-hydrodynamic-data-*.exe`) must be installed. This can be downloaded 
+from the [Releases](https://github.com/DTOcean/dtocean-hydrodynamics/releases)
+page.
 
 Once downloaded execute the file to install. If upgrading from version 1,
 uninstall the old version first from the Windows start menu program folder,
