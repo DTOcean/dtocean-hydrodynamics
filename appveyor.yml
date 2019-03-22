@@ -41,8 +41,8 @@ init:
   - "ECHO %PYTHON_VERSION% %MINICONDA%"
 
 install:
-  - ps: Start-FileDownload 'https://github.com/DTOcean/dtocean-hydrodynamics/releases/download/v1.0.0/dtocean-hydrodynamic-data-1_0-standalone_0.exe' 'dtocean-hydrodynamic-data-1_0-standalone_0.exe'
-  - dtocean-hydrodynamic-data-1_0-standalone_0.exe /verysilent
+  - ps: Start-FileDownload 'https://github.com/DTOcean/dtocean-hydrodynamics/releases/download/v2.0.0/dtocean-hydrodynamic-data-2.0.exe' 'dtocean-hydrodynamic-data-2.0.exe'
+  - dtocean-hydrodynamic-data-2.0.exe /verysilent
   - "set PATH=%MINICONDA%;%MINICONDA%\\Scripts;%PATH%"
   - conda config --set always_yes yes --set changeps1 no
   - conda update --quiet conda
