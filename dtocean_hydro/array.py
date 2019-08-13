@@ -229,10 +229,8 @@ class Array_pkg(object):
 
         """
         if self.minDist_constraint:
-            if self._debug:
-                module_logger.warning('Warning[minDist]: violation of the '
-                                      'minimum distance constraint in the '
-                                      'actual array layout')
+            module_logger.warning('Violation of the minimum distance '
+                                  'constraint between one or more devices')
             machine_mask = np.zeros(self.coord.shape[0],dtype=bool)
         else:
             original_el = MultiPoint(self.coord)
