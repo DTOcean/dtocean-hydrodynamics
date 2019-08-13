@@ -62,95 +62,110 @@ class ArrayYield:
     def performance(self, debug=False, debug_plot=False):
         """
         Method computes both array and device performance power capacity, Watts.
-
+        
         Kwargs:
           debug (bool): debug flag
           debug_plot (bool): debug plot flag
         """
+        
         debug = debug or self._debug
         debug_plot = debug_plot or self._debug_plot
         if debug: module_logger.info("...Computing capacity & performance")
-
-        #Constants
-        rho = 1025.0 #water density
-        #Initialize some stuffs
-        l=natural_sort(self._array.velHub.keys())
+        
+        # Water density
+        rho = 1025.0
+        
+        l = natural_sort(self._array.velHub.keys())
         turbGene = np.zeros(self._turbine_count)
         turbGeneIni = np.zeros(self._turbine_count)
         turbID = []
         
         for i, key in enumerate(l):
-            #turbine features
+            
+            # Turbine features
             diam = self._array.features[key]['Diam']
             cutIn = self._array.features[key]['cutIO'][0]
             cutOut = self._array.features[key]['cutIO'][1]
             ry = self._array.features[key]['RY']  # relative yawing angle
             rating = self._array.features[key]['Rating']
-            A = np.pi * ((diam/2.0)**2.0) * np.cos(np.radians(ry))  # ellipse area            
-            if np.abs(ry) > 89:
-                A=0  # patch to avoid negative power production. Probably also the disk model should be modified but it is not yet.
-            #Flow speed at hub           
+            
+            # Rotor area (as an ellipse due to yawing)
+            A = np.pi * ((diam/2.0)**2.0) * np.cos(np.radians(ry))
+            
+            # Patch to avoid negative power production. Probably also the disk 
+            # model should be modified but it is not yet.
+            if np.abs(ry) > 89: A = 0
+            
+            # Flow speed at hub 
             u = self._array.velHub[key][0]
             v = self._array.velHub[key][1]
             uIni = self._array.velHubIni[key][0]
             vIni = self._array.velHubIni[key][1]
             norm = np.sqrt((u**2.0) + (v**2.0))
             normIni = np.sqrt((uIni**2.0) + (vIni**2.0))
-            #Cp curve
+            
+            # Cp curve
             cp = interp1d(self._array.features[key]['Cp'][0],
                           self._array.features[key]['Cp'][1],
                           bounds_error=False, fill_value=0.0)
-            #capacity & perf.
+            
+            # Capacity & perf
             Cp = cp(norm)
             Cpini = cp(normIni)
+            
             if norm < cutIn:
+                
                 module_logger.debug("{}: hub velocity: {} < cut-in: {} --> "
                                     "no power production".format(key,
                                                                  norm,
                                                                  cutIn))
                 power = 0.0
+            
             elif norm > cutOut:
-                # power = 0.5*rho*Cp*A*(cutOut**3.0)
+                
                 module_logger.debug("{}: hub velocity: {} > cut-out: {} --> "
                                     "no power production".format(key,
                                                                  norm,
                                                                  cutOut))
                 power = 0.0
+            
             else:
-                power = 0.5*rho*Cp*A*(norm**3.0)
+                
+                power = 0.5 * rho * Cp * A * norm ** 3.0
+                
                 if np.abs(ry) > 89:
                     module_logger.debug("{}: angle of attach > 90deg --> no "
                                         "power production".format(key))
+            
             if normIni < cutIn:
                 powerIni = 0.0
-            elif norm > cutOut:
-                # powerIni = 0.5*rho*Cp*A*(cutOut**3.0)
+            elif normIni > cutOut:
                 powerIni = 0.0
             else:
-                powerIni = 0.5*rho*Cpini*A*(normIni**3.0)
+                powerIni = 0.5 * rho * Cpini * A * normIni ** 3.0
             
             # Clip power to the power rating
             if power > rating:
                 power = rating
-                
+            
             if powerIni > rating:
                 powerIni = rating
-                
+            
             turbGene[i] = power
             turbGeneIni[i] = powerIni
             turbID.append(key)
-
+            
             #load in attributs
             self.turbine_capacity[key] = power
             self.turbine_capacity_no_interaction[key] = powerIni
-            
+        
         totGene = np.nansum(turbGene)
         totGeneIni = np.nansum(turbGeneIni)
-
+        
         #load in attributes
         self.array_capacity = totGene
         self.array_capacity_no_interaction = totGeneIni
-
+        
         if debug_plot:
             fig1 = plt.figure(figsize=(18,10))
             ax1 = fig1.add_subplot(1,1,1)
