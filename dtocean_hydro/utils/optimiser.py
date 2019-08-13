@@ -35,13 +35,11 @@ from __future__ import division
 import logging
 module_logger = logging.getLogger(__name__)
 
-# optimisation import
-import cma
-from math import sqrt
-import numpy as np
-
-# test plot 
 import pickle
+from math import sqrt
+
+import cma
+import numpy as np
 
 
 class SearchOptimum(object):
@@ -80,7 +78,9 @@ class SearchOptimum(object):
         _Val (str/numpy.ndarray): array structure description
         _Opt (int): array type option.
     """
-    def __init__(self, hyd_obj,
+    
+    def __init__(self, optim_func,
+                       hyd_obj,
                        array_obj,
                        val,
                        opt,
@@ -90,6 +90,7 @@ class SearchOptimum(object):
                        debug=False):
         
         self.nogo_areas = nogo_areas
+        self._optim_func = optim_func
         self._array = array_obj
         self._hyd_obj = hyd_obj
 
@@ -100,7 +101,7 @@ class SearchOptimum(object):
 
         # set search space bounds
         self._min_bound = 0.
-        self._max_bound = 10.
+        self._max_bound = 50.
 
         # set result constraints
         self._min_q_factor = min_q_factor
@@ -121,7 +122,7 @@ class SearchOptimum(object):
         self.opt_dim = 4  # default case
         self.par_a = np.eye(self.opt_dim)
         self.par_b = np.zeros(self.opt_dim)
-
+        
         if self._Opt == 1:
             if self._Val == 'rectangular':
                 self.opt_dim = 2
@@ -146,7 +147,7 @@ class SearchOptimum(object):
         else:
             raise IOError("The specified array option is out of bounds")
 
-    def eval_optimal_layout(self, opt_method_id=1):
+    def eval_optimal_layout(self):
         """
         eval_optimal_layout: calls the method specified in the opt_method args
             and send the results back to the calling environment
@@ -163,178 +164,35 @@ class SearchOptimum(object):
             -1 if no optimisation was achieved
         """
         # call the optimisation method
-        xopt = None
-        if opt_method_id == 1:
-            xopt = self.method_cma_es()
-        elif opt_method_id == 2:
-            xopt = self.method_monte_carlo()
-        elif opt_method_id == 3:
-            xopt = self.method_brutal_force()
-        else:
-            raise IOError("The specified optimisation method ID is out of "
-                          "range.")
+        xopt = self._optim_func(self)
         
         # rescale the optimal solution, if any. 
         if xopt == -1:
             errStr=("Error[OptimisationResults]: No array configuration "
                     "satisfies the given optimisation constrains")
             raise ValueError(errStr)
+        
+        xmap = self.scale_param(xopt)
+        
+        module_logger.info("Optimal configuration parameters:")
+        module_logger.info("Inter-column distance: {}".format(xmap[0]))
+        module_logger.info("Inter-row distance: {}".format(xmap[1]))
+        module_logger.info("Column angle: {}".format(xmap[2]))
+        module_logger.info("Row angle: {}".format(xmap[3]))
+        
+        if self._Opt == 1:
+            NR, NC, IR, IC, beta, psi = self.param_conditioning(xmap)
+            self._array.generator(NR, NC, IR, IC, beta, psi)
         else:
-
-            xmap = self.scale_param(xopt)
-
-            module_logger.info("Optimal configuration parameters:")
-            module_logger.info("Inter-column distance: {}".format(xmap[0]))
-            module_logger.info("Inter-row distance: {}".format(xmap[1]))
-            module_logger.info("Column angle: {}".format(xmap[2]))
-            module_logger.info("Row angle: {}".format(xmap[3]))
-
+            self._array.coord = (self._Val*int(xmap[0]) / 
+                                                 self._normalisation_point)
             
-            if self._Opt == 1:
-                NR, NC, IR, IC, beta, psi = self.param_conditioning(xmap)
-                self._array.generator(NR, NC, IR, IC, beta, psi)
-            else:
-                self._array.coord = (self._Val*int(xmap[0]) / 
-                                                     self._normalisation_point)
-
-            module_logger.info('Ending the optimisation loop.....')
-            module_logger.info('Re-generating the best array layout')
-
-            return 0
-
-    def method_brutal_force(self, N=5):
-        """
-        TEMPORARY USED FOR 2d problem only
-        problem optimisation via generation of a regular discretised space
-        """
-        x = np.linspace(self._min_bound,self._max_bound,N)
-        y = np.linspace(self._min_bound,self._max_bound,N)
-        fit = np.zeros((N*N))
-        ind = -1
-        for ii, inter_col in enumerate(x):
-            for jj, beta in enumerate(y):
-                ind += 1
-                print('iteration {} over {}'.format(ind+1, len(x)*len(y)))
-                fit[ind] = -self.optimCostFunNorm((inter_col, beta))[0]
-        # index = np.unravel_index(fit.argmin(), fit.shape)
-        index = fit.argmin()
-        pickle.dump([fit, x, y],
-                    open("optimisation_results_brutal_force.pkl", "wb"))
-
-        if fit[index] > 0:
-            return -1
-        else:
-            return (x[index//N], y[int(index%N)])
-
-
-    def method_cma_es(self, tolfun=1e1,
-                            tolx=1e-3,
-                            maxiter=200,
-                            maxfevals=2000):
-        """
-        method_cma_es: calls the cma package to optimise the power production
-            of the array
-
-        Args (optional):
-            tolfun (float)[W]: minimun allowed variation of the fit to decide
-                for the solution stagnation
-            tolx (float)[-]: minimun allowed variation of the parameters to
-                decide for the solution stagnation
-            maxiter (int)[-]: max number of population regeneration
-            maxfevals (int)[-]: max number of total function evaluation
-
-        Returns:
-             x (list): list of normalised parameters that represent the best
-               solution found
-        """
-        
-        x0, self._normalisation_point = self.estimate_start_point()
-        if not x0:
-            warning_str = ('Could not find a suitable starting point '
-                           'for the optimiser, the centroid of the '
-                           'parameter space is used instead')
-            module_logger.warning(warning_str)
-            x0 = self.opt_dim * [(self._min_bound+self._max_bound)/2]
-        
-        es = cma.CMAEvolutionStrategy(
-                        x0,
-                        2,
-                        {'bounds': [self._min_bound,self._max_bound],
-                         'verb_disp': 0})
-        
-        es.opts.set('tolfun', tolfun)
-        es.opts.set('tolx', tolx)
-        es.opts.set('maxiter', maxiter)
-        es.opts.set('maxfevals',maxfevals)
-
-        while not es.stop():
-            
-            solutions = es.ask()
-			
-            # reduce the significant digits of the search space
-            # solutions = [np.around(s, decimals=1) for s in solutions]
-            temp = [self.optimCostFunNorm(s) for s in solutions]
-            fitness = [(-el[0]) for el in temp]
-            es.tell(solutions, fitness)
-            
-            if self._debug:
-                es.logger.add()
-                es.disp(10)
-        
-        if self._debug:
-            es.result_pretty()
-#            es.logger.plot_all()
-#            pickle.dump(es.archive.data,
-#                        open("optimisation_results_cma-es_new.pkl", "wb"))
-
-        if es.best.f > 0.:
-            return -1
-        else:
-            return (es.best.x).tolist()
-
-    def method_monte_carlo(self, maxiter=5):
-        """
-        methodMonteCarlo: optimise the array layout using the Motecarlo
-            simulation approach
-
-        Args:
-            n_MC (int): number of simulation to be run. Since there is no
-                rational behind this method, but everything is based on the
-                randomness of the solution, the number of n_MC is directly
-                affecting the stability of the solution
-
-        Returns:
-            x (list): list of normalised parameters that represent the best
-              solution found
-        """
-        xx = np.random.random_sample((self.opt_dim, maxiter))
-        xx *= (self._max_bound-self._min_bound)
-        xx += self._min_bound
-
-        fit = np.zeros(maxiter)
-
-        for i in range(maxiter):
-            module_logger.info('iteration #: {}'.format(i))
-
-            x = xx[:,i]
-            fit[i] = -self.optimCostFunNorm(x)[0]
-        # find max average energy for arrays with q-factor larger than q_min
-        index = fit.argmin()
-        pickle.dump([fit, xx],
-                    open("optimisation_results_brutal_force.pkl", "wb"))
-
-        if self._debug:
-                module_logger.info('AEP for the different configurations:')
-                module_logger.info(fit)
-                module_logger.info('Optimal configuration features:')
-                module_logger.info(xx[:,index].tolist())
-
-        if fit[index] > 0:
-            return -1
-        else:
-            return xx[:,index].tolist()
+        module_logger.info('Ending the optimisation loop.....')
+        module_logger.info('Re-generating the best array layout')
     
+    # TODO: Staggered doesn't use column spacing?
     def estimate_start_point(self):
+        
         def remap(val, sc, IR, IC, beta, psi):
             if val == 'rectangular':
                 X_norm = ((float(IR)-sc)/sc, (float(IC)-sc)/sc)
@@ -351,8 +209,9 @@ class SearchOptimum(object):
             if abs(X_norm[0]-5) > 1:
                 sc = float(IR)/6
                 return remap(val, sc, IR, IC, beta, psi)
-            return (X_norm, sc)
             
+            return (X_norm, sc)
+        
         module_logger.info("Estimating the optimisation starting point")
         max_eval = 100
         
@@ -368,8 +227,7 @@ class SearchOptimum(object):
         else:
             par_a = self.par_a
             par_b = self.par_b
-           
-                    
+        
         # un-normalize optimization variable
         x_b = np.array([5,5],'f')
         xmap = np.dot(par_a, x_b)
@@ -381,11 +239,11 @@ class SearchOptimum(object):
         xmap[3] *= 0.1 * np.pi/2
         
         xNorm = xmap + par_b
-    
+        
         NR, NC, IR, IC, beta, psi = self.param_conditioning(xNorm)
         IC = self._array.Dmin[0]+1.01
         IR = self._array.Dmin[1]+1.01
-
+        
         ind = 0
         
         while True:
@@ -397,9 +255,9 @@ class SearchOptimum(object):
                 self._array.checkMinDist()
             else:
                 self._array.generator(NR, NC, IR, IC, beta, psi)
-    
+            
             inside = self._array.checkout()
-    
+            
             # check conditions prior to solve the array interaction
             if inside.any() and not self._array.minDist_constraint:
                 
@@ -413,40 +271,64 @@ class SearchOptimum(object):
                                  IR, 
                                  beta,
                                  psi)
-                    
+            
             else:
                 
-                IC *= 1.05
-                IR *= 1.05
-                    
+                IC /= 1.05
+                IR /= 1.05
+            
             ind += 1
             
             if ind > max_eval:
                 return (), self._normalisation_point 
-                
+        
+        raise RuntimeError('Insufficient facts always invite danger.')
+    
     def param_conditioning(self, x_scale):
         """
         param_conditioning: the function applies truncation to the scale
             parameters.
         Args:
             x_scale (numpy.ndarray): array of scaled parameters
-
+        
         Returns:
             array_vals (list): conditioned scaled parameters
         """
         Nb = self._max_num_dev
-        # the factor 10 is used because for small skewing angles there is a
-        # risk to do not fill the lease area. The extra number of bodies do not 
-        # affect the calculation.
-        NR = 10*int(sqrt(Nb))
-        NC = 10*int(sqrt(Nb))+1
-        IC = int(x_scale[0])
+        
         IR = int(x_scale[1])
+        IC = int(x_scale[0])
         beta = int(x_scale[2]*100)/100.0
         psi = int(x_scale[3]*100)/100.0
         
-        return NR, NC, IC, IR, beta, psi
-                
+        combos = np.array([[0, 0],
+                           [0, 1],
+                           [1, 0],
+                           [1, 1]])
+        devs = np.zeros(4)
+        
+        for i, combo in enumerate(combos):
+            
+            # the factor 10 is used because for small skewing angles there is a
+            # risk to do not fill the lease area. The extra number of bodies 
+            # do not affect the calculation.
+            NR = 10 * int(sqrt(Nb)) + combo[0]
+            NC = 10 * int(sqrt(Nb)) + combo[1]
+            
+            self._array.generator(NR, NC, IR, IC, beta, psi)
+            inside = self._array.checkout(nogo_list=self.nogo_areas)
+            n_devs = self._array.coord[inside].shape[0]
+            
+            devs[i] = n_devs
+        
+        most_devs_idx = np.argmax(devs)
+        bost_combo = combos[most_devs_idx]
+        
+        NR = 10 * int(sqrt(Nb)) + bost_combo[0]
+        NC = 10 * int(sqrt(Nb)) + bost_combo[1]
+        
+        return NR, NC, IR, IC, beta, psi
+    
     def scale_param(self, x_norm):
         """
         scale_param: the function denormalise the parameters.
@@ -486,49 +368,54 @@ class SearchOptimum(object):
         # call dernorm cost fun
         fval = self.optimCostFun(xNorm)
         return fval[0], fval[1]
-
+    
     def optimCostFun(self, x):
         """
         optimCostFun: the method calculate the AEP and q-factor for the given
             configuration, calling either the tidal or the wave modules
-
+        
         Args:
             x (list): list of 4 parameters used to build the array layout
-
+        
         Return:
             AEP (float): annual energy production for the given array
             q (float): q factor for the given array
         """
-                
+        
         NR, NC, IR, IC, beta, psi = self.param_conditioning(x)
         
-        if beta<0.05 and self._Opt != 3:
+        if beta < 0.05 and self._Opt != 3:
             module_logger.debug("The angle between rows and "
                                 "columns is too close to zero.")
-            
+        
         if self._Opt == 3:
+            
             scaleX = IC/self._normalisation_point  
             scaleY = IR/self._normalisation_point
             self._array.coord = self._Val*np.array([scaleX, scaleY])
             self._array.checkMinDist()
+            
         else:
+            
+            module_logger.info("Layout parameters: IC: {} IR: {} beta: {} "
+                               "psi: {}".format(IC, IR, beta, psi))
+            
             self._array.generator(NR, NC, IR, IC, beta, psi)
-
-        inside = self._array.checkout(nogo_list=self.nogo_areas)
-#        if self._debug:
-#            self._array.show(inside)
         
-        module_logger.debug("Array parameters: IC: {} IR: {} beta: {} "
-                            "psi: {}".format(IC, IR, beta, psi))
-
+        inside = self._array.checkout(nogo_list=self.nogo_areas)
+        if self._debug: self._array.show(inside)
+        
         # check conditions prior to solve the array interaction
         if inside.any() and not self._array.minDist_constraint:
             
-            if self._array.coord[inside].shape[0] > self._max_num_dev:
+            n_devs = self._array.coord[inside].shape[0]
+            
+            if n_devs > self._max_num_dev:
                 
-                if self._debug: module_logger.info("Not valid: N_dev > "
-                                                   "N_max ({})".format(
-                                                           self._max_num_dev))
+                msg_str = ("Layout not valid: {} devices generated, "
+                           "but maximum is {}").format(n_devs,
+                                                       self._max_num_dev)
+                module_logger.info(msg_str)
                 
                 # return the squared error from actual value and bound
                 # due to the computational constraints this penality term is
@@ -538,18 +425,16 @@ class SearchOptimum(object):
                 
                 return maxdev_error, -1
             
-            else:
-                
-                if self._debug: module_logger.info("OK constr")
-
-                # solve the array interaction
-                res = self._hyd_obj.energy(self._array.coord[inside])
-
+            if self._debug: module_logger.info("OK constr")
+            
+            # solve the array interaction
+            res = self._hyd_obj.energy(self._array.coord[inside])
+            
             module_logger.info("Number of devices: {} AEP: {} q-factor: "
                                "{}".format(self._array.coord[inside].shape[0],
                                            res.AEP_array,
                                            res.q_array))
-
+            
             if res.q_array >= self._min_q_factor:
                 
                 if self._debug:
@@ -560,24 +445,149 @@ class SearchOptimum(object):
                 
                 return res.AEP_array, res.q_array
             
-            else:
-                
-                if self._debug: module_logger.info("Not valid: q < q_min")
-                
-                # return the squared error from actual value and bound
-                qfactor_error = -((res.q_array /
-                                   self._min_q_factor - 1) * 100.) ** 2
-                
-                return qfactor_error, res.q_array
+            if self._debug: module_logger.info("Not valid: q < q_min")
+            
+            # return the squared error from actual value and bound
+            qfactor_error = -((res.q_array /
+                               self._min_q_factor - 1) * 100.) ** 2
+            
+            return qfactor_error, res.q_array
+        
+        if self._debug:
+            module_logger.warning('WARNING! For the given configuration '
+                                  'no device is inside the active area!. '
+                                  'No calculation is performed!')
+        
+        mindist_error = -((self._array._actual_mindist / 
+                                       self._min_dist - 1) * 100.) ** 2
+        
+        return mindist_error, -1
 
-        else:
-            
-            if self._debug:
-                module_logger.warning('WARNING! For the given configuration '
-                                      'no device is inside the active area!. '
-                                      'No calculation is performed!')
-            
-            mindist_error = -((self._array._actual_mindist / 
-                                           self._min_dist - 1) * 100.) ** 2
-            
-            return mindist_error, -1
+
+def method_brutal_force(searcher, N=5):
+    
+    x = np.linspace(searcher._min_bound,searcher._max_bound,N)
+    y = np.linspace(searcher._min_bound,searcher._max_bound,N)
+    fit = np.zeros((N*N))
+    ind = -1
+    for ii, inter_col in enumerate(x):
+        for jj, beta in enumerate(y):
+            ind += 1
+            print('iteration {} over {}'.format(ind+1, len(x)*len(y)))
+            fit[ind] = -searcher.optimCostFunNorm((inter_col, beta))[0]
+    # index = np.unravel_index(fit.argmin(), fit.shape)
+    index = fit.argmin()
+    pickle.dump([fit, x, y],
+                open("optimisation_results_brutal_force.pkl", "wb"))
+
+    if fit[index] > 0:
+        return -1
+    else:
+        return (x[index//N], y[int(index%N)])
+
+
+def method_cma_es(searcher,
+                  tolfun=1e1,
+                  tolx=1e-3,
+                  maxiter=200,
+                  maxfevals=2000):
+    """
+    calls the cma package to optimise the power production
+        of the array
+
+    Args (optional):
+        tolfun (float)[W]: minimun allowed variation of the fit to decide
+            for the solution stagnation
+        tolx (float)[-]: minimun allowed variation of the parameters to
+            decide for the solution stagnation
+        maxiter (int)[-]: max number of population regeneration
+        maxfevals (int)[-]: max number of total function evaluation
+
+    Returns:
+         x (list): list of normalised parameters that represent the best
+           solution found
+    """
+    
+    x0, searcher._normalisation_point = searcher.estimate_start_point()
+    if not x0:
+        warning_str = ('Could not find a suitable starting point '
+                       'for the optimiser, the centroid of the '
+                       'parameter space is used instead')
+        module_logger.warning(warning_str)
+        x0 = searcher.opt_dim * [(searcher._min_bound
+                                          + searcher._max_bound) / 2.]
+    
+    es = cma.CMAEvolutionStrategy(
+                    x0,
+                    2,
+                    {'bounds': [searcher._min_bound, searcher._max_bound],
+                     'verb_disp': 0})
+    
+    es.opts.set('tolfun', tolfun)
+    es.opts.set('tolx', tolx)
+    es.opts.set('maxiter', maxiter)
+    es.opts.set('maxfevals',maxfevals)
+
+    while not es.stop():
+        
+        solutions = es.ask()
+        
+        # reduce the significant digits of the search space
+        # solutions = [np.around(s, decimals=1) for s in solutions]
+        temp = [searcher.optimCostFunNorm(s) for s in solutions]
+        fitness = [(-el[0]) for el in temp]
+        es.tell(solutions, fitness)
+        
+        if searcher._debug:
+            es.logger.add()
+            es.disp(10)
+    
+    if searcher._debug:
+        es.result_pretty()
+    
+    if es.best.f > 0.:
+        return -1
+    else:
+        return (es.best.x).tolist()
+
+
+def method_monte_carlo(searcher, maxiter=5):
+    """
+    optimise the array layout using the Motecarlo simulation approach
+
+    Args:
+        n_MC (int): number of simulation to be run. Since there is no
+            rational behind this method, but everything is based on the
+            randomness of the solution, the number of n_MC is directly
+            affecting the stability of the solution
+
+    Returns:
+        x (list): list of normalised parameters that represent the best
+          solution found
+    """
+    xx = np.random.random_sample((searcher.opt_dim, maxiter))
+    xx *= (searcher._max_bound - searcher._min_bound)
+    xx += searcher._min_bound
+
+    fit = np.zeros(maxiter)
+
+    for i in range(maxiter):
+        module_logger.info('iteration #: {}'.format(i))
+
+        x = xx[:,i]
+        fit[i] = -searcher.optimCostFunNorm(x)[0]
+    # find max average energy for arrays with q-factor larger than q_min
+    index = fit.argmin()
+    pickle.dump([fit, xx],
+                open("optimisation_results_brutal_force.pkl", "wb"))
+
+    if searcher._debug:
+            module_logger.info('AEP for the different configurations:')
+            module_logger.info(fit)
+            module_logger.info('Optimal configuration features:')
+            module_logger.info(xx[:,index].tolist())
+
+    if fit[index] > 0:
+        return -1
+    else:
+        return xx[:,index].tolist()

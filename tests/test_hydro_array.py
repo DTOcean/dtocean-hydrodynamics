@@ -91,3 +91,45 @@ def test_checkMinDist_error():
     
     with pytest.raises(IOError):
         arr.checkMinDist()
+
+
+def test_generator():
+    
+    lease = np.array([[-100,-100],
+                      [100,-100],
+                      [100,100],
+                      [-100,100]],'f')
+    
+    arr = Array_pkg(lease,
+                    lease*1.05,
+                    (10, 10),
+                    np.pi / 4)
+    
+    arr.generator(2, 2, 100, 100, np.pi / 2, 0)
+    
+    p1 = arr.coord[0, :]
+    p2 = arr.coord[1, :]
+    dist = np.sqrt((p2[0] - p1[0]) ** 2 + (p2[1] - p1[1]) ** 2)
+    
+    assert len(arr.coord) == 4
+    assert np.isclose(dist, 100)
+
+
+def test_show(mocker):
+    
+    lease = np.array([[-100,-100],
+                      [100,-100],
+                      [100,100],
+                      [-100,100]],'f')
+    
+    arr = Array_pkg(lease,
+                    lease*1.05,
+                    (10, 10),
+                    np.pi / 4)
+    
+    arr.generator(2, 2, 100, 100, np.pi / 2, 0)
+    
+    show_patch = mocker.patch("dtocean_hydro.array.plt.show")
+    arr.show()
+    
+    assert show_patch.called

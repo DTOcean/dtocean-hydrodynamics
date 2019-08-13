@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-#    Copyright (C) 2017-2018 Mathew Topper
+#    Copyright (C) 2017-2021 Mathew Topper
 #
 #    This program is free software: you can redistribute it and/or modify
 #    it under the terms of the GNU General Public License as published by
@@ -104,15 +104,14 @@ def tidalsite():
     U = np.dstack(u_arrays)
     V = np.dstack(v_arrays)
     SSH = np.dstack(ssh_arrays)
-    U = U*0+2
-    V = V*0+0
+    U = U*0+0
+    V = V*0+2
     TI = np.array([0.1])
     p = np.ones(U.shape[-1])
     
     # END of Statistical analysis generation
     # --------------------------------------- 
     Meteocean = {'V':V,'U':U,'p':p,'TI':TI,'x':x,'y':y,'SSH':SSH} 
-    VelocityShear = np.array([7.])
     MainDirection = None#np.array([1.,1.])
     #ang = np.pi*0.25
     #MainDirection = np.array([np.cos(ang),np.sin(ang)])
@@ -122,7 +121,6 @@ def tidalsite():
     #yb = np.linspace(0,50,5)
     
     Bathymetry = np.array([-60.])
-    Geophysics = np.array([0.3])
     
     BR = 1.
     electrical_connection_point = (-1000.0, -4000.0)
@@ -130,10 +128,10 @@ def tidalsite():
     out = [leaseAreaVertexUTM,
            Nogoareas_wave,
            Meteocean,
-           VelocityShear,
+           None,
+           None,
            MainDirection,
            Bathymetry,
-           Geophysics,
            BR,
            electrical_connection_point]
 
@@ -174,7 +172,6 @@ def wavesite():
     "---------------------------------------"
     
     Meteocean_wave = {'Te':T,'Hs':H,'B':B,'p':p,'specType':specType,'SSH':SSH}
-    VelocityShear_tidal =  np.empty(0)
     MainDirection = None
     
     x = np.linspace(0.,1000.,75)
@@ -187,17 +184,16 @@ def wavesite():
     xyz = np.vstack((X.ravel(),Y.ravel(),Z.ravel())).T
     Bathymetry = xyz
     
-    Geophysics =  np.empty(0)
     BR = np.empty(0)
     electrical_connection_point = (-1000.0, -4000.0)
 
     out = [leaseAreaVertexUTM,
            Nogoareas_wave,
            Meteocean_wave,
-           VelocityShear_tidal,
+           None,
+           None,
            MainDirection,
            Bathymetry,
-           Geophysics,
            BR,
            electrical_connection_point]
     
@@ -238,7 +234,6 @@ def wavesitebiggamma():
     "---------------------------------------"
     
     Meteocean_wave = {'Te':T,'Hs':H,'B':B,'p':p,'specType':specType,'SSH':SSH}
-    VelocityShear_tidal =  np.empty(0)
     MainDirection = None
     
     x = np.linspace(0.,1000.,75)
@@ -251,17 +246,16 @@ def wavesitebiggamma():
     xyz = np.vstack((X.ravel(),Y.ravel(),Z.ravel())).T
     Bathymetry = xyz
     
-    Geophysics =  np.empty(0)
     BR = np.empty(0)
     electrical_connection_point = (-1000.0, -4000.0)
 
     out = [leaseAreaVertexUTM,
            Nogoareas_wave,
            Meteocean_wave,
-           VelocityShear_tidal,
+           None,
+           None,
            MainDirection,
            Bathymetry,
-           Geophysics,
            BR,
            electrical_connection_point]
     
@@ -278,24 +272,18 @@ def tidal():
     YawAngle = 0./180*np.pi#Need to be clarified
     Float_flag = False
     InstalDepth = [-np.inf,0]
-    MinDist = (150,)
+    MinDist = (100,25)
     OpThreshold = 0
     
-    MinDist = (150,)
-    dx = MinDist[0] * 4
-    dy = dx/4
+    dx = MinDist[0]
+    dy = dx / 4
     pos = []
     for i in range(5):
         for j in range(5):
-            if not (i)%2:
-                temp = [i*dx,j*dy-dy/2]
-            else:
-                temp = [i*dx,j*dy]
-            
+            temp = [i*dx + 70, j*dy + 70]
             pos.append(temp)
             
     pos = [item for item in pos if item[1] >= 0]
-
     FixedArrayLayout = np.array(pos, dtype=float) + 0.1
     
     UserArray = {'Option': 2,
@@ -398,8 +386,7 @@ def wave():
     InstalDepth = [-np.inf,0]
     MinDist = (80,)
     OpThreshold = 0.8
-
-    MinDist = (150,)
+    
     dx = MinDist[0] * 4
     dy = dx/4
     pos = []
@@ -413,7 +400,7 @@ def wave():
             pos.append(temp)
             
     pos = [item for item in pos if item[1] >= 0]
-
+    
     FixedArrayLayout = np.array(pos, dtype=float) + 0.1
     
     UserArray = {'Option': 2,

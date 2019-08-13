@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 
 #    Copyright (C) 2016 Francesco Ferri
-#    Copyright (C) 2017-2018 Mathew Topper
+#    Copyright (C) 2017-2019 Mathew Topper
 #
 #    This program is free software: you can redistribute it and/or modify
 #    it under the terms of the GNU General Public License as published by
@@ -27,11 +27,17 @@ by Thomas Roc (ITPower).
 .. moduleauthor:: Francesco Ferri <ff@civil.aau.dk>
 .. moduleauthor:: Mathew Topper <mathew.topper@dataonlygreater.com>
 """
+
+import logging
+
 import numpy as np
 from dtocean_hydro.output import ReducedOutput
 
 from .main import wp2_tidal
-from .utils.misc import radians_to_bearing
+from .utils.misc import bearing_to_radians, radians_to_bearing
+
+# Start logging
+module_logger = logging.getLogger(__name__)
 
 
 class CallTidal:
@@ -88,7 +94,6 @@ class CallTidal:
         __u_mean (float)[m/s]: mean Easting velocity
         __v_mean (float)[m/s]: mean Northing velocity
         __TI (numpy.ndarray)[-]: turbulence intensity at each grid node for each sea state
-        __PLE (numpy.ndarray) [-]: Tidal velocity shear formula (power law), used to evaluate the vertical velocity profile
         __SSH (numpy.ndarray)[m]: Sea Surface Height wrt the bathymetry datum, at each grid node for each sea state
         __base_feature (dict)[-]: contains the base feature of each turbine that need to be repeated for each body.
                                 The dictionary is only used to reduce the line of code.
@@ -118,7 +123,6 @@ class CallTidal:
                             U: see __U
                             V: see __V
                             TI: see __TI
-                            PLE: see __PLE
                             SSH: see __SSH
                             bathy (numpy.ndarray) [m]: Describes the vertical profile of the sea bottom
                                                     at each (given) UTM coordinate.
@@ -134,7 +138,9 @@ class CallTidal:
                                             area surface enclosed in a channel.
                                                     1. - closed channel
                                                     0. - open sea
-
+                            beta (float): bed roughness
+                            alpha (float): power law exponent
+    
     Returns:
         CallTidal (class): return the current class object.
     """    
@@ -144,7 +150,7 @@ class CallTidal:
                  cfd_data,
                  debug=False,
                  debug_plot=False):
-        # initialise attributes that will be used later in the output_tidal method
+        
         self.cfd_data = cfd_data
         self.Device_Model = None
         self.AEP_perD = None
@@ -158,11 +164,13 @@ class CallTidal:
         self.debug = debug
         self.debug_plot = debug_plot
         self.coord = None
-
-        # crete the all the required local variables
+        
         # machine features
-        Cp = [WP2Input.M_data.tidal_velocity_curve, WP2Input.M_data.tidal_power_curve]
-        Ct = [WP2Input.M_data.tidal_velocity_curve, WP2Input.M_data.tidal_thrust_curve]
+        Cp = [WP2Input.M_data.tidal_velocity_curve,
+              WP2Input.M_data.tidal_power_curve]
+        Ct = [WP2Input.M_data.tidal_velocity_curve,
+              WP2Input.M_data.tidal_thrust_curve]
+        
         char_len = WP2Input.M_data.Clen
         Diam = char_len[0]
         
@@ -170,10 +178,11 @@ class CallTidal:
         OA = radians_to_bearing(WP2Input.S_data.mainAngle)
         cutIO = WP2Input.M_data.tidal_cutinout
         floaT = WP2Input.M_data.Floatflag
-        HAS = 2*WP2Input.M_data.YawAngle*180/np.pi  # the factor 2 is 
-                                    #  used to take the half span to the full span
+        
+        # the factor 2 is used to take the half span to the full span
+        HAS = 2 * WP2Input.M_data.YawAngle * 180 / np.pi
         Bidirection = WP2Input.M_data.tidal_bidirectional
-
+        
         # site features
         x = WP2Hydro.x
         y = WP2Hydro.y
@@ -183,19 +192,15 @@ class CallTidal:
         self.__V = WP2Hydro.V
         TI = WP2Hydro.TI
         SSH = WP2Hydro.wdepth
-        PLE = WP2Input.S_data.VelocityShear
         self.__prob = WP2Hydro.p
         
         self.__u_mean = np.nanmean(self.__U)
         self.__v_mean = np.nanmean(self.__V)
         self.n_seastate = len(self.__prob)
-
-#        Bathy = WP2Hydro.bathy[:,-1].reshape((ny,nx))
-#        Geophy = WP2Input.S_data.Geophysics[:,-1].reshape((ny,nx))
-
+        
         Bathy = points_to_grid(WP2Hydro.bathy, x, y).T
-        Geophy = points_to_grid(WP2Input.S_data.Geophysics, x, y).T
-
+        rated_power = WP2Input.M_data.RatedPowerDevice
+        
         # By default the MCT is not considered.
         # patch for the MCT case
         if not np.size(char_len) == 1:
@@ -203,19 +208,18 @@ class CallTidal:
                 # this flag is used to trigger the case of the MCT on/off.
                 self.__mct_flag = True
                 self.__mct_dist = char_len[1]
-
+                rated_power /=  2.
+        
         # conditional reconstruction of some input
         if len(TI) == 1:
-            TI = TI*np.ones((ny,nx,self.n_seastate))
-        PLE = PLE*np.ones((ny,nx,self.n_seastate))
+            TI = TI * np.ones((ny, nx, self.n_seastate))
+            
         if SSH.size == self.n_seastate:
-            SSH = np.multiply(np.ones((ny,nx,self.n_seastate)),SSH)
+            SSH = np.multiply(np.ones((ny, nx, self.n_seastate)), SSH)
+        
         self.__TI = TI
-        self.__PLE = PLE
         self.__SSH = SSH
-
-        del TI, PLE, SSH
-
+        
         self.__base_feature = {'Ct': Ct,
                                'Cp': Cp,
                                'Diam': Diam,
@@ -224,26 +228,39 @@ class CallTidal:
                                'HAS': HAS,
                                'OA': OA,
                                '2way': Bidirection,
-                               'Rating': WP2Input.M_data.RatedPowerDevice}
-
-        self.__data = {'U': None, 'V': None, 'TI': None,
-                            'PLE': None, 'SSH': None, 'bathy': Bathy,
-                            'geophy': Geophy, 'X': x, 'Y': y,
-                            'lease': WP2Input.S_data._LeaseArea, 'BR': WP2Input.S_data.BR}
-
+                               'Rating': rated_power}
+        
+        self.__data = {'U': None,
+                       'V': None,
+                       'TI': None,
+                       'SSH': None,
+                       'bathy': Bathy,
+                       'X': x,
+                       'Y': y,
+                       'lease': WP2Input.S_data._LeaseArea,
+                       'BR': WP2Input.S_data.BR,
+                       'beta': WP2Hydro.beta,
+                       'alpha': WP2Hydro.alpha}
+    
     def energy(self, coord):
         """
-        energy: method to assess the energy production of the array specified in the input argument.
-
+        method to assess the energy production of the array specified in the
+        input argument.
+        
         Args:
-             coord (numpy.ndarray): UTM coordinates (Easting, Northing) of the machines in the current layout
-
+             coord (numpy.ndarray):
+                 UTM coordinates (Easting, Northing) of the machines in the
+                 current layout
+             
         Returns:
-            ReducedOutput Object: contains the minimum set of information required by the WP2Output class.
+            ReducedOutput Object: contains the minimum set of information
+            required by the WP2Output class.
         """
+        
         n = self.n_seastate
         self.__set_coordinates(coord)
         (nb, fea, turb) = self.__set_turbine_and_features()
+        
         # initialise some support variables
         pow_perf_dev_state = np.zeros((nb, n))
         pow_perf_dev_state_ni = np.zeros((nb, n))
@@ -251,84 +268,129 @@ class CallTidal:
         pow_perf_array_no_int = np.zeros((n))
         resource_reduction_state = np.zeros((n))
         ti_dev_state = []
-
+        
+        U_dict = self.cfd_data['dfU'].to_dict()
+        V_dict = self.cfd_data['dfV'].to_dict()
+        TKE_dict = self.cfd_data['dfTKE'].to_dict()
+        
         # iterate over the different sea states
         for seastate_id in range(self.n_seastate):
+            
+            module_logger.debug("Evaluating sea-state {}".format(seastate_id))
+            
             self.__set_data(seastate_id)
-#            import pickle
-#            output = open('data.pkl', 'wb')
-#            pickle.dump({'data':self.__data, 'turbine':turb, 'feature':fea}, output)
-            # evaluate the array performance for the current array layout and sea state
+            
+            # evaluate the array performance for the current array layout and
+            # sea state
             (pow_perf_dev_no_int,
              pow_perf_dev,
              pow_perf_array_no_int[seastate_id],
              pow_perf_array[seastate_id],
-             resource_reduction_state[seastate_id],            
+             resource_reduction_state[seastate_id],
              ti) = wp2_tidal(self.__data,
                              turb,
                              fea,
                              self.cfd_data,
+                             U_dict,
+                             V_dict,
+                             TKE_dict,
                              debug=self.debug,
                              debug_plot=self.debug_plot)
+            
             ti_dev_state.append(ti)
-                        
+            
+            pow_perf_dev_sorted = sorted(pow_perf_dev.items())
+            pow_perf_dev_no_int_sorted = sorted(pow_perf_dev_no_int.items())
+            
             for ii in range(nb):
-                pow_perf_dev_state[ii,seastate_id] = sorted(pow_perf_dev.items())[ii][1]
-                pow_perf_dev_state_ni[ii,seastate_id] = sorted(pow_perf_dev_no_int.items())[ii][1]
                 
+                new_pow_perf_dev = pow_perf_dev_sorted[ii][1]
+                new_pow_perf_dev_ni = pow_perf_dev_no_int_sorted[ii][1]
+                
+                pow_perf_dev_state[ii, seastate_id] = new_pow_perf_dev
+                pow_perf_dev_state_ni[ii, seastate_id] = new_pow_perf_dev_ni
+        
         # for the case of the MCT, the number of turbine has been doubled
         # Now the values are mapped back to the original number of devices
         if self.__mct_flag:
             (pow_perf_dev_state,
              pow_perf_dev_state_ni,
              ti_dev_state,
-             turb, nb) = self.__map_mct_results(pow_perf_dev_state,
-                                                pow_perf_dev_state_ni,
-                                                ti_dev_state,
-                                                turb)
-
-        # adding the results to the class attributes
-        pow_perf_DEV = np.sum(pow_perf_dev_state*self.__prob, 1)
-
-        self.power_prod_perD_perS = pow_perf_dev_state*1.0e6  # the power is defined in W
-        self.power_prod_perD_perS_ni = pow_perf_dev_state_ni*1.0e6  # the power is defined in W
-        self.power_prod_perD = pow_perf_DEV*1.0e6  # the power is defined in W
-        self.power_prod_array = pow_perf_array*1.0e6  # the power is defined in W
-        self.power_prod_array_no_int = pow_perf_array_no_int*1.0e6  # the power is defined in W
+             turb, nb) = _map_mct_results(pow_perf_dev_state,
+                                          pow_perf_dev_state_ni,
+                                          ti_dev_state,
+                                          turb)
+        
+        self.power_prod_perD_perS = pow_perf_dev_state * 1.0e6
+        self.power_prod_perD_perS_ni = pow_perf_dev_state_ni * 1.0e6
+        self.power_prod_array = pow_perf_array * 1.0e6
+        self.power_prod_array_no_int = pow_perf_array_no_int * 1.0e6
         self.Nbodies = nb
         self.__turbines = turb
         self.TI = ti_dev_state
         self.Resource_reduction = np.nanmax(resource_reduction_state)
-
+        
         return self.__output_tidal()
-           
+    
     def __output_tidal(self):
         """
-        output_tidal: the method is used to map the tidal output to the WP2 object format.
-
+        output_tidal: the method is used to map the tidal output to the WP2
+        object format.
+        
         Returns:
             the methods return the object itself with mapped attributes
         """
+        
         machine = {}
+        n_digits = len(str(self.Nbodies))
+        
         for jj in range(self.Nbodies):
-            stro = 'turbine%d' %jj
+            
+            stro = 'turbine{:0{width}d}'.format(jj, width=n_digits)
             pos = self.__turbines[stro]['position']
-            strn = 'Device%d'%jj
-            machine.update({strn:(pos[0],pos[1])})
+            strn = 'Device{}'.format(jj)
+            machine[strn] = (pos[0], pos[1])
             
         year_hours = 365 * 24
         
-        aep_ar = np.sum(self.power_prod_array * self.__prob) * year_hours
+        pow_dev = np.sum(self.power_prod_perD_perS * self.__prob, 1)
+        aep_dev = year_hours * pow_dev
+        aep_ar = np.sum(aep_dev)
+        
         q_ar = np.sum(self.power_prod_array) / \
                                           np.sum(self.power_prod_array_no_int)
-        q_dev = self.power_prod_perD / \
-                        np.sum(self.power_prod_perD_perS_ni * self.__prob, 1)
-
+        q_dev = np.sum(self.power_prod_perD_perS, 1) / \
+                                        np.sum(self.power_prod_perD_perS_ni, 1)
+        
+        # ReducedOutput arguments:
+        #
+        # aep_ar (float)[Wh]: annual energy production of the whole array
+        # aep_dev (numpy.ndarray)[Wh]: annual energy production of each device
+        #   within the array
+        # q_dev (numpy.ndarray)[]: q-factor for each device, calculated as
+        #   energy produced by the device within the array over the energy
+        #   produced by the device without interaction
+        # q_ar (float)[]: q-factor for the array, calculated as energy
+        #   produced by the array over the energy produced by the device 
+        #   without interaction times the number of devices.
+        # pow_dev (numpy.ndarray)[W]: average power production of each
+        #   device within the array
+        # pow_dev_state (numpy.ndarray)[W]: average power production
+        #   of each device within the array for each sea state
+        # nb (float)[]: number of devices in the array
+        # pos (numpy.ndarray)[m]: UTM coordinates of each device in
+        #   the array. NOTE: the UTM coordinates do not consider different UTM
+        #   zones. The maping in the real UTM coordinates is done at a higher
+        #   level.
+        # res_red (float)[]: ratio between absorbed and incoming
+        #   energy.
+        # ti (float)[TIDAL ONLY]: turbulence intensity within the array
+        
         res = ReducedOutput(aep_ar,
-                            self.power_prod_perD * year_hours,
+                            aep_dev,
                             q_ar,
                             q_dev,
-                            self.power_prod_perD,
+                            pow_dev,
                             self.power_prod_perD_perS,
                             self.Nbodies,
                             machine,
@@ -336,125 +398,187 @@ class CallTidal:
                             self.TI)
         
         return res
-
+    
     def __set_turbine_and_features(self):
         """
-        __set_turbine_and_features: generates the required features and machine specification for each sea state.
+        Generates the required features and machine specification for each sea 
+        state.
+        
         Returns:
             (tuple):
-                number of bodies (int)[-]: number of bodies specified in the coord attribute
-                machine features (dict)[-]: repeat the __base_feature dictionary for each machine in the array
-                machine position (dict)[-]: contains the xy position ("position") of each machine ("turbineID") of the array.
+                number of bodies (int)[-]:
+                    number of bodies specified in the coord attribute
+                machine features (dict)[-]:
+                    repeat the __base_feature dictionary for each machine in 
+                    the array
+                machine position (dict)[-]:
+                    contains the xy position ("position") of each machine 
+                    ("turbineID") of the array.
         """
+        
         turbines = {}
         features = {}
-
+        
         if len(self.coord.shape) == 1:
             nb = 1
         else:
             nb = len(self.coord)
-
+        
+        n_digits = len(str(nb))
+        
         for ii in range(nb):
-            strn = 'turbine%d'%ii
+            strn = 'turbine{:0{width}d}'.format(ii, width=n_digits)
             posxy = self.coord[ii, :]
             pxyz = np.array([posxy[0], posxy[1], self.hub_height])
-            turbines.update({strn: {'position': pxyz}})
-            features.update({strn: self.__base_feature})
-
+            turbines[strn] =  {'position': pxyz}
+            
+            # Shallow copy is OK here as any mutables should be invariant
+            # Worth checking if such features can be modified in the future.
+            features[strn] = self.__base_feature.copy()
+        
         return (nb, features, turbines)
-
+    
     def __set_data(self, ss_id):
         """
-        __set_data: updates the __data dictionary for the specific sea state, specified in the input argument (index)
-
+        updates the __data dictionary for the specific sea state, specified in 
+        the input argument (index)
+        
         Args:
             ss_id (int)[-]: index of the current sea state.
-
-        Returns:
-
         """
         nx = len(self.__data['X'])
         ny = len(self.__data['Y'])
         self.__data['U'] = row_major(nx, ny, self.__U[:,:,ss_id])
         self.__data['V'] = row_major(nx, ny, self.__V[:,:,ss_id])
         self.__data['TI'] = row_major(nx, ny, self.__TI[:,:,ss_id])
-        self.__data['PLE'] = row_major(nx, ny, self.__PLE[:,:,ss_id])
         self.__data['SSH'] = row_major(nx, ny, self.__SSH[:,:,ss_id])
-
+    
     def __set_coordinates(self, coord):
         """
-        __set_coordinates: updates the coord argument for the specific array. If the __mct_flag is True the number of
-                        machine is doubled and the position of the machine is placed symmetrically wrt the original
-                        machine position.
+        Updates the coord argument for the specific array. If the 
+        __mct_flag is True the number of machine is doubled and the 
+        position of the machine is placed symmetrically wrt the original
+        machine position.
+        
         Args:
-            coord (numpy.ndarray): UTM coordinates (Easting, Northing) of the machines in the current layout
-
-        Returns:
-
+            coord (numpy.ndarray):
+                UTM coordinates (Easting, Northing) of the  machines in the 
+                current layout
+            
         """
+        
         if self.__mct_flag:
-            perp_dir = np.cross(np.array([0,0,1]),
-                                np.array([self.__u_mean, self.__v_mean, 0]))[:-1]
-            perp_versor = (perp_dir/np.linalg.norm(perp_dir))
-            self.coord = np.vstack((coord+perp_versor*self.__mct_dist,
-                                    coord-perp_versor*self.__mct_dist))
+            self.coord = _get_perp_positions(self.__base_feature['OA'],
+                                             self.__mct_dist,
+                                             coord)
         else:
             self.coord = coord
+        
+        return
 
-    def __map_mct_results(self, pow_perf_dev_state, pow_perf_dev_state_ni, ti_dev_state, turbines):
-        """
-        __map_mct_results: modifies the output generated by the tidal module, in order to account for the MCT case.
-        Args:
-            pow_perf_dev_state (numpy.ndarray)[W]: average power production of each device per each sea
-                                                    states WITH interaction
-            pow_perf_dev_state_ni (numpy.ndarray)[W]: average power production of each device  per each sea
-                                                        states WITHOUT interaction
-            ti_dev_state (list)[-]: list of dictionaries gathering the information of the turbulence
-                        intensity of each device for each sea states.
-                        The keys of each dictionary are:
-                            "turbineID": where the ID is an integer with base count 0 up to Nb-1
-            turbines (dict)[m]: dictionary gathering the information of the position of each machine in the array.
-                                    For each key a tuple of UTM coordinates (Easting, Northing) is assigned.
-                                    The dictionary keys are:
-                                        "machineID": where the ID is an integer with base count 0 up to Nb-1
 
-        Returns:
-            (tuple) (pow_perf_dev_state, pow_perf_dev_state_ni, ti_dev_state, turbines, nb)
-                same as input arguments but with machine coupled in pares (MCT)
-
-        """
-        (nb, n) = pow_perf_dev_state.shape
-        nb /= 2
-        ti_dev_state_n = []
-        turbines_n = {}
-        for kk in range(nb):  # sum the power produced by the two rotors of the MCT machines
-            pow_perf_dev_state[kk, ] = pow_perf_dev_state[kk, ] + pow_perf_dev_state[kk+nb, ]
-            pow_perf_dev_state_ni[kk, ] = pow_perf_dev_state_ni[kk, ] + pow_perf_dev_state_ni[kk+nb, ]
-            turbines_n.update({'turbine{}'.format(kk):{'position':
-                                0.5*(turbines['turbine{}'.format(kk)]['position']+
-                                turbines['turbine{}'.format(kk+nb)]['position'])}})
-        for ll in range(n):
-            local_dict = {}
-            for kk in range(nb):
-                strn = 'turbine{}'.format(kk)
-                local_dict.update({strn:
-                                   0.5*(ti_dev_state[ll]['turbine{}'.format(kk)]+
-                                   ti_dev_state[ll]['turbine{}'.format(kk+nb)])})
-            ti_dev_state_n.append(local_dict)
-
-        ti_dev_state = ti_dev_state_n
-        pow_perf_dev_state = np.delete(pow_perf_dev_state, np.s_[-nb:], 0)
-        pow_perf_dev_state_ni = np.delete(pow_perf_dev_state_ni, np.s_[-nb:], 0)
-        turbines = turbines_n
-
-        return (pow_perf_dev_state, pow_perf_dev_state_ni, ti_dev_state, turbines, nb)
+def _map_mct_results(pow_perf_dev_state,
+                     pow_perf_dev_state_ni,
+                     ti_dev_state,
+                     turbines):
+    """
+    modifies the output generated by the tidal module, in order to account
+    for the MCT case.
+    
+    Args:
+        pow_perf_dev_state (numpy.ndarray)[W]:
+            average power production of each device per each sea states 
+            WITH interaction
+        pow_perf_dev_state_ni (numpy.ndarray)[W]:
+            average power production of each device  per each sea states
+            WITHOUT interaction
+        ti_dev_state (list)[-]:
+            list of dictionaries gathering the information of the
+            turbulence intensity of each device for each sea states.
+        turbines (dict)[m]:
+            dictionary gathering the information of the position of each
+            machine in the array. For each key a tuple of UTM coordinates
+            (Easting, Northing) is assigned.
+    
+    Returns:
+        (tuple) (pow_perf_dev_state,
+                 pow_perf_dev_state_ni,
+                 ti_dev_state,
+                 turbines,
+                 nb)
+            
+            Same as input arguments but with machine coupled in pares (MCT)
+    
+    """
+    (nb, n) = pow_perf_dev_state.shape
+    nb /= 2
+    ti_dev_state_n = []
+    turbines_n = {}
+    
+    n_digits_old = len(str(nb * 2))
+    n_digits_new = len(str(nb))
+    
+    for kk in range(nb):
+        
+        left_turb_name = 'turbine{:0{width}d}'.format(kk,
+                                                      width=n_digits_old)
+        right_turb_name = 'turbine{:0{width}d}'.format(kk + nb,
+                                                       width=n_digits_old)
+        turb_name = 'turbine{:0{width}d}'.format(kk, width=n_digits_new)
+        
+        pow_perf_dev_state[kk, ] = (pow_perf_dev_state[kk, ] +
+                                              pow_perf_dev_state[kk+nb, ])
+        pow_perf_dev_state_ni[kk, ] = (pow_perf_dev_state_ni[kk, ] +
+                                         pow_perf_dev_state_ni[kk+nb, ])
+        
+        turb_pos = 0.5 * (turbines[left_turb_name]['position'] +
+                          turbines[right_turb_name]['position'])
+        
+        turbines_n[turb_name] = {'position': turb_pos}
+    
+    for ll in range(n):
+        
+        local_dict = {}
+        
+        for kk in range(nb):
+            
+            left_turb_name = 'turbine{:0{width}d}'.format(
+                                                    kk,
+                                                    width=n_digits_old)
+            right_turb_name = 'turbine{:0{width}d}'.format(
+                                                    kk + nb,
+                                                    width=n_digits_old)
+            turb_name = 'turbine{:0{width}d}'.format(kk,
+                                                     width=n_digits_new)
+            
+            turb_ti = 0.5 * (ti_dev_state[ll][left_turb_name] +
+                             ti_dev_state[ll][right_turb_name])
+            
+            local_dict[turb_name] = turb_ti
+        
+        ti_dev_state_n.append(local_dict)
+    
+    ti_dev_state = ti_dev_state_n
+    pow_perf_dev_state = np.delete(pow_perf_dev_state,
+                                   np.s_[-nb:],
+                                   0)
+    pow_perf_dev_state_ni = np.delete(pow_perf_dev_state_ni,
+                                      np.s_[-nb:],
+                                      0)
+    turbines = turbines_n
+    
+    return (pow_perf_dev_state,
+            pow_perf_dev_state_ni,
+            ti_dev_state,
+            turbines,
+            nb)
 
 
 # Utilities
 def row_major(nx, ny, q):
     """
     row_major: Converts the matrix q to row major if needed
-
+    
     Args:
       - nx: x axis dimension, (int)
       - ny: y axis dimension, (int)
@@ -471,7 +595,7 @@ def points_to_grid(points, xs, ys, fill_value=np.nan):
     
     #    The original reshaping did not take into account the posibility of
     #    non-rectangular domains.
-
+    
     y_idx = get_indices(points[:, 1], ys)
     x_idx = get_indices(points[:, 0], xs)
     
@@ -488,10 +612,23 @@ def get_indices(search, base):
     index = np.argsort(base)
     sorted_base = base[index]
     sorted_search = np.searchsorted(sorted_base, search)
-
+    
     searchindex = np.take(index, sorted_search, mode="clip")
     mask = base[searchindex] != search
     
     result = np.ma.array(searchindex, mask=mask)
         
     return result
+
+
+def _get_perp_positions(main_bearing, separation_len, centre_coord):
+    
+    perp_bearing = (main_bearing + 90) % 360
+    perp_angle = bearing_to_radians(perp_bearing)
+    perp_vector = np.array([np.cos(perp_angle), np.sin(perp_angle)])
+    separation_vector = perp_vector * separation_len
+    
+    turb_coords = np.vstack((centre_coord + separation_vector,
+                             centre_coord - separation_vector))
+    
+    return turb_coords

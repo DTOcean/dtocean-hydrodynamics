@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 
 #    Copyright (C) 2016 Thomas Roc
-#    Copyright (C) 2017-2018 Mathew Topper
+#    Copyright (C) 2017-2019 Mathew Topper
 #
 #    This program is free software: you can redistribute it and/or modify
 #    it under the terms of the GNU General Public License as published by
@@ -23,11 +23,13 @@ import logging
 
 import numpy as np
 import matplotlib.pyplot as plt
+from numpy.linalg import norm
 from descartes import PolygonPatch
 
 # Local import
-from dtocean_tidal.submodel.ParametricWake import WakeShape, Wake
-from dtocean_tidal.modules.blockage_ratio import blockage_ratio
+from .models import DominantWake, get_wake_coefficients
+from ..ParametricWake import WakeShape, Wake
+from ...modules.blockage_ratio import blockage_ratio
 
 # Start logging
 module_logger = logging.getLogger(__name__)
@@ -36,224 +38,152 @@ module_logger = logging.getLogger(__name__)
 class WakeInteraction:
     """
     -WakeInteraction class-
-
+    
     Computes wake interaction and their impacts of flow field
-
-    Args:
-      hydro (dtocean_tidal.main.Hydro): Hydro class/object
-      array (dtocean_tidal.main.Array): Array class/object
-
-    Kwargs:
-      debug (bool): debug flag
-      debug_plot (bool): debug plot flag
-
-    Attributes:
-      indMat (numpy.array): matrix of induction factors, float, (nb. device, nb. device)
-      tiMat (numpy.array): matrix of turbulence intensity, float, (nb. device, nb. device)
-      induction (numpy.array): turbines' resultant induction factors, float, (nb. device)
-      inducedTI (numpy.array): turbines' resultant turbulence intensities, float, (nb. device)
-      wake (dict): collection of dtocean_tidal.submodel.ParametricWake.Wake class objects for each device
-      wakeShape (dict):  collection of dtocean_tidal.submodel.ParametricWake.WakeShape class objects for each device
-
+    
     """
-
-    def __init__(self, hydro, array, cfd_data, debug=False, debug_plot=False):
-
+    
+    def __init__(self, hydro,
+                       array,
+                       cfd_data,
+                       U_dict,
+                       V_dict,
+                       TKE_dict,
+                       criterior=1e-8,
+                       max_loop=50,
+                       debug=False,
+                       debug_plot=False):
+        
         self._turbine_count = len(array.positions.keys())
         self._debug = debug
         self._debug_plot = debug_plot
         self._hydro = hydro
         self._bounding_box = hydro.bounding_box
         self._array = array
-        self.indMat = np.ones((self._turbine_count, self._turbine_count))
-        self.tkeMat = np.zeros((self._turbine_count, self._turbine_count))
-        self.induction = np.zeros(self._turbine_count)
-        self.inducedTKE = np.zeros(self._turbine_count)
-        self.wake = {}
-        self.wakeShape = {}
-        # compute global blockage ratio
-        rbr = blockage_ratio(hydro, array, debug=debug)
-        self.blockage = rbr * hydro.BR
-        # Load the dataframe.
         self._df = cfd_data
-
+        self._U_dict = U_dict
+        self._V_dict = V_dict
+        self._TKE_dict = TKE_dict
+        
+        nan_array = np.empty(self._turbine_count)
+        nan_array[:] = np.nan
+        
+        self.coefficient = np.ones(self._turbine_count)
+        self.inducedTKE = nan_array
+        self._wake = {}
+        self._wakeShape = {}
+        
+        rbr = blockage_ratio(hydro, array, debug=debug)
+        self._blockage = rbr * hydro.BR
+        
+        self._criterior = criterior
+        self._max_loop = max_loop
+        
         return
-
-    def solv_induction(self, speed_superimpo='renkema',
-                             tke_superimpo='max',
-                             debug=False):
+    
+    def solve_flow(self, debug=False):
+        
         """
-        Compute the induction factor at each turbine hub
-        based on each others interactions
-
+        Find velocities and TIs at each turbine by iterating the velocity and
+        TI coefficients based on superposition of wakes
+        
         Kwargs:
-          speed_superimpo (str): wake speed superimposition method
-                                 it can be 'linear', 'geometric', 'rss', 'linrss', 'max', 'mean', 'renkema', 'prod', 'geosum'
-          tke_superimpo (str): wake tke superimposition method
-                                 it can be 'max', 'min', 'mean', 'sum', 'prod', 'rss'
+          criterior (float): convergence criterior
+          max_loop (int): maximum number of loops
           debug (bool): debug flag
-          debug_plot (bool): debug plot flag
         """
-        # Compute velocities at each turbine hub position
+        
         debug = debug or self._debug
-
-        # Initial speed and T.I. into two big matrix
+        
+        iniSpeed = np.empty(self._turbine_count)
+        iniVel = np.empty((2, self._turbine_count))
+        iniTI = np.empty(self._turbine_count)
+        iniTKE = np.empty(self._turbine_count)
+        
+        n_digits = len(str(self._turbine_count))
+        
         for i in range(self._turbine_count):
-            p = self._array.velHub['turbine' + str(i)]
-            speed = np.sqrt(p[0]**2.0 + p[1]**2.0)
-            u = np.abs(p[0])
-            v = np.abs(p[1])
-            tke = 1.5 * (self._array.features['turbine' + str(i)]['TIH'] * speed)**2.0
-            if i == 0:
-                iniSpeed = speed
-                iniTKE = tke
-            else:
-                iniSpeed = np.hstack((iniSpeed, speed))
-                iniTKE = np.hstack((iniTKE, tke))
-
-        # initialization Convergence criteria and other matrices
-        newVel = np.zeros((2, self._turbine_count))
-        newTKE = np.zeros(self._turbine_count)
-        self.tkeMat[:] = np.resize(iniTKE, (self._turbine_count, self._turbine_count))
-
+            
+            turb = 'turbine{:0{width}d}'.format(i, width=n_digits)
+            
+            p = self._array.velHub[turb]
+            
+            iniSpeed[i] = np.sqrt(p[0]**2.0 + p[1]**2.0)
+            iniVel[:, i] = self._array.velHub[turb][:]
+            iniTI[i] = self._array.features[turb]['TIH']
+            iniTKE[i] = _get_tke(iniTI[i], iniSpeed[i])
+            
+            self._wake[turb] = Wake(self._df,
+                                    self._U_dict,
+                                    self._V_dict,
+                                    self._TKE_dict,
+                                    self._array.features[turb],
+                                    self._blockage,
+                                    debug=self._debug)
+        
         if debug:
-           module_logger.info("Querying parametric wake model...")
-           start = time.time()
-        for i in range(self._turbine_count):
-            turb = 'turbine' + str(i)
-            self.wake[turb] = Wake(self._df,
-                                   self._array.features[turb],
-                                   self.blockage,
-                                   debug=self._debug)
-
-            for turbNb in self._array.distances[turb].keys():
-                self.indMat[i, int(turbNb)], self.tkeMat[i, int(turbNb)] = \
-                self.wake[turb].ind_fac(self._array.distances[turb][turbNb][:],
-                                        self._array.velHub[turb][:],
-                                        self._array.features[turb]['TIH'],
-                                        debug=self._debug)
+            module_logger.info("Querying parametric wake model...")
+            start = time.time()
+        
+        ind_err = np.inf
+        old_coefficient = np.ones(self._turbine_count)
+        newVel = iniVel.copy()
+        newTI = iniTI.copy()
+        newTKE = iniTKE.copy()
+        loop_counter = 0
+        
+        while (ind_err > self._criterior and
+               loop_counter < self._max_loop):
+            
+            (newVel,
+             newSpeed,
+             newTI,
+             newTKE) = _solve_flow(self._turbine_count,
+                                   self._array.distances,
+                                   self._wake,
+                                   newVel,
+                                   newTI,
+                                   newTKE,
+                                   iniVel,
+                                   iniTKE,
+                                   debug)
+            
+            new_coefficient = newSpeed / iniSpeed
+            ind_err = norm(abs(old_coefficient - new_coefficient))
+            old_coefficient = new_coefficient
+            
+            loop_counter += 1
+        
         if debug:
             end = time.time()
-            module_logger.info("...done after " + str(end - start) + " seconds.")
-        # Cumulative induction: Sigma (1-U/Uinf)
-        # TODO: perform validation against CFD to determine which method to choose
-        speed_superimpo = speed_superimpo.lower()
-        if not speed_superimpo in ['prod', 'linear', 'geometric', 'rss', 'linrss', 'max', 'renkema', 'geosum', 'mean']:
-            module_logger.warning("Wrong superimposition method for momentum. Default value used")
-            speed_superimpo = 'renkema'  # default method
-        # ## Wake Interaction methods for intersection wakes cf. Palm 2011
-        if speed_superimpo == 'linear':
-            # Wake Inter. Method 1: linear superposition
-            self.induction = np.sum(self.indMat,0)
-            # filtering induction = 1.0 for summation
-            indMat = self.indMat[:]
-            indMat[self.indMat == 1.0] = 0.0
-            # summation
-            self.induction = np.sum(indMat, 0)
-            # filtering back
-            self.induction[np.where(self.induction == 0.0)] = 1.0
-        elif speed_superimpo == 'geometric':
-            # Wake Inter. Method 2: geometric superposition
-            ratio = 1.0 - self.indMat
-            # Filtering value = 0.0
-            ratio[ratio == 0.0] = 1.0
-            self.induction = 1.0 - np.prod(ratio,0)
-            # filtering back
-            self.induction[np.where(self.induction == 0.0)] = 1.0
-        elif speed_superimpo == 'rss':
-            # Wake Inter. Method 3: RSS of velocity deficits
-            # filtering induction = 1.0 for summation
-            indMat = self.indMat[:]
-            indMat[self.indMat == 1.0] = 0.0
-            # summation
-            self.induction = np.sqrt(np.sum(indMat**2.0, 0))
-            # filtering back
-            self.induction[np.where(self.induction == 0.0)] = 1.0
-        elif speed_superimpo == 'linrss':
-            # Wake Inter. Method 4: average of RSS & linear superposition
-            # filtering induction = 1.0 for summation
-            indMat = self.indMat[:]
-            indMat[self.indMat == 1.0] = 0.0
-            # summation
-            urss = np.sqrt(np.sum(indMat**2.0,0))
-            uls = np.sum(indMat,0)
-            self.induction = (urss + uls) / 2.0
-            # filtering back
-            self.induction[np.where(self.induction == 0.0)] = 1.0
-        elif speed_superimpo == 'max':
-            # Wake Inter. Method 5: Maximum wake deficit
-            self.induction = self.indMat.max(axis=0)
-        # ## Wake Superposition method cf. Renkema 2007
-        elif speed_superimpo == 'renkema':
-            # Wake Inter. Method 3: RSS of velocity deficits
-            c = 1.0 - self.indMat
-            self.induction = 1.0 - np.sqrt(np.sum(c**2.0, 0))
-        # ## Wake Interaction methods for wake superimposition Thomas Roc
-        elif speed_superimpo == 'prod':
-            # Wake Inter. Method 1: simple multiplication of induction
-            self.induction = np.prod(self.indMat, 0)
-        elif speed_superimpo == 'geosum':
-            # Wake Inter. Method 2: geometric superposition type
-            ratio = 1.0 - self.indMat
-            self.induction = 1.0 - np.sum(ratio, 0)
-        elif speed_superimpo == 'mean':
-            # Wake Inter. Method 6: Mean wake deficit# filtering induction = 1.0 for summation
-            indMat = self.indMat[:]
-            indMat[indMat == 1.0] = np.nan
-            # summation
-            self.induction = np.nanmean(self.indMat, axis=0)
-            # filtering back
-            self.induction[np.where(np.isnan(self.induction))] = 1.0
-
-        tke_superimpo = tke_superimpo.lower()
-        if not tke_superimpo in ['prod', 'min', 'rss', 'max', 'sum', 'mean']:
-            module_logger.warning("Wrong superimposition method for tke. Default value used")
-            tke_superimpo = 'max'  # default method
-        # ##Wake Interaction methods for TKE superimposition Thomas Roc
-        if tke_superimpo == 'max':
-            # Wake Inter. Method 1: simple maximum of TKE
-            self.inducedTKE = np.nanmax(self.tkeMat, axis=0)
-        elif tke_superimpo == 'min':
-            # Wake Inter. Method 2: simple average of TKE
-            self.inducedTKE = np.nanmin(self.tkeMat, axis=0)
-        elif tke_superimpo == 'mean':
-            # Wake Inter. Method 2: simple average of TKE
-            self.inducedTKE = np.nanmean(self.tkeMat, axis=0)
-        elif tke_superimpo == 'sum':
-            # Wake Inter. Method 3: simple sum of TKE
-            self.inducedTKE = np.nansum(self.tkeMat, axis=0)
-            self.inducedTKE[np.where(self.inducedTKE == 0.0)] = np.nan  # empty slice case
-        elif tke_superimpo == 'prod':
-            # Wake Inter. Method 4: simple prod of TKE
-            self.inducedTKE = 1.0 - np.nanprod(1.0 + self.tkeMat, axis=0)
-            self.inducedTKE[np.where(self.inducedTKE == 1.0)] = np.nan  # empty slice case
-        elif tke_superimpo == 'rss':
-            # Wake Inter. Method 3: RSS of tke
-            self.inducedTKE = np.sqrt(np.nansum(self.tkeMat**2.0, 0))
-            self.inducedTKE[np.where(self.inducedTKE == 0.0)] = np.nan  # empty slice case
-
-        # iteratively compute and re-assign velocity and T.I. at hub
+            module_logger.info("...done after " + str(end - start) +
+                                                               " seconds.")
+        
+        if ind_err <= self._criterior:
+            
+            log_msg = ("Device interaction solver converged in {} "
+                       "iteration(s)").format(loop_counter)
+            module_logger.debug(log_msg)
+        
+        else:
+            
+            log_msg = ("Device interaction solver failed to converge after "
+                       "the maximum {} iterations. Residual at last "
+                       "interation was {}").format(self._max_loop, ind_err)
+            module_logger.warning(log_msg)
+        
         for i in range(self._turbine_count):
-            turb = 'turbine' + str(i)
-            newVel[:,i] = self._array.velHub[turb][:] * self.induction[i]
+            
+            turb = 'turbine{:0{width}d}'.format(i, width=n_digits)
+            
             self._array.velHub[turb][:] = newVel[:, i]
-            speed = np.sqrt(newVel[0, i]**2.0 + newVel[1, i]**2.0)
-            if not np.isnan(self.inducedTKE[i]):
-                newTKE[i] = self.inducedTKE[i]
-            else:
-                newTKE[i] = 1.5 * (self._array.features[turb]['TIH'] * speed)**2.0
-            self._array.features[turb]['TIH'] = np.sqrt((2.0/3.0) * newTKE[i]) / speed
-
-        # Recompute induction factor based on result speed / initial speed
-        for i in range(self._turbine_count):
-            p = self._array.velHub['turbine' + str(i)]
-            speed = np.sqrt(p[0]**2.0 + p[1]**2.0)
-            if i == 0:
-                resSpeed = speed
-            else:
-                resSpeed = np.hstack((resSpeed, speed))
-        self.induction = resSpeed / iniSpeed
-         
+            self._array.features[turb]['TIH'] = newTI[i]
+        
+        self.coefficient = newSpeed / iniSpeed
+        self.inducedTKE = newTKE
+        
+        return
+    
     # Simple formula for wake expansion while waiting for further development...
     # see dtocean_tidal/submodel/ParametricWake/wakeClass.py
     # This feature is not needed for DTOcean as is.
@@ -268,27 +198,109 @@ class WakeInteraction:
         """ 
         debug = self._debug or debug 
         debug_plot = debug_plot or self._debug_plot
-
+        
+        n_digits = len(str(self._turbine_count))
+        
         # Compute wake shape
         for i in range(self._turbine_count):
-            turb = 'turbine' + str(i)        
-            self.wakeShape[turb] = WakeShape(self._array.velHub[turb][:],
-                                             self._array.streamlines[turb][:],
-                                             self.wake[turb],
-                                             self._bounding_box,
-                                             debug=debug)#,
+            turb = 'turbine{:0{width}d}'.format(i, width=n_digits)
+            self._wakeShape[turb] = WakeShape(self._array.velHub[turb][:],
+                                              self._array.streamlines[turb][:],
+                                              self._wake[turb],
+                                              self._bounding_box,
+                                              debug=debug)#,
                                              #debug_plot=debug_plot)
+        
         if debug_plot:
+            
             fig = plt.figure(figsize=(18,10))
             ax = fig.add_subplot(111)
+            
             for i in range(self._turbine_count):
-                turb = 'turbine' + str(i)
-                x, y = self.wakeShape[turb].polygon.exterior.xy
-                patch = PolygonPatch(self.wakeShape[turb].polygon,
+                turb = 'turbine{:0{width}d}'.format(i, width=n_digits)
+                x, y = self._wakeShape[turb].polygon.exterior.xy
+                patch = PolygonPatch(self._wakeShape[turb].polygon,
                         alpha=0.1, zorder=2)
                 ax.plot(x, y, color='#999999', alpha=0.1, zorder=1)
                 ax.add_patch(patch)
                 ax.set_aspect('equal')
                 ax.set_ylabel('Distance (m)', fontsize = 12)
                 ax.set_xlabel('Distance (m)', fontsize = 12)
+            
             plt.show()
+        
+        return
+
+
+def _solve_flow(turbine_count,
+                turb_distances,
+                turb_wakes,
+                turb_velocity,
+                turb_TI,
+                turb_TKE,
+                base_velocity,
+                base_TKE,
+                debug=False):
+    
+    new_vel = np.empty((2, turbine_count))
+    new_TKE = np.empty(turbine_count)
+    new_TI = np.empty(turbine_count)
+    new_speed = np.empty(turbine_count)
+    wake_mat = np.empty((turbine_count, turbine_count))
+    tke_mat = np.empty((turbine_count, turbine_count))
+    
+    n_digits = len(str(turbine_count))
+    
+    for i in range(turbine_count):
+        
+        turb = 'turbine{:0{width}d}'.format(i, width=n_digits)
+        
+        for j in range(turbine_count):
+            
+            if j in turb_distances[turb].keys():
+                
+                (wake_mat[i, j],
+                 tke_mat[i, j]) = turb_wakes[turb].get_velocity_TKE(
+                                                 turb_distances[turb][j][:],
+                                                 turb_velocity[:, i],
+                                                 turb_TI[i],
+                                                 debug=debug)
+            
+            else:
+                
+                wake_mat[i, j] = np.sqrt(turb_velocity[0, i] ** 2 +
+                                                     turb_velocity[1, i] ** 2)
+                tke_mat[i, j] = np.nan
+    
+    superposition_model = DominantWake(turb_velocity,
+                                       wake_mat)
+    coefficients = superposition_model.coefficients
+    
+    TKE_coeff_mat = get_wake_coefficients(turb_TKE,
+                                          tke_mat)
+    TKE_coeff = superposition_model.get_dominant(TKE_coeff_mat)
+    new_TKE = TKE_coeff * base_TKE
+    
+    # Replace any nan values with TKE of turbines
+    if np.isnan(new_TKE).any():
+        new_TKE = np.where(np.isnan(new_TKE), turb_TKE, new_TKE)
+    
+    for i in range(turbine_count):
+        
+        new_vel[:,i] = base_velocity[:, i] * coefficients[i]
+        new_speed[i] = np.sqrt(new_vel[0, i] ** 2 + new_vel[1, i] ** 2)
+        new_TI[i] = _get_ti(new_TKE[i], new_speed[i])
+    
+    return new_vel, new_speed, new_TI, new_TKE
+
+
+def _get_tke(I, U):
+    
+    return 1.5 * (I * U) ** 2.0
+
+
+def _get_ti(k, U):
+    
+    two_thirds = 2. / 3
+    
+    return np.sqrt(two_thirds * k) / U

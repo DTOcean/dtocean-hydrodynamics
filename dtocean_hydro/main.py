@@ -115,7 +115,9 @@ class WP2:
                        Cfit=None,
                        Kfit=None,
                        pickup=False,
-                       debug=False):
+                       debug=False,
+                       search_class=None,
+                       optim_method=1):
         
         # The input object is passed for use in the optimisation loop method
         self.iInput = WP2input
@@ -127,7 +129,14 @@ class WP2:
                                 WP2input.S_data.mainAngle,
                                 WP2input.S_data.NogoAreas_bathymetry)
         self._debug = debug
-
+        
+        if search_class is None:
+            self._search_class = optimiser.SearchOptimum
+        else:
+            self._search_class = search_class
+        
+        self._optim_method = optim_method
+        
         if not WP2input.internalOptim:
             module_logger.info("The user provided an external map of the "
                                "hydrodynamic interaction. No internal model "
@@ -136,6 +145,7 @@ class WP2:
             bathy = WP2input.S_data.Bathymetry
 
             if WP2input.M_data.tidalFlag:
+                
                 devType = 'T'
                 V = WP2input.S_data.MeteoceanConditions['V']
                 U = WP2input.S_data.MeteoceanConditions['U']
@@ -144,8 +154,25 @@ class WP2:
                 x = WP2input.S_data.MeteoceanConditions['x']
                 y = WP2input.S_data.MeteoceanConditions['y']
                 SSH = WP2input.S_data.MeteoceanConditions['SSH']
-                self.iHydro = Hydro_pkg(devType, V, U, p, TI, x, y, SSH, bathy)
-
+                beta = WP2input.S_data.Beta
+                alpha = WP2input.S_data.Alpha
+                
+                # Defaults
+                if beta is None: beta = 0.4
+                if alpha is None: alpha = 7.
+                
+                self.iHydro = Hydro_pkg(devType,
+                                        V,
+                                        U,
+                                        p,
+                                        TI,
+                                        x,
+                                        y,
+                                        SSH,
+                                        bathy,
+                                        beta,
+                                        alpha)
+            
             else:
                 devType = 'W'
                 freqs = read_wec_sol.read_freq(
@@ -297,7 +324,7 @@ class WP2:
         else:
             raise ValueError("No feasible configurations found in the given "
                              "result table")
-
+    
     def optimisationLoop(self):
         """
         optimisationLoop: the method calls iteratively either the tidal or wave
@@ -342,125 +369,158 @@ class WP2:
                '\t --> point inside the lease area\n'
                '\t --> point outside the user-given nogo-zones\n'
                '\t --> point below the considered water level datum.')
-
+        
         if not self.iInput.internalOptim:
             return self.optimiseExternalTab()
-
-        stopRun = False
+        
         Opt = self.iInput.M_data.UserArray['Option']
         Value = self.iInput.M_data.UserArray['Value']
-
+        
+        # initialise either the tidal or wave object
+        hyd_obj = self._get_hyd_obj()
+        
+        if Opt == 2:
+            self.iArray.coord = Value
+            self.iArray.checkMinDist()
+        else:
+            opt_obj = self._get_optim_obj(hyd_obj)
+            opt_obj.eval_optimal_layout()
+        
+        # Regenerate the optimal array layout
+        module_logger.info('Finishing the WP2 task: Evaluation of the '
+                           'final array layout interaction')
+        
+        mindist_raise = False
+        if Opt == 2: mindist_raise = True
+        
+        inside = self.iArray.checkout(
+                                    nogo_list=self.iInput.S_data.NogoAreas,
+                                    mindist_raise=mindist_raise)
+        
+        if self._debug: self.iArray.show(inside)
+        
+        if not np.any(inside):
+            
+            msgStr = ("All devices have been excluded. Check lease area "
+                      "boundary, depth and distance constraints, and "
+                      "no-go areas")
+            module_logger.error(msgStr)
+            
+            return -1
+        
+        if Opt == 2 and not inside.all():
+            
+            exc_strings = ["({}, {})".format(xy[0], xy[1])
+                                    for xy in self.iArray.coord[~inside]]
+            exc_string = ", ".join(exc_strings)
+            
+            err_msg = ("Devices at positions {} have been excluded. Check "
+                       "lease area boundary, depth constraints, and no-go "
+                       "areas").format(exc_string)
+            raise RuntimeError(err_msg)
+        
+        if not self.iInput.M_data.tidalFlag:
+            
+            bem_depth = self.iWEC.water_depth
+            site_depth = self.iWEC.depth
+            layout = self.iArray.coord[inside]
+            SSH = np.nanmean(self.iInput.S_data.MeteoceanConditions['SSH'])
+                
+            dev_depth = get_device_depths(self.iInput.S_data.Bathymetry,
+                                          layout)
+            device_average_depth = -np.mean(dev_depth) + SSH
+                                          
+            if (np.any(np.logical_or(bem_depth <= site_depth * 0.99,
+                                     bem_depth >= site_depth * 1.01)) or 
+                np.any(np.logical_or(bem_depth <=
+                                             device_average_depth * 0.99,
+                                     bem_depth >=
+                                             device_average_depth * 1.01))
+                ):
+                
+                module_logger.warning(warning_str.format(
+                                                    bem_depth,
+                                                    site_depth,
+                                                    device_average_depth,
+                                                    site_depth))
+                
+            power_matrix_dims = {
+                   "te": self.iInput.S_data.MeteoceanConditions['Te'],
+                   "hm0": self.iInput.S_data.MeteoceanConditions['Hs'],
+                   "dirs":  self.iInput.S_data.MeteoceanConditions['B']}
+            
+        else:
+            
+            power_matrix_dims = None
+            
+        # solve the hydrodynamic interaction of the array
+        hyd_res = hyd_obj.energy(self.iArray.coord[inside])
+        norm_dir = (self.iInput.S_data.Main_Direction / 
+                        np.linalg.norm(self.iInput.S_data.Main_Direction))
+        
+        result = WP2output(hyd_res.AEP_array,
+                           hyd_res.power_prod_perD_perS,
+                           hyd_res.AEP_perD,
+                           hyd_res.power_prod_perD,
+                           hyd_res.Device_Position,
+                           hyd_res.Nbodies,
+                           hyd_res.Resource_reduction,
+                           hyd_res.Device_Model,
+                           hyd_res.q_perD,
+                           hyd_res.q_array,
+                           norm_dir,
+                           hyd_res.TI,
+                           hyd_res.power_matrix_machine,
+                           power_matrix_dims)
+        
+        result.remap_res(self.iInput.S_data.electrical_connection_point)
+        result.logRes()
+        
+        return result
+    
+    def _get_hyd_obj(self):
+        
         # initialise either the tidal or wave object
         if self.iInput.M_data.tidalFlag:
+            
             hyd_obj = CallTidal(self.iHydro,
                                 self.iInput,
                                 self.cfd_data,
                                 debug=self._debug,
                                 debug_plot=self._debug)
+        
         else:
+            
             hyd_obj = MultiBody(self.iHydroMB,
                                 self.iWEC,
                                 cylamplitude=True)
-
-        if Opt == 2:
-            self.iArray.coord = Value
-            self.iArray.checkMinDist()
-        else:
-            opt_obj = optimiser.SearchOptimum(hyd_obj,
-                                              self.iArray,
-                                              Value, Opt,
-                                              self.iInput.M_data.MaxNumDevices,
-                                              self.iInput.M_data.OptThreshold,
-                                              self.iInput.S_data.NogoAreas,
-                                              debug=False)
-
-            stat = opt_obj.eval_optimal_layout(opt_method_id=1)
-            if stat < 0:
-                stopRun = True
-            # regenerate the optimal array layout
-
-        if not stopRun:
-            
-            module_logger.info('Finishing the WP2 task: Evaluation of the '
-                               'final array layout interaction')
-            inside = self.iArray.checkout(
-                                        nogo_list=self.iInput.S_data.NogoAreas)
-            if self._debug: self.iArray.show(inside)
-            if not np.any(inside):
-                return -1
-            
-            if Opt == 2 and not inside.all():
-                exc_strings = ["({}, {})".format(xy[0], xy[1])
-                                        for xy in self.iArray.coord[~inside]]
-                exc_string = ", ".join(exc_strings)
-                infoStr = ("Devices at positions {} have been excluded. "
-                           "Check lease area boundary and no-go "
-                           "areas").format(exc_string)
-                module_logger.info(infoStr)
-
-            if not self.iInput.M_data.tidalFlag:
-                
-                bem_depth = self.iWEC.water_depth
-                site_depth = self.iWEC.depth
-                layout = self.iArray.coord[inside]
-                SSH = np.nanmean(self.iInput.S_data.MeteoceanConditions['SSH'])
-                    
-                dev_depth = get_device_depths(self.iInput.S_data.Bathymetry,
-                                              layout)
-                device_average_depth = -np.mean(dev_depth) + SSH
-                                              
-                if (np.any(np.logical_or(bem_depth <= site_depth * 0.99,
-                                         bem_depth >= site_depth * 1.01)) or 
-                    np.any(np.logical_or(bem_depth <=
-                                                 device_average_depth * 0.99,
-                                         bem_depth >=
-                                                 device_average_depth * 1.01))
-                    ):
-                    
-                    module_logger.warning(warning_str.format(
-                                                        bem_depth,
-                                                        site_depth,
-                                                        device_average_depth,
-                                                        site_depth))
-                    
-                power_matrix_dims = {
-                       "te": self.iInput.S_data.MeteoceanConditions['Te'],
-                       "hm0": self.iInput.S_data.MeteoceanConditions['Hs'],
-                       "dirs":  self.iInput.S_data.MeteoceanConditions['B']}
-                
-            else:
-                
-                power_matrix_dims = None
-                
-            # solve the hydrodynamic interaction of the array
-            hyd_res = hyd_obj.energy(self.iArray.coord[inside])
-            norm_dir = (self.iInput.S_data.Main_Direction / 
-                            np.linalg.norm(self.iInput.S_data.Main_Direction))
-
-            result = WP2output(hyd_res.AEP_array,
-                               hyd_res.power_prod_perD_perS,
-                               hyd_res.AEP_perD,
-                               hyd_res.power_prod_perD,
-                               hyd_res.Device_Position,
-                               hyd_res.Nbodies,
-                               hyd_res.Resource_reduction,
-                               hyd_res.Device_Model,
-                               hyd_res.q_perD,
-                               hyd_res.q_array,
-                               norm_dir,
-                               hyd_res.TI,
-                               hyd_res.power_matrix_machine,
-                               power_matrix_dims)
-
-            result.remap_res(self.iInput.S_data.electrical_connection_point)
-            result.logRes()
-            
-        else:
-            
-            result = -1
-            
-        return result
+        
+        return hyd_obj
     
+    def _get_optim_obj(self, hyd_obj):
+        
+        if self._optim_method == 1:
+            opt_func = optimiser.method_cma_es
+        elif self._optim_method == 2:
+            opt_func = optimiser.method_monte_carlo
+        elif self._optim_method == 3:
+            opt_func = optimiser.method_brutal_force
+        else:
+            raise IOError("The specified optimisation method ID is out of "
+                          "range.")
+        
+        opt_obj = self._search_class(opt_func,
+                                     hyd_obj,
+                                     self.iArray,
+                                     self.iInput.M_data.UserArray['Value'],
+                                     self.iInput.M_data.UserArray['Option'],
+                                     self.iInput.M_data.MaxNumDevices,
+                                     self.iInput.M_data.OptThreshold,
+                                     self.iInput.S_data.NogoAreas,
+                                     debug=False)
+        
+        return opt_obj
+
 
 def get_device_depths(bathymetry, layout):
     

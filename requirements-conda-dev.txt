@@ -1,5 +1,5 @@
 # REQUIREMENTS FOR CONDA INSTALLATION (EXCLUDING DTOCEAN PACKAGES)
-cma
+cma ==2.6.0
 descartes
 h5py
 matplotlib <2
@@ -7,6 +7,7 @@ numpy
 pandas
 pyopengl
 pyqt <5
+pyyaml
 scikit-learn
 scipy
 setuptools

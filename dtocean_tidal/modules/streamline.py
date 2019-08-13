@@ -25,9 +25,9 @@
 import numpy as np
 import matplotlib.pyplot as plt
 import matplotlib as mpl
+from shapely.geometry import Point
 
-#Local Import
-from dtocean_tidal.utils.interpolation import interp_at_point
+
 
 class Streamlines:
     """
@@ -36,155 +36,172 @@ class Streamlines:
     grid points. The mesh spacing is assumed to be uniform
     in each dimension.
     U and V - 2D arrays of the velocity field.
-    spacing - Sets the minimum density of streamlines, in grid points.
-    maxLen - The maximum length of an individual streamline segment.
-    detectLoops - Determines whether an attempt is made to stop extending
-                  a given streamline before reaching maxLen points if
-                  it forms a closed loop or reaches a velocity node.
+    maxlen - The maximum length of an individual streamline segment.
 
     Plots are generated with the 'plot' or 'plotArrows' methods.
     """
-    def __init__(self, data, turbPos, NbTurb, debug=False):
+    def __init__(self, data, turbPos, NbTurb, maxlen=np.inf, debug=False):
         #Define attributs 
         self._debug = debug
-        res=1.0 #Sets the distance between successive points in each streamline
-        spacing=4 #Sets the minimum density of streamlines, in grid points.
-        #maxLen=50 #The maximum length of an individual streamline segment.
-        detectLoops=True #Determines whether an attempt is made to stop extending
-                         #a given streamline before reaching maxLen points if
-                         #it forms a closed loop or reaches a velocity node.
-        self.spacing = spacing
+        res = 0.25  # Sets the distance between successive points in each
+                    # streamline
+        detectLoops = True  # Determines whether an attempt is made to stop 
+                            # extending a given streamline before reaching 
+                            # maxLen points if it forms a closed loop or 
+                            # reaches a velocity node.
         self.detectLoops = detectLoops
-        #self.maxLen = maxLen
+        self.maxlen = maxlen
         self.res = res
         #allocate data
-        self.data = data
-        self.x = self.data['X'][:]
-        self.y = self.data['Y'][:]
-        self.dx = (self.x[-1]-self.x[0])/(self.x.size-1) # assume a regular grid
-        self.dy = (self.y[-1]-self.y[0])/(self.y.size-1) # assume a regular grid
+        self.lease = data['lease']
+        self.x = data['X'][:]
+        self.y = data['Y'][:]
+        self.dx = (self.x[-1]-self.x[0])/(self.x.size-1)
+        self.dy = (self.y[-1]-self.y[0])/(self.y.size-1)
         self.dr = self.res * np.sqrt(self.dx * self.dy)
         #initial drifter positions and velocities
         self.driftPos = turbPos
-        self.u = self.data['U']
-        self.v = self.data['V']
-
+        self.u = data['U']
+        self.v = data['V']
+        self.interpU = data['interpU']
+        self.interpV = data['interpV']
+        
         # marker for which regions have contours
         self.used = np.zeros(self.u.shape, dtype=bool)
         self.used[0] = True
         self.used[-1] = True
         self.used[:,0] = True
         self.used[:,-1] = True
-
-        # Don't try to compute streamlines in regions where there is no velocity data
+        
+        # Don't try to compute streamlines in regions where there is no
+        # velocity data
         for i in range(self.y.size):
             for j in range(self.x.size):
                 if self.u[i,j] == 0.0 and self.v[i,j] == 0.0:
                     self.used[i,j] = True
-
+        
         # Make the streamlines
         self.streamlines = []
         for i in range(NbTurb):
             # Make a streamline starting at the first unrepresented grid point
             self.streamlines.append(self._makeStreamline(self.driftPos[i,0],
                                                          self.driftPos[i,1]))
-
-    def plot(self, NbTurb, lw=1, ax=None, size=16):
+    
+    def plot(self, NbTurb=None, lw=1, ax=None, size=16):
         """
-        Draw the computed streamline segments with arrows indicating flow direction.
-
+        Draw the computed streamline segments with arrows indicating flow
+        direction.
+        
         Optional keyword arguments:
             lw - line width
             ax - axes to use for plotting
             size - size of the arrow head
-
+        
         """
         if ax is None:
             ax = plt.gca()
-
+        
+        if NbTurb is None:
+            NbTurb = len(self.driftPos)
+        
+        speed = np.sqrt(self.u ** 2 + self.v ** 2)
+        cs = ax.contourf(self.x, self.y, speed,  extend='both')
+        ax.streamplot(self.x, self.y, self.u, self.v, color='0.8', density=2)
+        
         for streamline in self.streamlines:
             if (len(streamline[0]) > 1) or (len(streamline[1]) > 1):
                 ax.plot(streamline[0], streamline[1], 'k', lw=lw)
-
+        
         #Plot points and numbers
         ax.scatter(self.driftPos[:,0], self.driftPos[:,1])
         n = range(NbTurb)
+        
         for i, txt in enumerate(n):
-           ax.annotate(txt, (self.driftPos[i,0], self.driftPos[i,1]))
-
+            ax.annotate(txt, (self.driftPos[i,0], self.driftPos[i,1]))
+        
         for streamline in self.streamlines:
+            
             if (len(streamline[0]) > 1) or (len(streamline[1]) > 1):
-                path = mpl.path.Path(np.asarray((streamline[0], streamline[1])).T)
+                
+                path = mpl.path.Path(np.asarray((streamline[0],
+                                                 streamline[1])).T)
                 patch = mpl.patches.FancyArrowPatch(path=path,
                                                     arrowstyle='->',
                                                     mutation_scale=size,
                                                     lw=lw,
                                                     color='k')
                 ax.add_patch(patch)
-
+        
+        fig = plt.gcf()
+        fig.colorbar(cs)
+        
         ax.axis('tight')
         ax.set_aspect('equal')
         plt.show()
-
-    def _makeStreamline(self, x0, y0):
-        """
-        Compute a streamline extending in both directions from the given point.
-        """
-
-        sx, sy = self._makeHalfStreamline(x0, y0, 1) # forwards
-        #rx, ry = self._makeHalfStreamline(x0, y0, -1) # backwards
-
-        #rx.reverse()
-        #ry.reverse()
-
-        return [x0]+sx, [y0]+sy
-        #return rx+[x0]+sx, ry+[y0]+sy
-
-    def _makeHalfStreamline(self, x0, y0, sign):
+        
+        return
+    
+    def _makeStreamline(self, x0, y0, sign=1):
         """
         Compute a streamline extending in one direction from the given point.
         """
-
+        
         xmin = self.x[0]
         xmax = self.x[-1]
         ymin = self.y[0]
         ymax = self.y[-1]
-
+        
         sx = []
         sy = []
-
+        slen = 0.
+        
         x = x0
         y = y0
-        i = 0
+        
         while xmin < x < xmax and ymin < y < ymax:
-            [u, v] = interp_at_point(x, y, self.x, self.y, [self.u, self.v])
+            
+            if not Point(x, y).within(self.lease):
+                break
+            
+            if self.detectLoops and self._detectLoop(sx, sy):
+                break
+            
+            u = self.interpU(x, y)[0][0]
+            v = self.interpV(x, y)[0][0]
+            
+            if u == 0. and v == 0.:
+                break
+            
             theta = np.arctan2(v,u)
-
+            
+            xold = x
+            yold = y
+            
             x += sign * self.dr * np.cos(theta)
             y += sign * self.dr * np.sin(theta)
-
-            # Check if out on domain
-            # if self.detectLoops and i % 10 == 0 and self._detectLoop(sx, sy):
-            if not sx == []:
-                if self.detectLoops and self._detectLoop(sx, sy):
-                    break
-
-            # Check if x or y == nan
-            if np.isnan(x) or np.isnan(y):
+            
+            slen += np.sqrt((x - xold) ** 2 + (y - yold) ** 2)
+            
+            if slen > self.maxlen:
                 break
-            else:
-                sx.append(x)
-                sy.append(y)
-
-                i += 1
-
-        return sx, sy
-
-    #TR comment: this might not be needed after all
-    def _detectLoop(self, xVals, yVals):
+            
+            sx.append(x)
+            sy.append(y)
+        
+        return [x0] + sx, [y0] + sy
+    
+    def _detectLoop(self, x, y):
         """ Detect closed loops and nodes in a streamline. """
-        x = xVals[-1]
-        y = yVals[-1]
-        D = np.array([np.hypot(x-xj, y-yj)
-                      for xj,yj in zip(xVals[:-1],yVals[:-1])])
-        return (D < 0.9 * self.dr).any()
+        
+        if not x or not y: return False
+        
+        x0 = x[-1]
+        y0 = y[-1]
+        
+        xd = x0 - np.array(x[:-1])
+        yd = y0 - np.array(y[:-1])
+        
+        D = np.hypot(xd, yd)
+        result = (D < 0.9 * self.dr).any()
+        
+        return result

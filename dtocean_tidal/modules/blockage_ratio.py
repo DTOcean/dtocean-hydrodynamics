@@ -34,23 +34,29 @@ def blockage_ratio(hydro, array, debug=False):
     Args:
       hydro (dtocean_tidal.main.Hydro): dtocean_tidal's Hydro object
       array (dtocean_tidal.main.Array): dtocean_tidal's Array object
-
+    
     Kwargs:
       debug (bool): debug flag
-
+    
     Returns:
       rbr (float): relative blockage ration (i.e. rotor's surface / lease's transect surface)
-
+    
     """
+    
     if debug: module_logger.info("Computing relative blockage ratio RBR...")
-    transect, first_row, speed = transec_surf(hydro,array, debug=debug)
+    
+    transect, first_row, speed = transec_surf(hydro, array, debug=debug)
     rotor_surf = 0.0
+    
+    n_digits = len(str(array.turbine_count))
+    
     for i in first_row:
-        diam = array.features['turbine'+str(i)]['Diam']
-        ry = array.features['turbine'+str(i)]['RY']  # relative yawing angle
-        surf = np.pi * ((diam/2.0)**2.0) * np.cos(np.radians(ry))  # ellipse area
+        turb_name = 'turbine{:0{width}d}'.format(i, width=n_digits)
+        diam = array.features[turb_name]['Diam']
+        ry = array.features[turb_name]['RY']  # relative yawing angle
+        surf = np.pi * ((diam/2.0)**2.0) * abs(np.cos(np.radians(ry)))  # ellipse area
         rotor_surf += surf
-
+    
     # final check
     rbr = rotor_surf/transect
     if rbr > 1.0:
@@ -59,5 +65,5 @@ def blockage_ratio(hydro, array, debug=False):
         module_logger.info("...transect surface = " + str(transect) + " m2...")
         module_logger.info("...rotors surface = " + str(rotor_surf) + " m2...")
         module_logger.info("...RBR = " + str(rbr))
-
+        
     return rbr

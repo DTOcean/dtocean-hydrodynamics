@@ -51,8 +51,8 @@ def get_unfeasible_regions(xyz,
                   "has been found for the device for the given bathymetry.")
         raise ValueError(errStr)
     elif stat == 1:
-        module_logger.info("No NOGO areas related to the machine depth "
-                           "installation constraints have been found.")
+        module_logger.debug("No NOGO areas related to the machine depth "
+                            "installation constraints have been found.")
         return None, False
     
     dx = np.max(xyz[1:, 0] - xyz[:-1, 0])

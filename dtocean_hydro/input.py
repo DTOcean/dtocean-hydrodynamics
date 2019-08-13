@@ -85,16 +85,14 @@ class WP2_SiteData:
                                                   TI is specified at each grid node.
                                         'x' (numpy.ndarray)[m]: Vector containing the easting coordinate of the grid nodes
                                         'y' (numpy.ndarray)[m]: Vector containing the northing coordinate of the grid nodes
-                                        'SSH' (numpy.ndarray)[m]: Sea Surface Height wrt the bathymetry datum 
-                                    
-                                    
-        VelocityShear (numpy.ndarray) [-]: Tidal velocity shear formula (power law), used to evaluate the vertical velocity profile
+                                        'SSH' (numpy.ndarray)[m]: Sea Surface Height wrt the bathymetry datum
+        
+        Beta (float, optional if None): TIDAL ONLY bed roughness (default = 0.4)
+        Alpha (float, optional if None): TIDAL ONLY power law exponent (default = 7.)
         Main_Direction (numpy.ndarray, optional) [m]: xy vector defining the main orientation of the array. If not provided it will be 
                                                         assessed from the Metocean conditions, expressed as [X(Northing),Y(Easting)].
         Bathymetry (numpy.ndarray) [m]: Describes the vertical profile of the sea bottom at each (given) UTM coordinate. 
                                         Expressed as [X(Northing),Y(Easting),Z(Down)]
-        Geophysics (numpy.ndarray) [-]: Describes the sea bottom geophysic characteristic (Manning number) at each (given) UTM coordinate. 
-                                        Expressed as [X(Northing),Y(Easting),Geo]
         BR (float) [-]: describes the ratio between the lease area surface over the site area surface enclosed in a channel. 
                         1. - closed channel
                         0. - open sea
@@ -117,10 +115,10 @@ class WP2_SiteData:
     def __init__(self,LeaseArea,
                       NogoAreas,
                       MeteoceanConditions,
-                      VelocityShear,
+                      Alpha,
+                      Beta,
                       Main_Direction,
                       Bathymetry,
-                      Geophysics,
                       BR,
                       electrical_connection_point,
                       boundary_padding=None):
@@ -128,10 +126,10 @@ class WP2_SiteData:
         self.LeaseArea = LeaseArea
         self.NogoAreas = NogoAreas
         self.MeteoceanConditions = MeteoceanConditions
-        self.VelocityShear = VelocityShear
+        self.Alpha = Alpha
+        self.Beta = Beta
         self.Main_Direction = Main_Direction
         self.Bathymetry = Bathymetry
-        self.Geophysics = Geophysics
         self.BR = BR
         self.electrical_connection_point = electrical_connection_point
         self.boundary_padding = boundary_padding
@@ -296,9 +294,6 @@ class WP2input:
             .InstalDepth:   set to [-inf,0] if None
                             switch the numbers if the first element is bigger than the second
 
-        The S_data class attribute(s) are modified as follow:
-            .Geophysics:   reshaped to the provided grid if a single float is given
-
         The M_data class is updated with the following attribute(s):
             .tidal_flag (bool): switch the call between the tidal or wave modules
     """
@@ -353,16 +348,7 @@ class WP2input:
             if self.M_data.InstalDepth[0] > self.M_data.InstalDepth[1]:
                 self.M_data.InstalDepth = [self.M_data.InstalDepth[1],
                                            self.M_data.InstalDepth[0]]
-
-        if self.M_data.tidalFlag:
-            Geophysics = self.S_data.Geophysics
-            if len(Geophysics)==1:
-                x = self.S_data.MeteoceanConditions['x']
-                y = self.S_data.MeteoceanConditions['y']
-                X, Y = np.meshgrid(x,y)
-                G = np.ones(X.shape)*Geophysics
-                self.S_data.Geophysics = np.vstack((X.ravel(),Y.ravel(),G.ravel())).T
-
+        
         self.getInstallationAreaConstraints()  # identifies possible areas where the devices cannot be installed
         self.rated_power_consistency_check()  # check the rated power consistency
         self.wec_power_matrix_check()  # check if the WEC power matrix represents the given site

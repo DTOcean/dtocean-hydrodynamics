@@ -1,6 +1,6 @@
 [![appveyor](https://ci.appveyor.com/api/projects/status/github/DTOcean/dtocean-hydrodynamics?branch=master&svg=true)](https://ci.appveyor.com/project/DTOcean/dtocean-hydrodynamics)
 [![codecov](https://codecov.io/gh/DTOcean/dtocean-hydrodynamics/branch/master/graph/badge.svg)](https://codecov.io/gh/DTOcean/dtocean-hydrodynamics)
-[![Codacy Badge](https://api.codacy.com/project/badge/Grade/f96b19d24ee9465899a888515c9bdade)](https://www.codacy.com/project/H0R5E/dtocean-hydrodynamics/dashboard?utm_source=github.com&amp;utm_medium=referral&amp;utm_content=DTOcean/dtocean-hydrodynamics&amp;utm_campaign=Badge_Grade_Dashboard&amp;branchId=11701799)
+[![Codacy Badge](https://app.codacy.com/project/badge/Grade/0ba57ae117cb4cb8b284635638f7c5a2)](https://www.codacy.com/gh/DTOcean/dtocean-hydrodynamics/dashboard?utm_source=github.com&amp;utm_medium=referral&amp;utm_content=DTOcean/dtocean-hydrodynamics&amp;utm_campaign=Badge_Grade)
 [![release](https://img.shields.io/github/release/DTOcean/dtocean-hydrodynamics.svg)](https://github.com/DTOcean/dtocean-hydrodynamics/releases/latest)
 
 # DTOcean Hydrodynamics Module
@@ -15,7 +15,7 @@ See [dtocean-app](https://github.com/DTOcean/dtocean-app) or [dtocean-core](
 https://github.com/DTOcean/dtocean-app) to use this package within the DTOcean
 ecosystem.
 
-* For python 2.7 only.
+*   For python 2.7 only.
 
 ## Installation
 
@@ -50,7 +50,7 @@ Conda can be used to install dependencies into a dedicated environment from
 the source code root directory:
 
 ```
-conda create -n _dtocean_hydro python=2.7 pip
+conda create -y -n _dtocean_hydro python=2.7 pip
 ```
 
 Activate the environment, then copy the `.condrc` file to store installation  
@@ -66,7 +66,7 @@ example, if installing it from source:
 
 ```
 $ cd \\path\\to\\polite
-$ conda install --file requirements-conda-dev.txt
+$ conda install -y --file requirements-conda-dev.txt
 $ pip install -e .
 ```
 
@@ -89,7 +89,7 @@ C:\mingw\mingw64\bin
 The numpy and libpython packages are also required for compilation:
 
 ```
-$ conda install -y numpy libpython
+$ conda install -y numpy=1.11.3=py27hfef472a_4 libpython
 ```
 
 Now compile the modules:
@@ -102,7 +102,7 @@ $ python setup.py bootstrap
 Finally, install dtocean-hydrodynamics and its dependencies using conda and pip:
 
 ```
-$ conda install --file requirements-conda-dev.txt
+$ conda install -y --file requirements-conda-dev.txt
 $ pip install -e .
 ```
 
@@ -199,13 +199,13 @@ Please make sure to update tests as appropriate.
 This package was initially created as part of the [EU DTOcean project](
 https://www.dtoceanplus.eu/About-DTOceanPlus/History) by:
 
- * Francesco Ferri at [Aalborg University](https://www.en.aau.dk/)
- * Pau Mercade Ruiz at [Aalborg University](https://www.en.aau.dk/)
- * Thomas Roc at IT Power (now [ITPEnergised](http://www.itpenergised.com/))
- * Chris Chartrand at [Sandia National Labs](https://www.sandia.gov/)
- * Jean-Francois Filipot at [France Energies Marines](https://www.france-energies-marines.org/)
- * Rui Duarte at [France Energies Marines](https://www.france-energies-marines.org/)
- * Mathew Topper at [TECNALIA](https://www.tecnalia.com)
+*   Francesco Ferri at [Aalborg University](https://www.en.aau.dk/)
+*   Pau Mercade Ruiz at [Aalborg University](https://www.en.aau.dk/)
+*   Thomas Roc at IT Power (now [ITPEnergised](http://www.itpenergised.com/))
+*   Chris Chartrand at [Sandia National Labs](https://www.sandia.gov/)
+*   Jean-Francois Filipot at [France Energies Marines](https://www.france-energies-marines.org/)
+*   Rui Duarte at [France Energies Marines](https://www.france-energies-marines.org/)
+*   Mathew Topper at [TECNALIA](https://www.tecnalia.com)
 
 It is now maintained by Mathew Topper at [Data Only Greater](
 https://www.dataonlygreater.com/).

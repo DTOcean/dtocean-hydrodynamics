@@ -113,7 +113,6 @@ Z = (-X*0.1-1)*0-60
 
 xyz = np.vstack((X.ravel(),Y.ravel(),Z.ravel())).T
 Bathymetry = np.array([-60.])
-Geophysics = np.array([0.3])
 
 BR = 1.
 electrical_connection_point = (-1000.0, -4000.0)
@@ -121,10 +120,10 @@ electrical_connection_point = (-1000.0, -4000.0)
 Site = WP2_SiteData(leaseAreaVertexUTM,
                     Nogoareas_wave,
                     Meteocean,
-                    VelocityShear,
+                    None,
+                    None,
                     MainDirection,
                     Bathymetry,
-                    Geophysics,
                     BR,
                     electrical_connection_point,
                     boundary_padding=0)         

@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 
 #    Copyright (C) 2016 Thomas Roc
-#    Copyright (C) 2017-2018 Mathew Topper
+#    Copyright (C) 2017-2019 Mathew Topper
 #
 #    This program is free software: you can redistribute it and/or modify
 #    it under the terms of the GNU General Public License as published by
@@ -18,27 +18,27 @@
 
 from __future__ import division
 
-# Start logging
-import logging
-module_logger = logging.getLogger(__name__)
-
 import time
-from shapely.geometry import Polygon
+import logging
+
 import numpy as np
 import matplotlib.pyplot as plt
+from shapely.geometry import Polygon
+from scipy.interpolate import RectBivariateSpline
 
 # Local import
 from .utils import distance_from_streamline
-from .utils.interpolation import interpol_scatter2grid, interp_at_point
-from .utils.misc import pi2pi, deg360_to_radpi, vector_to_bearing
+from .utils.interpolation import interp_at_point
+from .utils.misc import bearing_to_radians, vector_to_bearing
 from .modules.vertical_velocity_profile import vvpw
-# TR: alternative using Soulsby formulation
-#from .modules.vertical_velocity_profile import vvpw_soulsby
 from .modules import Streamlines, ArrayYield, HydroImpact
 from .submodel.WakeInteraction import WakeInteraction
 from .submodel.ParametricWake import read_database
 
-###Classes definition###
+# Start logging
+module_logger = logging.getLogger(__name__)
+
+
 class Hydro:
     """
     Site data & Hydrodynamic conditions
@@ -62,6 +62,8 @@ class Hydro:
       Y (numpy.array): y data positions (South-North), assuming regular grid, 1d array, m
       dx (float): x spatial step, assuming regular grid, float, m
       dy (float): y spatial step, assuming regular grid, float, m
+      beta (float): bed roughness
+      alpha (float): power law exponent
 
     """
     def __init__(self, data, debug=False, debug_plot=False):
@@ -71,16 +73,23 @@ class Hydro:
         self.U = self.data['U']
         self.V = self.data['V']
         self.TI = self.data['TI']
-        self.PLE = self.data['PLE']
         self.SSH = self.data['SSH']
         self.bathy = self.data['bathy']
-        self.geophy = self.data['geophy']
         self.X = self.data['X']
         self.Y = self.data['Y']
         self.lease = Polygon(self.data['lease'])
         (xm, ym, xM, yM) = self.lease.bounds
         self.bounding_box = Polygon([[xm, ym], [xM, ym], [xM, yM], [xm, yM]])
         self.BR = self.data['BR'] # lease surface / site area, user input
+        self.beta = self.data['beta']
+        self.alpha = self.data['alpha']
+        
+        # Set up interpolators for U and V
+        U0 = np.nan_to_num(self.U)
+        V0 = np.nan_to_num(self.V)
+        
+        self.interpU = RectBivariateSpline(self.X, self.Y, U0.T)
+        self.interpV = RectBivariateSpline(self.X, self.Y, V0.T)
 
         if debug_plot:
             plt.figure(figsize=(18,10))
@@ -133,201 +142,189 @@ class Array:
                        features,
                        debug=False,
                        debug_plot=False):
-        """ Initialise Array class"""
-        self._turbine_count = len(turbines.keys())
+        
+        turbine_count = len(turbines.keys())
+        n_digits = len(str(turbine_count))
+        
+        self.turbine_count = turbine_count
+        
         #Turn turbine positions into one big matrix
         self.positions = {}
-        for i in range(self._turbine_count):
-            p = turbines['turbine' + str(i)]['position']
+        
+        for i in range(turbine_count):
+            
+            turb_name = 'turbine{:0{width}d}'.format(i, width=n_digits)
+            
+            p = turbines[turb_name]['position']
+            
             if i == 0:
                 positions = p
             else:
                 positions = np.vstack((positions, p))
-            self.positions['turbine' + str(i)] = p            
- 
-        #Turn turbine features into one big matrix
-        self.features = {}
-        for i in range(self._turbine_count):
-            self.features['turbine' + str(i)] = features['turbine' + str(i)]
-
+            
+            self.positions[turb_name] = p
+        
+        self.features = features
+        
         # Streamlines
-        #  generate regular structured grid U, V, X, Y to pass on to Streamlines
         data = {}
-        x, y = np.meshgrid(hydro.X, hydro.Y)
         xn = hydro.X.shape[0]
         yn = hydro.Y.shape[0]
-        data['X'], data['Y'], data['U'] = interpol_scatter2grid(
-                                                            x.flatten(),
-                                                            y.flatten(),
-                                                            hydro.U.flatten(),
-                                                            xn,
-                                                            yn, 
-                                                            debug=debug)
-        data['X'], data['Y'], data['V'] = interpol_scatter2grid(
-                                                            x.flatten(),
-                                                            y.flatten(),
-                                                            hydro.V.flatten(),
-                                                            xn,
-                                                            yn,
-                                                            debug=debug)
+        
+        xmin = hydro.X.min()
+        xmax = hydro.X.max()
+        ymin = hydro.Y.min()
+        ymax = hydro.Y.max()
+        dx = (xmax - xmin) / (xn - 1)
+        dy = (ymax - ymin) / (yn - 1)
+        xi = np.arange(xmin, xmax + dx, dx)
+        yi = np.arange(ymin, ymax + dy, dy)
+        
+        data['X'] = xi
+        data['Y'] = yi
+        data['U'] = hydro.U
+        data['V'] = hydro.V
+        data['interpU'] = hydro.interpU
+        data['interpV'] = hydro.interpV
+        data['lease'] = hydro.lease
+        
         # In case there is only one turbine in the array
-        if not self._turbine_count == 1:
+        if not turbine_count == 1:
+            
             #  computes streamlines
+            turb_zero = 'turbine{:0{width}d}'.format(0, width=n_digits)
+            
+            diam = features[turb_zero]['Diam']
+            max_len = 20 * diam
+            
             SLs = Streamlines(data,
                               positions,
-                              self._turbine_count,
+                              turbine_count,
+                              maxlen=max_len,
                               debug=debug)
-            if debug_plot: SLs.plot(self._turbine_count)
-
+            
+            if debug_plot: SLs.plot(turbine_count)
+            
             #Relative distance from streamlines
             self.streamlines={}
             self.distances={}
-
-            for i in range(self._turbine_count):
+            
+            for i in range(turbine_count):
+                
                 if debug:
                     module_logger.info("Streamline nb: {}".format(i))
+                
+                turb_name = 'turbine{:0{width}d}'.format(i, width=n_digits)
                 streamline = SLs.streamlines[i]
-                self.streamlines['turbine' + str(i)] = streamline
-                self.distances['turbine' + str(i)] = \
+                
+                self.streamlines[turb_name] = streamline
+                self.distances[turb_name] = \
                             distance_from_streamline(streamline,
                                                      positions,
                                                      debug=debug,
                                                      debug_plot=debug_plot)
-            
-            if debug_plot:
-                SLs.plot(self._turbine_count)
-                
+        
         else:
             
             if debug: module_logger.info("Single turbine...no streamlines")
-
+        
         # Velocity and TI at hub
         self.velHub = {}
         self.velHubIni = {}  # save initial velocity for computing Q factor
-        if debug: module_logger.info("Computing Hub velocities...")
-        for i in range(self._turbine_count):
-            if debug: module_logger.info("Interpolating quantities...")
+        
+        if debug:
+            module_logger.info("Computing Hub velocities...")
+        
+        for i in range(turbine_count):
+            
+            if debug:
+                module_logger.info("Interpolating quantities...")
+            
+            turb_name = 'turbine{:0{width}d}'.format(i, width=n_digits)
+            
             Q = [hydro.U,
                  hydro.V,
                  hydro.SSH,
                  hydro.bathy,
-                 hydro.geophy,
-                 hydro.PLE,
                  hydro.TI]
-            [u, v, el, h, n, ple, ti] = interp_at_point(
-                                        self.positions['turbine' + str(i)][0],
-                                        self.positions['turbine' + str(i)][1],
-                                        hydro.X, hydro.Y, Q)
-            # quantity formatting
+            
+            (u, v, el, h, ti) = interp_at_point(self.positions[turb_name][0],
+                                                self.positions[turb_name][1],
+                                                hydro.X,
+                                                hydro.Y,
+                                                Q)
+            
+            # Quantity formatting
             if h < 0.0: h *= -1.0
-            #  Hub height account for floating options
-            hh = self.positions['turbine' + str(i)][2]  # hub height, negative by convention
+            
+            # Get hub height accounting for floating options
+            hh = self.positions[turb_name][2]
             if hh > 0.0: hh *= -1.0
-            if self.features['turbine' + str(i)]['floating']:
+            
+            if self.features[turb_name]['floating']:
                 z = (el + h) + hh
             else:
                 z = -hh
-            # Computing velocity vertical profile weight
-            radius = self.features['turbine' + str(i)]['Diam'] / 2.0
-            wTop = vvpw(u, v, z+radius, el, h, n, debug=debug)
-            wBottom = vvpw(u, v, z-radius, el, h, n, debug=debug)
-            # TR: alternative using Soulsby formulation
-#            wTop = vvpw_soulsby(z+radius, el, h, n, ple, debug=debug)
-#            wBottom = vvpw_soulsby(z-radius, el, h, n, ple, debug=debug)
-            w = (wTop + wBottom) / 2.0  # Linear interpolation along the vertical
-            self.velHub['turbine' + str(i)] = np.array([u * w, v * w])
-            self.velHubIni['turbine' + str(i)] = np.array([u * w, v * w])
-            # Compute TIH, tubulence intensity at hub (%)
-            # TR: assuming TKE uniform throughout the water column height and TI = sqrt(2/3 * k) / U
-            wTI = 1/w # TR: due to above assumption
-            self.features['turbine' + str(i)]['TIH'] = wTI * ti
-
-        # Computes actual yawing angles
-        # Convention: angle between -pi and pi, 0 of trigonometric circle coincides with East
-        if debug: module_logger.info("Computing yawing angles...")
-        for i in range(self._turbine_count):
-            # absolute angle
-            bearing = vector_to_bearing(u, v)
-            absAngle = pi2pi(deg360_to_radpi(bearing) - np.pi)
-            # -pi in order to test turbine aligned with flow rather than facing flow
-            turbDir = deg360_to_radpi(self.features['turbine' + str(i)]['OA'])
-            turbSpan = np.abs(
-                    np.radians(self.features['turbine' + str(i)]['HAS']))/2.0
-            if turbSpan < np.pi:  # case where turbine rotates 360.0 degrees
-                # angle between -pi and pi
-                turbDir = pi2pi(turbDir)
-                # define intervals
-                inter1 = self._interval(turbDir, turbSpan)
-                # check if 2way turbine and define additional interval if needed
-                if self.features['turbine' + str(i)]['2way']:
-                    turbDir2 = pi2pi(turbDir + np.pi)
-                    inter2 = self._interval(turbDir2, turbSpan)
-                # check if flow direction with interval
-                inFlag = False
-                if type(inter1)==list:
-                    if inter1[0][0]<=absAngle<=inter1[0][1]: inFlag=True
-                    if inter1[1][0]<=absAngle<=inter1[1][1]: inFlag=True
-                else:
-                    if inter1[0]<=absAngle<=inter1[1]: inFlag=True
-                if self.features['turbine' + str(i)]['2way']:
-                    if type(inter2)==list:
-                        if inter2[0][0]<=absAngle<=inter2[0][1]: inFlag=True
-                        if inter2[1][0]<=absAngle<=inter2[1][1]: inFlag=True
-                    else:
-                        if inter2[0]<=absAngle<=inter2[1]: inFlag=True
-            else:
-                inFlag=True
-            # compute relative yaw, RY
-            if inFlag:
-                self.features['turbine' + str(i)]['RY'] = 0.0
-            else:
-                bounds = np.array(inter1).flatten()
-                if self.features['turbine' + str(i)]['2way']:
-                    bounds = np.hstack((bounds, np.array(inter2).flatten()))
-                #  find closest bound
-                ry = self._diff_rads(absAngle, bounds)
-                # relative yaw angle in deg., RY
-                self.features['turbine' + str(i)]['RY'] = np.degrees(ry.min())
-            if debug:
-                logMsg = ("Relative yawing angle for turbine{} = "
-                          "{}").format(i, 
-                                       self.features['turbine' + str(i)]['RY'])                                       
-                module_logger.info(logMsg)
-
-    def _interval(self, turbDir, turbSpan):
-        """
-        define angle interval
-
-        Args:
-          turbDir (float): turbine's orientation
-          turbSpan (float): turbine's yawing span
-
-        Returns:
-          inter1 (list): yawing angle's interval
-
-        """
-        inter1 = np.array([turbDir - turbSpan, turbDir + turbSpan])
-        # angle between -pi and pi
-        if np.any(inter1 >= np.pi):
-            inter1 = [np.array([turbDir - turbSpan, np.pi]),
-                     np.array([-np.pi, (turbDir + turbSpan) - 2.0*np.pi])]
-        elif np.any(inter1 <= -np.pi):
-            inter1 = [np.array([-np.pi, turbDir + turbSpan]),
-                     np.array([(turbDir - turbSpan) + 2.0*np.pi, np.pi])]
-        return inter1
-    
-    def _diff_rads(self, angle1, angles):
-        
-        if angle1 < 0: angle1 += 2 * np.pi
-        
-        diff = []
-        
-        for angle2 in angles:
             
-            if angle2 < 0: angle2 += 2 * np.pi
-            diff.append(abs(angle1 - angle2))
+            # Computing velocity vertical profile weight
+            radius = self.features[turb_name]['Diam'] / 2.0
+            z_top = z + radius
+            z_bottom = z - radius
+            args = [el,
+                    h,
+                    hydro.beta,
+                    hydro.alpha,
+                    debug]
+            
+            w_top = vvpw(z_top, *args)
+            w_bottom = vvpw(z_bottom, *args)
+            
+            # Linear interpolation along the vertical
+            w = (w_top + w_bottom) / 2.0
+            
+            urootw = u * np.sqrt(w)
+            vrootw = v * np.sqrt(w)
+            
+            self.velHub[turb_name] = np.array([urootw, vrootw])
+            self.velHubIni[turb_name] = np.array([urootw, vrootw])
+            
+            # Compute TIH, tubulence intensity at hub (%)
+            # TR: assuming TKE uniform throughout the water column height and
+            # TI = sqrt(2/3 * k) / U
+            if w == 0.:
+                wTI = 0.
+            else:
+                wTI = 1. / w # TR: due to above assumption
+            
+            self.features[turb_name]['TIH'] = wTI * ti
+            
+            if debug: module_logger.info("Computing yawing angles...")
+            
+            # current angle of attack
+            bearing = vector_to_bearing(u, v)
+            psi_current = bearing_to_radians(bearing) + np.pi
+            
+            # turbine direction
+            psi_turb = bearing_to_radians(self.features[turb_name]['OA'])
+            
+            # maximum yaw
+            psi_yaw = np.abs(np.radians(self.features[turb_name]['HAS'])) / 2.0
+            
+            ry = _get_angle_of_attack(psi_turb,
+                                      psi_yaw,
+                                      psi_current,
+                                      two_way=self.features[
+                                                          turb_name]['2way'])
+            
+            self.features[turb_name]['RY'] = np.degrees(ry)
+            
+            if debug:
+                
+                logMsg = ("Relative yawing angle for turbine{} = "
+                          "{}").format(i, self.features[turb_name]['RY'])
+                module_logger.info(logMsg)
         
-        return np.array(diff)
+        return
 
 
 ###Functions definitions###
@@ -335,6 +332,9 @@ def wp2_tidal(data,
               turbines,
               features,
               cfd_data,
+              U_dict,
+              V_dict,
+              TKE_dict,
               debug=False,
               debug_plot=False):
     """
@@ -343,9 +343,6 @@ def wp2_tidal(data,
     Args:
       data (dict) dictionary gathering site information with the following entries:
         . 'bathy' = bathymetry (m), 2D numpy array, dimension: (ny,nx)
-        . 'geophy' = Manning's roughness coeff., 2D numpy array, dimension: (ny,nx)
-        . 'PLE' = Power law exponent for velocity vertical profile,
-                2D numpy array, dimension: (ny,nx)
         . 'SSH' = sea surface elevation (m), 2D numpy array, dimension: (ny,nx)
         . 'TI' = depth averaged turbulence intensity (m), 2D numpy array, dimension: (ny,nx)
         . 'U' = depth averaged West-East velocity component (m/s),
@@ -354,6 +351,8 @@ def wp2_tidal(data,
               2D numpy array, dimension: (ny,nx)
         . 'X' = West-East corrdinates (m), 1D numpy array, dimension: (nx)
         . 'Y' = South-North corrdinates (m), 1D numpy array, dimension: (ny)
+          'beta' = bed roughness
+          'alpha' = power law exponent
       turbines (dict): dictionary gathering turbines' locations (m), 1D numpy array [x,y,z].
       features (dict): dictionary gathering individual turbine's features with the following entries:
         . 'Cp' = Power curve, Cp vs flow speed, list of two 1D numpy arrays [speed, Cp] where
@@ -379,22 +378,42 @@ def wp2_tidal(data,
       ti (dict) turbulence intensities at hub height for each turbine
 
     Notes: the 'turbines', 'features' and output dictionaries have the following structure:
-      turbines[turbine's ID]['position'] where turbine's ID = 'turbine'+str(integer)
-      for integers going from 0 to infinity
+      turbines[turbine's ID]['position'] where turbine's ID = 'turbine{number}'
+      where the numbers should be padded so all ids are the same length
 
 
     """
     #performance benchmark
     if debug: start = time.time()
-
+    
+    # Check that the keys of turbines are the same length
+    key_lengths_set = set([len(k) for k in turbines.keys()])
+    
+    if not len(key_lengths_set) == 1:
+        
+        err_msg = ("Key lengths in turbines argument differ. Ensure turbine "
+                   "numbers are padded with zeros.")
+        raise ValueError(err_msg)
+    
+    # Check that the keys of turbines and features are equal
+    turbines_keys_set = set(turbines.keys())
+    features_keys_set = set(features.keys())
+    
+    if turbines_keys_set != features_keys_set:
+        
+        err_msg = ("The arguments 'turbines' and 'features' have "
+                   "non-matching keys")
+        raise ValueError(err_msg)
+    
     if debug: module_logger.info("initiating classes...")
+    
     hydro = Hydro(data, debug=debug, debug_plot=debug_plot)
     array = Array(hydro,
                   turbines,
                   features,
                   debug=debug,
                   debug_plot=debug_plot)
-
+    
     # In case there is only one turbine in the array
     NbTurb = len(array.positions.keys())
     if not NbTurb == 1:
@@ -402,12 +421,15 @@ def wp2_tidal(data,
         interaction = WakeInteraction(hydro,
                                       array,
                                       cfd_data,
+                                      U_dict,
+                                      V_dict,
+                                      TKE_dict,
                                       debug=debug,
                                       debug_plot=debug_plot)
-        interaction.solv_induction(debug=debug)
+        interaction.solve_flow(debug=debug)
     else:
         if debug: module_logger.info("Single turbine...no interactions")
-
+        
     if debug: module_logger.info("Computing performances...")
     arrayYield = ArrayYield(array, debug=debug, debug_plot=debug_plot)
     arrayYield.performance()
@@ -443,8 +465,11 @@ def wp2_tidal(data,
     #  impacts
     ratio = impacts.diss_avai_mass_flow_rate
     ti = {}
+    
+    n_digits = len(str(NbTurb))
+    
     for i in range(NbTurb):
-        turb = 'turbine' + str(i)
+        turb = 'turbine{:0{width}d}'.format(i, width=n_digits)
         ti[turb] = array.features[turb]['TIH']
 
     #exit function
@@ -459,6 +484,55 @@ def wp2_tidal(data,
             pow_perf_array,
             ratio,
             ti)
+
+
+def _get_angle_of_attack(psi_turb, psi_yaw, psi_current, two_way=False):
+    
+    if _is_within_yaw(psi_turb, psi_yaw, psi_current, two_way=two_way):
+        return 0.0
+    
+    check_angles = []
+                
+    for a in [-1, 1]:
+        
+        x = (psi_current - psi_turb
+                                 + np.pi) % (2 * np.pi) - np.pi + a * psi_yaw
+        
+        check_angles.append(abs(x))
+    
+    if two_way:
+        
+        for a in [-1, 1]:
+        
+            x = (psi_current - psi_turb) % (2 * np.pi) - np.pi + a * psi_yaw
+            
+            check_angles.append(abs(x))
+    
+    return min(check_angles)
+
+
+def _is_within_yaw(psi_turb, psi_yaw, psi_current, two_way=False):
+    
+    if psi_yaw < 0. or psi_yaw > np.pi:
+        
+        psi_yaw = ("Given psi_yaw={} exceeds the valid range of "
+                   "[0, pi]").format(psi_yaw)
+        raise ValueError(psi_yaw)
+    
+    if psi_yaw == np.pi: return True
+    
+    check_uni = (psi_current - psi_turb + np.pi) % (2 * np.pi) - np.pi
+    
+    if abs(check_uni) <= psi_yaw: return True
+    
+    if not two_way: return False
+    
+    check_bi = (psi_current - psi_turb) % (2 * np.pi) - np.pi
+    
+    if abs(check_bi) <= psi_yaw: return True
+    
+    return False
+
 
 def test():
     """
@@ -484,8 +558,6 @@ def test():
     x = np.linspace(0.0, xmax, (xmax/10)+1) # dx = 10 m
     y = np.linspace(0.0, ymax, (ymax/10)+1) # dy = 10 m
     X, Y = np.meshgrid(x,y)
-    nx = len(x)
-    ny = len(y)
     BR = 1.0  # blockage ratio
 
     umax = 3.69 # maximum velocity in the X direction
@@ -499,14 +571,9 @@ def test():
     SSH = np.ones(X.shape) * sshmax
     TI = np.ones(X.shape) * timax
     BATHY = np.ones(X.shape) * bathy
-    PLE = 12.0 * np.ones(X.shape)
-    # bed roughness coefficient here
-    manning = np.ones(X.shape) * 0.3
 
     data = {}
     data['TI'] = TI
-    data['PLE'] = PLE
-    data['geophy'] = manning
     data['X'] = x  # save only 1D array as structured grid assumed
     data['Y'] = y  # save only 1D array as structured grid assumed
     data['U'] = U
@@ -515,6 +582,8 @@ def test():
     data['bathy'] = BATHY
     data['BR'] = BR
     data['lease'] = lease
+    data['beta'] = 0.4
+    data['alpha'] = 7.
 
     ## Turbines positions
     z = bathy/2.0 # hub height/depth
