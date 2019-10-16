@@ -36,17 +36,17 @@ module_logger = logging.getLogger(__name__)
 class WakeInteraction:
     """
     -WakeInteraction class-
-
+    
     Computes wake interaction and their impacts of flow field
-
+    
     Args:
       hydro (dtocean_tidal.main.Hydro): Hydro class/object
       array (dtocean_tidal.main.Array): Array class/object
-
+    
     Kwargs:
       debug (bool): debug flag
       debug_plot (bool): debug plot flag
-
+    
     Attributes:
       indMat (numpy.array): matrix of induction factors, float, (nb. device, nb. device)
       tiMat (numpy.array): matrix of turbulence intensity, float, (nb. device, nb. device)
@@ -85,7 +85,7 @@ class WakeInteraction:
         """
         Compute the induction factor at each turbine hub
         based on each others interactions
-
+        
         Kwargs:
           speed_superimpo (str): wake speed superimposition method
                                  it can be 'linear', 'geometric', 'rss', 'linrss', 'max', 'mean', 'renkema', 'prod', 'geosum'
