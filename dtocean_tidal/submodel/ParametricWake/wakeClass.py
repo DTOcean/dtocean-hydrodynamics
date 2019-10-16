@@ -85,15 +85,20 @@ class Wake:
             self.RY = ry
             
         self.TIH = turbParams['TIH']
-        self.Ct = interp1d(turbParams['Ct'][0], turbParams['Ct'][1], bounds_error=False, fill_value=0.0)
+        self.Ct = interp1d(turbParams['Ct'][0],
+                           turbParams['Ct'][1],
+                           bounds_error=False,
+                           fill_value=0.0)
         self.Diam = turbParams['Diam']
         self.cutIn = turbParams['cutIO'][0]
         self.cutOut = turbParams['cutIO'][1]
-        self._df = dataframe
         
         # database values
-        self._cts = np.copy(self._df['cts'][:])
-        self._tis = np.copy(self._df['tis'][:])
+        self._dfU = dataframe['dfU'].to_dict()
+        self._dfV = dataframe['dfV'].to_dict()
+        self._dfTKE = dataframe['dfTKE'].to_dict()
+        self._cts = np.copy(dataframe['cts'][:])
+        self._tis = np.copy(dataframe['tis'][:])
         self._cts.sort()
         self._tis.sort()
         
@@ -129,14 +134,14 @@ class Wake:
         for ss, ee in zip(self._cts[:-1], self._cts[1:]):
             if ss <= ct <= ee:
                 ctbounds = [ss, ee]
-
+                break
         
         tibounds = []
         
         for ss, ee in zip(self._tis[:-1], self._tis[1:]):
             if ss <= ti <= ee:
                 tibounds = [ss, ee]
-
+                break
         
         # If requested values outside of range
         if ctbounds == []:
@@ -221,11 +226,16 @@ class Wake:
         
         for n in range(3):
             
+            if wght[n] == 0: continue
+            
             tmpCt = atmp[n]
             tmpTi = btmp[n]
-            umat = self._df['dfU']['ti'+str(tmpTi)]['ct'+str(tmpCt)] * wght[n]
-            vmat = self._df['dfV']['ti'+str(tmpTi)]['ct'+str(tmpCt)] * wght[n]
-            tkemat = self._df['dfTKE']['ti'+str(tmpTi)]['ct'+str(tmpCt)] * wght[n]
+            
+            umat = self._dfU['ti' + str(tmpTi)]['ct' + str(tmpCt)] * wght[n]
+            vmat = self._dfV['ti' + str(tmpTi)]['ct' + str(tmpCt)] * wght[n]
+            tkemat = self._dfTKE['ti' + str(tmpTi)][
+                                                'ct' + str(tmpCt)] * wght[n]
+            
             tmp = interp_at_point(x, y, X, Y, [umat.T, vmat.T, tkemat.T])
             
             u += tmp[0]
