@@ -131,8 +131,8 @@ def distance_from_streamline(streamline,
         part_distance = np.sqrt(np.sum(np.square(min_segment))) * min_weight
         streamline_distance = upto_distance + part_distance
         
-        turbine_distances[str(i)] = np.array([streamline_distance,
-                                              min_dist])
+        turbine_distances[i] = np.array([streamline_distance,
+                                         min_dist])
     
     if debug: module_logger.info(turbine_distances)
     
