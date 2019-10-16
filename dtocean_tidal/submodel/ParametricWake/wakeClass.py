@@ -199,7 +199,7 @@ class Wake:
             u += tmp[0]
             v += tmp[1]
             tke += tmp[2]
-
+        
         return u, v, tke
 
     def ind_fac(self, distance, velHub, tiHub, debug=False):
@@ -210,16 +210,16 @@ class Wake:
           or 2D array (Nturb, 2) or list [x,y]
           velHub (list): velocity components at hub, [u, v], float list
           tiHub (float): turbulence intensity at hub (%)
-
+        
         Kwargs:
           debug (bool): debug flag
-
+        
         Returns:
           ind (float): induction factor
           newTI (float): new turbulence intensity
-
+        
         """
-
+        
         debug = debug or self._debug
 
         # Various param.
@@ -238,9 +238,9 @@ class Wake:
             # idSpeed = np.argmin(np.abs(self.Ct.x - norm))
             # Ct = self.Ct.y[idSpeed]
             Ct = 0.0
-
+        
         ry = np.radians(self.RY)
-
+        
         # Checking bounds
         if Ct > self._cts[-1]:
             Ct = self._cts[-1]

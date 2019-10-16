@@ -32,7 +32,7 @@ def distance_from_streamline(streamline,
                              debug_plot=True):
     """
     Compute the relative distance from a given streamline (SL) and its origin.
-
+    
     Args:
       streamline (tuple): SL points, tuple of 2 1D arrays, i.e. Xs and Ys in
           meters
@@ -40,16 +40,16 @@ def distance_from_streamline(streamline,
           dimension (Nturb, 3)
       n_turbines (float): number of turbines in the array
       turbine_id (integer): turbine's ID number
-
+    
     Kwargs:
       debug (bool): debug flag
       debug_plot (bool): debug plot flag
-
+    
     Returns:
       turbine_distances (dict): distance from hub to SL, 2D array of dimension
            (Xturb, 3) where each item is composed of:
            turbine id: np.array(distance along SL, distance across SL)
-
+    
     """
     if debug: module_logger.info("Computing relative distance from hub...")
     
@@ -70,18 +70,18 @@ def distance_from_streamline(streamline,
     
     # filtering Nans
     streamline_vector[~np.isnan(streamline_vector).any(axis=1)]
-        
+    
     # Compute angle and length
     turbine_vector = np.zeros(streamline_vector.shape)
     
     n_turbines = turbine_positions.shape[0]
-
+    
     for i in range(n_turbines):
         
         # Calculate vector from turbine to each streamline point
         turbine_vector[:, 0] = turbine_positions[i, 0] - X[:-1]
         turbine_vector[:, 1] = turbine_positions[i, 1] - Y[:-1]
-                
+        
         # Another edge case when the turbine is at the beginning of the
         # streamline
         if np.isclose(np.sum(turbine_vector[0, :]), 0.): continue
@@ -96,20 +96,20 @@ def distance_from_streamline(streamline,
         check_zero = 0. < inner_product
         check_segment = inner_product <= segment_lengths
         check_both = np.logical_and(check_zero, check_segment)
-                
+        
         # If the turbine doesn't project onto any of the segments then loop.
         if not check_both.any(): continue
-    
+        
         # Filter the valid segments
         valid_segments = streamline_vector[check_both, :]
         valid_product = inner_product[check_both]
         valid_lengths = segment_lengths[check_both]
         valid_startx = X[:-1][check_both]
         valid_starty = Y[:-1][check_both]
-
+        
         # Calculate perpendicular distances
         segment_weights = valid_product / valid_lengths
-                
+        
         perpendicular_x = valid_startx - turbine_positions[i, 0] + \
                                      segment_weights * valid_segments[:, 0]
         perpendicular_y = valid_starty - turbine_positions[i, 1] + \
@@ -125,7 +125,7 @@ def distance_from_streamline(streamline,
         # Collect segments leading up to nearest
         where_segments = np.where(streamline_vector == min_segment)
         upto_segments = streamline_vector[:where_segments[0][0], :]
-
+        
         # Find distance along streamline to the nearest point
         upto_distance = np.sum(np.sqrt(np.sum(np.square(upto_segments), 1)))
         part_distance = np.sqrt(np.sum(np.square(min_segment))) * min_weight
@@ -135,5 +135,5 @@ def distance_from_streamline(streamline,
                                               min_dist])
     
     if debug: module_logger.info(turbine_distances)
-                        
+    
     return turbine_distances
