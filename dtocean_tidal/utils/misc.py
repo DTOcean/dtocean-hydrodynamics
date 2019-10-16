@@ -21,16 +21,42 @@ from __future__ import division
 import re
 import math
 import logging
+from collections import deque
 
 import numpy as np
 from numpy.linalg import LinAlgError
 from shapely.geometry import LineString
 
 # local imports
-from dtocean_tidal.utils.interpolation import interp_at_point
+from .interpolation import interp_at_point
 
 # Start logging
 module_logger = logging.getLogger(__name__)
+
+
+class MovingAverage(object):
+    
+    def __init__(self, length, init=None):
+        
+        if init is None: init = []
+        
+        self._data = deque(init, length)
+        
+        return
+    
+    def __call__(self, new_data=None):
+        
+        if new_data is not None:
+            self._data.append(new_data)
+        
+        data_length = len(self._data)
+        
+        if data_length == 0:
+            result = None
+        else:
+            result = sum(self._data) / float(data_length)
+        
+        return result
 
 
 def closest_point( pt, pts, debug=False):
