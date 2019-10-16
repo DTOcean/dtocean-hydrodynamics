@@ -37,29 +37,31 @@ module_logger = logging.getLogger(__name__)
 
 class Wake:
     """
-    Wake class computes the induction factor for any distance (x,y) and any set of turbine parameters
-
+    Wake class computes the induction factor for any distance (x,y) and any set
+    of turbine parameters
+    
     Args:
       data_reader (fortran): database reader
       turbParams (dict): turbine's parameters
       BR (float): blockage ratio, float
-
+    
     Attributes:
-      indFac (numpy.array or list): induction factor, either 3D array (Ny, Nx, 2) or 2D array (Nturb, 2) or list [x,y]
+      indFac (numpy.array or list): induction factor, either 3D array
+                                    (Ny, Nx, 2) or 2D array (Nturb, 2) or
+                                    list [x,y]
       VBR (float): vertical blockage ratio
       TIH (float): turbulence intensity at hub (%)
       YA (float): yaw angle (deg.)
       Ct (numpy.array): thrust coefficient
       A (float): rotor diameter (m2)
       velHub (list): velocity components at hub, [u, v], float list
-
+    
     """
-    #Class counter to zero
-    #ID = 0
-
+    
     def __init__(self, dataframe, turbParams, BR, debug=False):
+        
         self._debug = debug
-        # Sanity checks on...
+        
         # ...blockage ratio
         if BR < 0.0:
             self.BR = 0.0
@@ -69,8 +71,10 @@ class Wake:
                                 "theoretical limit.")
         else:
             self.BR = BR
+        
         # ...relative yawing angle
         ry = np.radians(turbParams['RY'])
+        
         if ry < 0.0:
             self.RY = ry * -1.0
         elif ry > np.radians(89.0):
@@ -79,75 +83,92 @@ class Wake:
             self.RY = ry
         else:
             self.RY = ry
+            
         self.TIH = turbParams['TIH']
         self.Ct = interp1d(turbParams['Ct'][0], turbParams['Ct'][1], bounds_error=False, fill_value=0.0)
         self.Diam = turbParams['Diam']
         self.cutIn = turbParams['cutIO'][0]
         self.cutOut = turbParams['cutIO'][1]
         self._df = dataframe
+        
         # database values
         self._cts = np.copy(self._df['cts'][:])
         self._tis = np.copy(self._df['tis'][:])
         self._cts.sort()
         self._tis.sort()
-        # Real distance Empirical relationship for vertical blockage ratio and yawing
+        
+        # Real distance Empirical relationship for vertical blockage ratio and
+        # yawing
         ratio = 0.489*self.BR**2.0 - 1.472*self.BR + 1.0
-        self._dfx = self._df['dfX'] * ratio * self.Diam
-        self._dfy = self._df['dfY'] * np.cos(ry) * self.Diam
-
+        self._dfx = dataframe['dfX'] * ratio * self.Diam
+        self._dfy = dataframe['dfY'] * np.cos(ry) * self.Diam
+        
         return
-
+    
     def read_at_point(self, x, y, ct, ti, debug=False):
         """
-        Interpolates CFD datasets stored in self._df based on Ct and TI values
+        Interpolates CFD datasets based on Ct and TI values
         Args:
           x (float): relative distance along streamline, m
           y (float): relative distance across streamline, m
           ct (float): turbine's thrust coefficient, dimensionless
-          ti (float): turbulence intensity at hub's location, dimensionless [0 ; 1]
-
+          ti (float): turbulence intensity at hub's location,
+                      dimensionless [0 ; 1]
+        
         Returns:
           u (numpy array): 2D array, flow field, m/s
           tke (numpy array): 2D array, TKE filed, m2/s2
         """
-
+        
         debug = debug or self._debug
         if debug: module_logger.info("Picking CFD datasets...")
-
+        
         # Looking through available Ct's and TI's values
         ctbounds = []
+        
         for ss, ee in zip(self._cts[:-1], self._cts[1:]):
             if ss <= ct <= ee:
                 ctbounds = [ss, ee]
 
+        
         tibounds = []
+        
         for ss, ee in zip(self._tis[:-1], self._tis[1:]):
             if ss <= ti <= ee:
                 tibounds = [ss, ee]
 
+        
         # If requested values outside of range
         if ctbounds == []:
+            
             module_logger.debug(("Requested Ct value {} is not covered by the "
                                  "current CFD database.").format(ct))
+            
             idx = (np.abs(self._cts - ct)).argmin()
+            
             try:
                 ctbounds = [self._cts[idx-1], self._cts[idx]]
             except IndexError:
                 ctbounds = [self._cts[idx], self._cts[idx + 1]]
+            
             module_logger.debug(("Ct value of {} will be "
                                  "used.").format(self._cts[idx]))
-
+        
         if tibounds == []:
+            
             module_logger.debug(("Requested TI value {} is not covered by "
                                  "the current CFD database.").format(ti))
+            
             idx = (np.abs(self._tis - ti)).argmin()
+            
             try:
                 tibounds = [self._tis[idx-1], self._tis[idx]]
             except IndexError:
                 tibounds = [self._tis[idx], self._tis[idx+1]]
+            
             module_logger.debug(("TI value of {} will be "
                                  "used.").format(self._tis[0]))
-
+        
         # compute distance
         dist = np.zeros(4)
         dist[0] = (ct - ctbounds[0])**2.0 + (ti - tibounds[0])**2.0
@@ -155,13 +176,16 @@ class Wake:
         dist[2] = (ct - ctbounds[1])**2.0 + (ti - tibounds[0])**2.0
         dist[3] = (ct - ctbounds[1])**2.0 + (ti - tibounds[1])**2.0
         mloc = dist.argmax()
-
+        
         # computing weights
         nn = 0
         atmp = np.zeros(3)
         btmp = np.zeros(3)
+        
         for n in range(4):
+            
             if not n == mloc:
+                
                 if n==0:
                     atmp[nn] = ctbounds[0]
                     btmp[nn] = tibounds[0]
@@ -174,28 +198,36 @@ class Wake:
                 elif n==3:
                     atmp[nn] = ctbounds[1]
                     btmp[nn] = tibounds[1]
+                
                 nn += 1
-
+        
         wght = np.ones(3)
-        wght[0] =(btmp[1]-btmp[2])*(ct-atmp[2]) + (atmp[2]-atmp[1])*(ti-btmp[2])
-        wght[1]=(btmp[2]-btmp[0])*(ct-atmp[2]) + (atmp[0]-atmp[2])*(ti-btmp[2])
-        wght[0:1] = wght[0:1] / ((btmp[1]-btmp[2])*(atmp[0]-atmp[2]) + (atmp[2]-atmp[1])*(btmp[0]-btmp[2]))
+        
+        wght[0] = (btmp[1] - btmp[2]) * (ct - atmp[2]) + \
+                                      (atmp[2] - atmp[1]) * (ti - btmp[2])
+        wght[1] = (btmp[2] - btmp[0]) * (ct - atmp[2]) + \
+                                      (atmp[0] - atmp[2]) * (ti - btmp[2])
+        wght[0:1] = wght[0:1] / ((btmp[1] - btmp[2]) * (atmp[0] - atmp[2]) +
+                                 (atmp[2] - atmp[1]) * (btmp[0] - btmp[2]))
         wght[2] = 1.0 - wght[0] - wght[1]
-
+        
         X = self._dfx
         Y = self._dfy
-
+        
         if debug: module_logger.info("...interpolation...")
         u = 0.0
         v = 0.0
         tke = 0.0
+        
         for n in range(3):
+            
             tmpCt = atmp[n]
             tmpTi = btmp[n]
             umat = self._df['dfU']['ti'+str(tmpTi)]['ct'+str(tmpCt)] * wght[n]
             vmat = self._df['dfV']['ti'+str(tmpTi)]['ct'+str(tmpCt)] * wght[n]
             tkemat = self._df['dfTKE']['ti'+str(tmpTi)]['ct'+str(tmpCt)] * wght[n]
             tmp = interp_at_point(x, y, X, Y, [umat.T, vmat.T, tkemat.T])
+            
             u += tmp[0]
             v += tmp[1]
             tke += tmp[2]
