@@ -201,10 +201,10 @@ class Wake:
             tke += tmp[2]
         
         return u, v, tke
-
-    def ind_fac(self, distance, velHub, tiHub, debug=False):
-        """Computing induction factor 1-(U/Uinf) and T.I.
-
+    
+    def induction(self, distance, velHub, tiHub, debug=False):
+        """Wake velocity and T.I. modification
+        
         Args:
           distance (numpy.array or list): along and across distances to hub
                                           axis (m)
@@ -216,7 +216,7 @@ class Wake:
           debug (bool): debug flag
         
         Returns:
-          ind (float): induction factor
+          wake_speed (float): wake velocity magnitude
           newTI (float): new turbulence intensity
         
         """
@@ -284,8 +284,10 @@ class Wake:
             
             indFac = 1.0
             newTKE = np.nan
-
-        return indFac, newTKE
+        
+        wake_speed = norm * indFac
+        
+        return wake_speed, newTKE
 
 
 # Simple formula for wake expansion while waiting for further development...
