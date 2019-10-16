@@ -70,7 +70,7 @@ class WakeInteraction:
                        array,
                        cfd_data,
                        criterior=1e-4,
-                       max_loop=20,
+                       max_loop=6,
                        moving_average_length=3,
                        debug=False,
                        debug_plot=False):
@@ -83,8 +83,11 @@ class WakeInteraction:
         self._array = array
         self._df = cfd_data
         
-        self.induction = np.zeros(self._turbine_count)
-        self.inducedTKE = np.zeros(self._turbine_count)
+        nan_array = np.empty(self._turbine_count)
+        nan_array[:] = np.nan
+        
+        self.induction = np.ones(self._turbine_count)
+        self.inducedTKE = nan_array
         self._wake = {}
         self._wakeShape = {}
         
