@@ -206,7 +206,8 @@ class Wake:
         """Computing induction factor 1-(U/Uinf) and T.I.
 
         Args:
-          distance (numpy.array or list): along and across distances to hub axis (m), either 3D array (Ny, Nx, 2)
+          distance (numpy.array or list): along and across distances to hub
+                                          axis (m)
           or 2D array (Nturb, 2) or list [x,y]
           velHub (list): velocity components at hub, [u, v], float list
           tiHub (float): turbulence intensity at hub (%)
@@ -221,61 +222,66 @@ class Wake:
         """
         
         debug = debug or self._debug
-
-        # Various param.
-        #  Distance variables
+        
         x = np.asarray(distance[0])
         y = np.asarray(distance[1])
-        #  Velocity norm
+        
         norm = np.sqrt((velHub[0]**2.0) + (velHub[1]**2.0))
-        #Ct = self.Ct(norm)
+
         try:
+            
             Ct = self.Ct(norm)
+            
         except ValueError:
+            
             if debug: module_logger.info("Flow speed value outside of Ct's "
                                          "curve range. Ct will be set to 0.0")
-            # Use nearest value
-            # idSpeed = np.argmin(np.abs(self.Ct.x - norm))
-            # Ct = self.Ct.y[idSpeed]
+            
             Ct = 0.0
         
         ry = np.radians(self.RY)
         
         # Checking bounds
         if Ct > self._cts[-1]:
+            
             Ct = self._cts[-1]
             module_logger.debug(("Thrust coefficient > {}... reaching "
                                  "parametric database's "
                                  "limit.").format(self._cts[-1]))
+        
         if Ct < self._cts[0]:
+            
             module_logger.debug(("Thrust coefficient < {}... reaching "
                                  "parametric database's "
                                  "limit.").format(self._cts[0]))
+        
         if tiHub < self._tis[0]:
+            
             tiHub = self._tis[0]
             module_logger.debug(("T.I. < {}... reaching "
                                  "parametric database's "
                                  "limit.").format(self._tis[0]))
+        
         if tiHub > self._tis[-1]:
+            
             tiHub = self._tis[-1]
             module_logger.debug(("T.I. > ... reaching "
                                  "parametric database's "
                                  "limit.").format(self._tis[-1]))
-
-        # call fortran routine to average the nearby solutions
+        
         X = self._dfx
         Y = self._dfy
+        
         if (Ct > np.min(self._cts) and ry < np.radians(89.0)) and \
-           (X.min() < x < X.max()) and (Y.min() < y < Y.max()):  # test if within values and spatial bounds
-            # Linear interpolation
-            # Retrieve u, tke, x, y at point
+           (X.min() < x < X.max()) and (Y.min() < y < Y.max()):
+            
             u, v, tke = self.read_at_point(x, y, Ct, tiHub, debug=debug)
-            # Induction factor
-            # TR: scheme 1
+            
             indFac = np.sqrt(u**2.0 + v**2.0)
             newTKE = tke
-        else:  # need to keep the option to set Ct = 0 to "mute" device
-            if debug: module_logger.info("Turbine is mute")
+        
+        else:
+            
             indFac = 1.0
             newTKE = np.nan
 
