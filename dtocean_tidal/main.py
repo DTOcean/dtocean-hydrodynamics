@@ -242,92 +242,39 @@ class Array:
             wTI = 1/w # TR: due to above assumption
             self.features['turbine' + str(i)]['TIH'] = wTI * ti
 
-        # Computes actual yawing angles
-        # Convention: angle between -pi and pi, 0 of trigonometric circle coincides with East
+        # Computes actual yawing angles. Convention: angle between 0 and 2pi,
+        # 0 of trigonometric circle coincides with East
         if debug: module_logger.info("Computing yawing angles...")
+        
         for i in range(self._turbine_count):
-            # absolute angle
+            
+            # current angle of attack
             bearing = vector_to_bearing(u, v)
-            absAngle = pi2pi(deg360_to_radpi(bearing) - np.pi)
-            # -pi in order to test turbine aligned with flow rather than facing flow
-            turbDir = deg360_to_radpi(self.features['turbine' + str(i)]['OA'])
-            turbSpan = np.abs(
-                    np.radians(self.features['turbine' + str(i)]['HAS']))/2.0
-            if turbSpan < np.pi:  # case where turbine rotates 360.0 degrees
-                # angle between -pi and pi
-                turbDir = pi2pi(turbDir)
-                # define intervals
-                inter1 = self._interval(turbDir, turbSpan)
-                # check if 2way turbine and define additional interval if needed
-                if self.features['turbine' + str(i)]['2way']:
-                    turbDir2 = pi2pi(turbDir + np.pi)
-                    inter2 = self._interval(turbDir2, turbSpan)
-                # check if flow direction with interval
-                inFlag = False
-                if type(inter1)==list:
-                    if inter1[0][0]<=absAngle<=inter1[0][1]: inFlag=True
-                    if inter1[1][0]<=absAngle<=inter1[1][1]: inFlag=True
-                else:
-                    if inter1[0]<=absAngle<=inter1[1]: inFlag=True
-                if self.features['turbine' + str(i)]['2way']:
-                    if type(inter2)==list:
-                        if inter2[0][0]<=absAngle<=inter2[0][1]: inFlag=True
-                        if inter2[1][0]<=absAngle<=inter2[1][1]: inFlag=True
-                    else:
-                        if inter2[0]<=absAngle<=inter2[1]: inFlag=True
-            else:
-                inFlag=True
-            # compute relative yaw, RY
-            if inFlag:
-                self.features['turbine' + str(i)]['RY'] = 0.0
-            else:
-                bounds = np.array(inter1).flatten()
-                if self.features['turbine' + str(i)]['2way']:
-                    bounds = np.hstack((bounds, np.array(inter2).flatten()))
-                #  find closest bound
-                ry = self._diff_rads(absAngle, bounds)
-                # relative yaw angle in deg., RY
-                self.features['turbine' + str(i)]['RY'] = np.degrees(ry.min())
+            psi_current = deg360_to_radpi(bearing) + np.pi
+            
+            # turbine direction
+            psi_turb = deg360_to_radpi(self.features['turbine' + str(i)]['OA'])
+            
+            # maximum yaw
+            psi_yaw = np.abs(
+                    np.radians(self.features['turbine' + str(i)]['HAS'])) / 2.0
+            
+            ry = _get_angle_of_attack(psi_turb,
+                                      psi_yaw,
+                                      psi_current,
+                                      two_way=self.features[
+                                                 'turbine' + str(i)]['2way'])
+                
+            self.features['turbine' + str(i)]['RY'] = np.degrees(ry)
+            
             if debug:
+                
                 logMsg = ("Relative yawing angle for turbine{} = "
                           "{}").format(i, 
-                                       self.features['turbine' + str(i)]['RY'])                                       
+                                       self.features['turbine' + str(i)]['RY'])
                 module_logger.info(logMsg)
-
-    def _interval(self, turbDir, turbSpan):
-        """
-        define angle interval
-
-        Args:
-          turbDir (float): turbine's orientation
-          turbSpan (float): turbine's yawing span
-
-        Returns:
-          inter1 (list): yawing angle's interval
-
-        """
-        inter1 = np.array([turbDir - turbSpan, turbDir + turbSpan])
-        # angle between -pi and pi
-        if np.any(inter1 >= np.pi):
-            inter1 = [np.array([turbDir - turbSpan, np.pi]),
-                     np.array([-np.pi, (turbDir + turbSpan) - 2.0*np.pi])]
-        elif np.any(inter1 <= -np.pi):
-            inter1 = [np.array([-np.pi, turbDir + turbSpan]),
-                     np.array([(turbDir - turbSpan) + 2.0*np.pi, np.pi])]
-        return inter1
-    
-    def _diff_rads(self, angle1, angles):
         
-        if angle1 < 0: angle1 += 2 * np.pi
-        
-        diff = []
-        
-        for angle2 in angles:
-            
-            if angle2 < 0: angle2 += 2 * np.pi
-            diff.append(abs(angle1 - angle2))
-        
-        return np.array(diff)
+        return
 
 
 ###Functions definitions###
@@ -459,6 +406,49 @@ def wp2_tidal(data,
             pow_perf_array,
             ratio,
             ti)
+
+
+def _get_angle_of_attack(psi_turb, psi_yaw, psi_current, two_way=False):
+    
+    if _is_within_yaw(psi_turb, psi_yaw, psi_current, two_way=two_way):
+        return 0.0
+    
+    check_angles = []
+                
+    for a in [-1, 1]:
+        
+        x = (psi_current - psi_turb
+                                 + np.pi) % (2 * np.pi) - np.pi + a * psi_yaw
+        
+        check_angles.append(abs(x))
+    
+    if two_way:
+        
+        for a in [-1, 1]:
+        
+            x = (psi_current - psi_turb) % (2 * np.pi) - np.pi + a * psi_yaw
+            
+            check_angles.append(abs(x))
+    
+    return min(check_angles)
+
+
+def _is_within_yaw(psi_turb, psi_yaw, psi_current, two_way=False):
+    
+    if psi_yaw > np.pi: return False
+        
+    check_uni = (psi_current - psi_turb + np.pi) % (2 * np.pi) - np.pi
+    
+    if abs(check_uni) <= psi_yaw: return True
+    
+    if not two_way: return False
+    
+    check_bi = (psi_current - psi_turb) % (2 * np.pi) - np.pi
+    
+    if abs(check_bi) <= psi_yaw: return True
+    
+    return False
+
 
 def test():
     """
