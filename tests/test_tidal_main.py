@@ -213,6 +213,9 @@ def test_is_within_yaw(psi_turb, psi_yaw, psi_current, two_way, expected):
     (7. * PIBY4, 3 * PIBY4, 0., False, 0.),
     (7. * PIBY4, 3 * PIBY4, 3 * PIBY4, False, PIBY4),
     (7. * PIBY4, 3 * PIBY4, 3 * PIBY4, True, 0.),
+    (3. * PIBY4, 3 * PIBY4, np.pi, False, 0.),
+    (3. * PIBY4, 3 * PIBY4, 7 * PIBY4, False, PIBY4),
+    (3. * PIBY4, 3 * PIBY4, 7 * PIBY4, True, 0.),
     ])
 def test_get_angle_of_attack(psi_turb,
                              psi_yaw,
