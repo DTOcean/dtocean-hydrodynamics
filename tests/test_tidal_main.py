@@ -176,13 +176,30 @@ def test_Array_init(data, turbines, features):
     (5. * PIBY4, PIBY6, 8 * PIBY6, True, True),
     (5. * PIBY4, PIBY6, 9 * PIBY6, True, False),
     (5. * PIBY4, PIBY6, 10 * PIBY6, True, False),
-    (5. * PIBY4, PIBY6, 11 * PIBY6, True, False)
+    (5. * PIBY4, PIBY6, 11 * PIBY6, True, False),
+    (0., np.pi, 0., False, True),
+    (0., 0., 0., False, True),
+    (np.pi, 0., np.pi, False, True),
+    (2. * np.pi, 0., 0., False, True),
+    (0., 0., -0.1, False, False),
+    (np.pi, 0., -0.1, False, False),
+    (2. * np.pi, 0., -0.1, False, False)
     ])
 def test_is_within_yaw(psi_turb, psi_yaw, psi_current, two_way, expected):
     
     test = _is_within_yaw(psi_turb, psi_yaw, psi_current, two_way)
     
     assert test == expected
+
+
+@pytest.mark.parametrize("psi_turb, psi_yaw, psi_current, two_way", [
+    (0., -0.1, 0., False),
+    (0., np.pi + 0.1, 0., False)
+    ])
+def test_is_within_yaw_error(psi_turb, psi_yaw, psi_current, two_way):
+    
+    with pytest.raises(ValueError):
+        _is_within_yaw(psi_turb, psi_yaw, psi_current, two_way)
 
 
 @pytest.mark.parametrize("psi_turb, psi_yaw, psi_current, two_way, expected", [
@@ -216,6 +233,10 @@ def test_is_within_yaw(psi_turb, psi_yaw, psi_current, two_way, expected):
     (3. * PIBY4, 3 * PIBY4, np.pi, False, 0.),
     (3. * PIBY4, 3 * PIBY4, 7 * PIBY4, False, PIBY4),
     (3. * PIBY4, 3 * PIBY4, 7 * PIBY4, True, 0.),
+    (0., 0., 0., False, 0.),
+    (0., 0., -0.1, False, 0.1),
+    (2. * np.pi, 0., 0., False, 0.),
+    (2. * np.pi, 0., -0.1, False, 0.1)
     ])
 def test_get_angle_of_attack(psi_turb,
                              psi_yaw,
