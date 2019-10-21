@@ -435,8 +435,14 @@ def _get_angle_of_attack(psi_turb, psi_yaw, psi_current, two_way=False):
 
 def _is_within_yaw(psi_turb, psi_yaw, psi_current, two_way=False):
     
-    if psi_yaw > np.pi: return False
+    if psi_yaw < 0. or psi_yaw > np.pi:
         
+        psi_yaw = ("Given psi_yaw={} exceeds the valid range of "
+                   "[0, pi]").format(psi_yaw)
+        raise ValueError(psi_yaw)
+    
+    if psi_yaw == np.pi: return True
+    
     check_uni = (psi_current - psi_turb + np.pi) % (2 * np.pi) - np.pi
     
     if abs(check_uni) <= psi_yaw: return True
