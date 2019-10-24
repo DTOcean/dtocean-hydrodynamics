@@ -20,33 +20,33 @@ from __future__ import division
 import numpy as np
 
 
-class DominatingWake(object):
+class DominantWake(object):
     
-    # Returns the induction factors and indexes of the dominant wake affecting 
-    # each turbine
+    # Returns the velocity coefficient and indexes of the dominant wake 
+    # affecting each turbine
     
     def __init__(self, turb_velocity,
                        wake_matrix):
         
-        self._perturbation = _get_wake_perturbations(turb_velocity,
-                                                     wake_matrix)
-        self.indexes = np.argmin(self._perturbation, axis=0)
+        self._coefficient = _get_wake_coefficients(turb_velocity,
+                                                   wake_matrix)
+        self.indexes = np.argmin(self._coefficient, axis=1)
         
         return
     
     @property
-    def induction(self):
+    def coefficient(self):
         
-        induction = self._perturbation[self.indexes,
-                                       range(self._perturbation.shape[1])]
+        coefficient = self._coefficient[range(self._coefficient.shape[0]),
+                                        self.indexes]
         
-        return induction
+        return coefficient
 
 
-def _get_wake_perturbations(turb_velocity,
-                            wake_matrix):
+def _get_wake_coefficients(turb_velocity,
+                           wake_matrix):
     
     turb_speed = np.sqrt(turb_velocity[0, :] ** 2 + turb_velocity[1, :] ** 2)
-    perturbation = wake_matrix / turb_speed
+    coefficient = wake_matrix / turb_speed
     
-    return perturbation
+    return coefficient

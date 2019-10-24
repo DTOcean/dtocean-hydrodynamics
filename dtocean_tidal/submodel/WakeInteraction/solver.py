@@ -23,13 +23,13 @@ import logging
 
 import numpy as np
 import matplotlib.pyplot as plt
+from numpy.linalg import norm
 from descartes import PolygonPatch
 
 # Local import
-from .models import DominatingWake
+from .models import DominantWake
 from ..ParametricWake import WakeShape, Wake
 from ...modules.blockage_ratio import blockage_ratio
-from ...utils.misc import MovingAverage
 
 # Start logging
 module_logger = logging.getLogger(__name__)
@@ -41,37 +41,13 @@ class WakeInteraction:
     
     Computes wake interaction and their impacts of flow field
     
-    Args:
-      hydro (dtocean_tidal.main.Hydro): Hydro class/object
-      array (dtocean_tidal.main.Array): Array class/object
-    
-    Kwargs:
-      debug (bool): debug flag
-      debug_plot (bool): debug plot flag
-    
-    Attributes:
-      indMat (numpy.array): matrix of induction factors,
-                            float, (nb. device, nb. device)
-      tiMat (numpy.array): matrix of turbulence intensity,
-                           float, (nb. device, nb. device)
-      induction (numpy.array): turbines' resultant induction factors,
-                               float, (nb. device)
-      inducedTI (numpy.array): turbines' resultant turbulence intensities,
-                               float, (nb. device)
-      wake (dict): collection of dtocean_tidal.submodel.ParametricWake.Wake
-                   class objects for each device
-      wakeShape (dict):  collection of
-                         dtocean_tidal.submodel.ParametricWake.WakeShape class
-                         objects for each device
-    
     """
     
     def __init__(self, hydro,
                        array,
                        cfd_data,
                        criterior=1e-4,
-                       max_loop=6,
-                       moving_average_length=3,
+                       max_loop=50,
                        debug=False,
                        debug_plot=False):
         
@@ -96,8 +72,6 @@ class WakeInteraction:
         
         self._criterior = criterior
         self._max_loop = max_loop
-        self._average_induction = MovingAverage(moving_average_length)
-        self._average_TKE = MovingAverage(moving_average_length)
         
         return
     
@@ -141,41 +115,40 @@ class WakeInteraction:
             start = time.time()
         
         ind_err = np.inf
-        old_induction = 2
+        old_coefficient = np.ones(self._turbine_count)
         newVel = iniVel.copy()
         newTI = iniTI.copy()
         newTKE = iniTKE.copy()
         loop_counter = 0
         
-        while (abs(ind_err) > self._criterior and
+        while (ind_err > self._criterior and
                loop_counter < self._max_loop):
             
             (newVel,
              newSpeed,
              newTI,
-             newTKE,
-             last_induction) = _solve_induction(self._turbine_count,
-                                                self._array.distances,
-                                                self._wake,
-                                                newVel,
-                                                newTI,
-                                                newTKE,
-                                                iniVel,
-                                                iniTKE,
-                                                self._average_induction,
-                                                self._average_TKE,
-                                                debug)
+             newTKE) = _solve_flow(self._turbine_count,
+                                   self._array.distances,
+                                   self._wake,
+                                   newVel,
+                                   newTI,
+                                   newTKE,
+                                   iniVel,
+                                   iniTKE,
+                                   debug)
             
-            new_induction = np.mean(newSpeed / iniSpeed)
-            ind_err = old_induction - new_induction
-            old_induction = new_induction
-            meanTI = np.mean(newTI)
+            new_coefficient = newSpeed / iniSpeed
+            ind_err = norm(abs(old_coefficient - new_coefficient))
+            old_coefficient = new_coefficient
             
-            debug_msg = ("loop: {}; induction: {}; error: {}; TI: "
+            coef_metric = new_coefficient.mean()
+            tke_metric = newTKE.mean()
+            
+            debug_msg = ("loop: {}; error: {}; coefficient {}; tke "
                          "{}").format(loop_counter,
-                                      old_induction,
-                                      abs(ind_err),
-                                      meanTI)
+                                      ind_err,
+                                      coef_metric,
+                                      tke_metric)
             module_logger.debug(debug_msg)
             
             loop_counter += 1
@@ -192,7 +165,7 @@ class WakeInteraction:
             self._array.velHub[turb][:] = newVel[:, i]
             self._array.features[turb]['TIH'] = newTI[i]
         
-        self.induction = newSpeed / iniSpeed
+        self.coefficient = newSpeed / iniSpeed
         self.inducedTKE = newTKE
         
         return
@@ -265,7 +238,7 @@ def _solve_flow(turbine_count,
             if j in turb_distances[turb].keys():
                         
                 (wake_mat[i, j],
-                 tke_mat[i, j]) = turb_wakes[turb].induction(
+                 tke_mat[i, j]) = turb_wakes[turb].get_velocity_TKE(
                                                  turb_distances[turb][j][:],
                                                  turb_velocity[:, j],
                                                  turb_TI[j],
@@ -275,38 +248,27 @@ def _solve_flow(turbine_count,
                 
                 wake_mat[i, j] = np.sqrt(turb_velocity[0, j] ** 2 +
                                                      turb_velocity[1, j] ** 2)
-                tke_mat[i, j] = turb_TI[j]
+                tke_mat[i, j] = turb_TKE[j]
     
-    superposition_model = DominatingWake(turb_velocity,
-                                         wake_mat)
+    superposition_model = DominantWake(turb_velocity,
+                                       wake_mat)
     coefficient = superposition_model.coefficient
     
-    if average_induction is not None:
-        induction = average_induction(induction)
-    
-    wake_TKE = tke_mat[superposition_model.indexes, range(tke_mat.shape[1])]
-    TKE_perturbation = wake_TKE / turb_TKE[superposition_model.indexes]
-    induced_TKE = base_TKE * TKE_perturbation
+    wake_TKE = tke_mat[range(tke_mat.shape[0]), superposition_model.indexes]
+    TKE_coefficient = wake_TKE / turb_TKE[superposition_model.indexes]
+    new_TKE = base_TKE * TKE_coefficient
     
     # Replace any nan values with original TKE
-    check_nan = np.isnan(induced_TKE)
-    
-    if check_nan.any():
-        nan_idx = np.argwhere(check_nan)
-        induced_TKE[nan_idx] = base_TKE[nan_idx]
-    
-    if average_TKE is not None:
-        induced_TKE = average_TKE(induced_TKE)
+    if np.isnan(new_TKE).any():
+        new_TKE = np.where(np.isnan(new_TKE), base_TKE, new_TKE)
     
     for i in range(turbine_count):
         
-        new_vel[:,i] = base_velocity[:, i] * induction[i]
+        new_vel[:,i] = base_velocity[:, i] * coefficient[i]
         new_speed[i] = np.sqrt(new_vel[0, i] ** 2 + new_vel[1, i] ** 2)
-        
-        new_TKE[i] = induced_TKE[i]
         new_TI[i] = _get_ti(new_TKE[i], new_speed[i])
     
-    return new_vel, new_speed, new_TI, new_TKE, induction
+    return new_vel, new_speed, new_TI, new_TKE
 
 
 def _get_tke(I, U):
