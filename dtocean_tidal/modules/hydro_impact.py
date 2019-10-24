@@ -84,9 +84,9 @@ class HydroImpact:
             diam = self._array.features[ID]['Diam']
             # in case only one turbine
             if self._interaction == None:
-                induction = 0.0
+                coefficient = 0.0
             else:
-                induction = self._interaction.induction[i]
+                coefficient = self._interaction.coefficient[i]
             #find mesh elements within 5 diam circle
             xx,yy=np.meshgrid(x,y)
             distance=np.sqrt((xx-xt)**2.0 + (yy-yt)**2.0)
@@ -96,9 +96,9 @@ class HydroImpact:
             mask = 1.0-mask#)**2.0#cubic distance mask
             #apply mask
             #TR quick fix for area with surging
-            if (1-induction) < 0.0: induction = 1.0
-            u[index]=u[index]-(mask[index]*(1-induction)*u[index])
-            v[index]=v[index]-(mask[index]*(1-induction)*v[index])
+            if (1-coefficient) < 0.0: coefficient = 1.0
+            u[index]=u[index]-(mask[index]*(1-coefficient)*u[index])
+            v[index]=v[index]-(mask[index]*(1-coefficient)*v[index])
 
         #load into attributs
         self.u_reduced[:] = u[:]
