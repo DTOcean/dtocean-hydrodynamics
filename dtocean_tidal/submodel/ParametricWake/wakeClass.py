@@ -95,7 +95,7 @@ class Wake:
         # yawing
         ratio = 0.489*self.BR**2.0 - 1.472*self.BR + 1.0
         self._dfx = dataframe['dfX'] * ratio * self.Diam
-        self._dfy = dataframe['dfY'] * np.cos(ry) * self.Diam
+        self._dfy = dataframe['dfY'] * abs(np.cos(ry)) * self.Diam
         
         return
     
