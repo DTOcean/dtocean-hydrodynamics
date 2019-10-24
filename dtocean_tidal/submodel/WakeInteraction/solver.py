@@ -86,7 +86,7 @@ class WakeInteraction:
         nan_array = np.empty(self._turbine_count)
         nan_array[:] = np.nan
         
-        self.induction = np.ones(self._turbine_count)
+        self.coefficient = np.ones(self._turbine_count)
         self.inducedTKE = nan_array
         self._wake = {}
         self._wakeShape = {}
@@ -101,11 +101,11 @@ class WakeInteraction:
         
         return
     
-    def solv_induction(self, debug=False):
+    def solve_flow(self, debug=False):
         
         """
-        Compute the induction factor at each turbine hub
-        based on each others interactions
+        Find velocities and TIs at each turbine by iterating the velocity and
+        TI coefficients based on superposition of wakes
         
         Kwargs:
           criterior (float): convergence criterior
@@ -239,17 +239,15 @@ class WakeInteraction:
         return
 
 
-def _solve_induction(turbine_count,
-                     turb_distances,
-                     turb_wakes,
-                     turb_velocity,
-                     turb_TI,
-                     turb_TKE,
-                     base_velocity,
-                     base_TKE,
-                     average_induction=None,
-                     average_TKE=None,
-                     debug=False):
+def _solve_flow(turbine_count,
+                turb_distances,
+                turb_wakes,
+                turb_velocity,
+                turb_TI,
+                turb_TKE,
+                base_velocity,
+                base_TKE,
+                debug=False):
     
     new_vel = np.empty((2, turbine_count))
     new_TKE = np.empty(turbine_count)
@@ -281,7 +279,7 @@ def _solve_induction(turbine_count,
     
     superposition_model = DominatingWake(turb_velocity,
                                          wake_mat)
-    induction = superposition_model.induction
+    coefficient = superposition_model.coefficient
     
     if average_induction is not None:
         induction = average_induction(induction)

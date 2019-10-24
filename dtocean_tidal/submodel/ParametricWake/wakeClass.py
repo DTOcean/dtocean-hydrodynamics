@@ -37,24 +37,13 @@ module_logger = logging.getLogger(__name__)
 
 class Wake:
     """
-    Wake class computes the induction factor for any distance (x,y) and any set
+    Wake class computes velocities and TKEs for any distance (x,y) and any set
     of turbine parameters
     
     Args:
       data_reader (fortran): database reader
       turbParams (dict): turbine's parameters
       BR (float): blockage ratio, float
-    
-    Attributes:
-      indFac (numpy.array or list): induction factor, either 3D array
-                                    (Ny, Nx, 2) or 2D array (Nturb, 2) or
-                                    list [x,y]
-      VBR (float): vertical blockage ratio
-      TIH (float): turbulence intensity at hub (%)
-      YA (float): yaw angle (deg.)
-      Ct (numpy.array): thrust coefficient
-      A (float): rotor diameter (m2)
-      velHub (list): velocity components at hub, [u, v], float list
     
     """
     
@@ -244,8 +233,9 @@ class Wake:
         
         return u, v, tke
     
-    def induction(self, distance, velHub, tiHub, debug=False):
-        """Wake velocity and T.I. modification
+    def get_velocity_TKE(self, distance, velHub, tiHub, debug=False):
+        """Return velocity and T.K.E at location behind turbine for input
+        velocity and T.I. conditions.
         
         Args:
           distance (numpy.array or list): along and across distances to hub

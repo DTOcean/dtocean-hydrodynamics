@@ -351,7 +351,7 @@ def wp2_tidal(data,
                                       cfd_data,
                                       debug=debug,
                                       debug_plot=debug_plot)
-        interaction.solv_induction(debug=debug)
+        interaction.solve_flow(debug=debug)
     else:
         if debug: module_logger.info("Single turbine...no interactions")
 
