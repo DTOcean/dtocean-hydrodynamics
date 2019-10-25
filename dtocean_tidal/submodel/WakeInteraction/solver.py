@@ -255,12 +255,15 @@ def _solve_flow(turbine_count,
     coefficient = superposition_model.coefficient
     
     wake_TKE = tke_mat[range(tke_mat.shape[0]), superposition_model.indexes]
-    TKE_coefficient = wake_TKE / turb_TKE[superposition_model.indexes]
-    new_TKE = base_TKE * TKE_coefficient
     
-    # Replace any nan values with original TKE
-    if np.isnan(new_TKE).any():
-        new_TKE = np.where(np.isnan(new_TKE), base_TKE, new_TKE)
+    # Replace any nan values with TKE of turbines
+    gamma_TKE = turb_TKE[superposition_model.indexes]
+    
+    if np.isnan(wake_TKE).any():
+        wake_TKE = np.where(np.isnan(wake_TKE), gamma_TKE, wake_TKE)
+    
+    TKE_coefficient = wake_TKE / gamma_TKE
+    new_TKE = base_TKE * TKE_coefficient
     
     for i in range(turbine_count):
         
