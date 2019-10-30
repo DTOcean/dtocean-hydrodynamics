@@ -318,17 +318,44 @@ class CallTidal:
             
         year_hours = 365 * 24
         
-        aep_ar = np.sum(self.power_prod_array * self.__prob) * year_hours
+        pow_dev = np.sum(self.power_prod_perD_perS * self.__prob, 1)
+        aep_dev = year_hours * pow_dev
+        aep_ar = np.sum(aep_dev)
+        
         q_ar = np.sum(self.power_prod_array) / \
                                           np.sum(self.power_prod_array_no_int)
-        q_dev = self.power_prod_perD / \
-                        np.sum(self.power_prod_perD_perS_ni * self.__prob, 1)
-
+        q_dev = np.sum(self.power_prod_perD_perS, 1) / \
+                                        np.sum(self.power_prod_perD_perS_ni, 1)
+        
+        # ReducedOutput arguments:
+        #
+        # aep_ar (float)[Wh]: annual energy production of the whole array
+        # aep_dev (numpy.ndarray)[Wh]: annual energy production of each device
+        #   within the array
+        # q_dev (numpy.ndarray)[]: q-factor for each device, calculated as
+        #   energy produced by the device within the array over the energy
+        #   produced by the device without interaction
+        # q_ar (float)[]: q-factor for the array, calculated as energy
+        #   produced by the array over the energy produced by the device 
+        #   without interaction times the number of devices.
+        # pow_dev (numpy.ndarray)[W]: average power production of each
+        #   device within the array
+        # pow_dev_state (numpy.ndarray)[W]: average power production
+        #   of each device within the array for each sea state
+        # nb (float)[]: number of devices in the array
+        # pos (numpy.ndarray)[m]: UTM coordinates of each device in
+        #   the array. NOTE: the UTM coordinates do not consider different UTM
+        #   zones. The maping in the real UTM coordinates is done at a higher
+        #   level.
+        # res_red (float)[]: ratio between absorbed and incoming
+        #   energy.
+        # ti (float)[TIDAL ONLY]: turbulence intensity within the array
+        
         res = ReducedOutput(aep_ar,
-                            self.power_prod_perD * year_hours,
+                            aep_dev,
                             q_ar,
                             q_dev,
-                            self.power_prod_perD,
+                            pow_dev,
                             self.power_prod_perD_perS,
                             self.Nbodies,
                             machine,
