@@ -98,12 +98,6 @@ class ArrayYield:
             ry = self._array.features[key]['RY']  # angle of attack
             rating = self._array.features[key]['Rating']
             
-            # Rotor area (as an ellipse due to yawing)
-            A = np.pi * ((diam/2.0)**2.0) * np.cos(np.radians(ry))
-            
-            # Patch to avoid negative power production. Probably also the disk 
-            # model should be modified but it is not yet.
-            if np.abs(ry) > 89: A = 0
             
             # Flow speed at hub 
             u = self._array.velHub[key][0]
@@ -122,43 +116,23 @@ class ArrayYield:
             Cp = cp(norm)
             Cpini = cp(normIni)
             
-            if norm < cutIn:
-                
-                module_logger.debug("{}: hub velocity: {} < cut-in: {} --> "
-                                    "no power production".format(key,
-                                                                 norm,
-                                                                 cutIn))
-                power = 0.0
+            power = _get_turbine_power(diam,
+                                       cutIn,
+                                       cutOut,
+                                       rating,
+                                       ry,
+                                       Cp,
+                                       norm,
+                                       rho=rho)
             
-            elif norm > cutOut:
-                
-                module_logger.debug("{}: hub velocity: {} > cut-out: {} --> "
-                                    "no power production".format(key,
-                                                                 norm,
-                                                                 cutOut))
-                power = 0.0
-            
-            else:
-                
-                power = 0.5 * rho * Cp * A * norm ** 3.0
-                
-                if np.abs(ry) > 89:
-                    module_logger.debug("{}: angle of attach > 90deg --> no "
-                                        "power production".format(key))
-            
-            if normIni < cutIn:
-                powerIni = 0.0
-            elif normIni > cutOut:
-                powerIni = 0.0
-            else:
-                powerIni = 0.5 * rho * Cpini * A * normIni ** 3.0
-            
-            # Clip power to the power rating
-            if power > rating:
-                power = rating
-            
-            if powerIni > rating:
-                powerIni = rating
+            powerIni = _get_turbine_power(diam,
+                                          cutIn,
+                                          cutOut,
+                                          rating,
+                                          ry,
+                                          Cpini,
+                                          normIni,
+                                          rho=rho)
             
             turbGene[i] = power
             turbGeneIni[i] = powerIni
@@ -246,3 +220,26 @@ class ArrayYield:
         
         return np.nansum(turbDiss)
 
+
+def _get_turbine_power(diameter,
+                       cut_in,
+                       cut_out,
+                       rating,
+                       angle_of_attack,
+                       Cp,
+                       u,
+                       rho=1025.):
+    
+    if (np.abs(angle_of_attack) >= 90 or
+        u < cut_in or
+        u > cut_out): return 0.
+    
+    aoa_rad = np.radians(np.abs(angle_of_attack))
+    power = np.pi / 8. * rho * diameter ** 2 * np.cos(aoa_rad) * Cp * u ** 3.0
+    
+    if power > rating:
+        power = rating
+    elif power < 0.:
+        power = 0.
+    
+    return power
