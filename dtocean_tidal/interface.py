@@ -286,34 +286,34 @@ class CallTidal:
                                                 pow_perf_dev_state_ni,
                                                 ti_dev_state,
                                                 turb)
-
-        # adding the results to the class attributes
-        pow_perf_DEV = np.sum(pow_perf_dev_state*self.__prob, 1)
-
-        self.power_prod_perD_perS = pow_perf_dev_state*1.0e6  # the power is defined in W
-        self.power_prod_perD_perS_ni = pow_perf_dev_state_ni*1.0e6  # the power is defined in W
-        self.power_prod_perD = pow_perf_DEV*1.0e6  # the power is defined in W
-        self.power_prod_array = pow_perf_array*1.0e6  # the power is defined in W
-        self.power_prod_array_no_int = pow_perf_array_no_int*1.0e6  # the power is defined in W
+        
+        self.power_prod_perD_perS = pow_perf_dev_state * 1.0e6
+        self.power_prod_perD_perS_ni = pow_perf_dev_state_ni * 1.0e6
+        self.power_prod_array = pow_perf_array * 1.0e6
+        self.power_prod_array_no_int = pow_perf_array_no_int * 1.0e6
         self.Nbodies = nb
         self.__turbines = turb
         self.TI = ti_dev_state
         self.Resource_reduction = np.nanmax(resource_reduction_state)
-
+        
         return self.__output_tidal()
-           
+    
     def __output_tidal(self):
         """
-        output_tidal: the method is used to map the tidal output to the WP2 object format.
-
+        output_tidal: the method is used to map the tidal output to the WP2
+        object format.
+        
         Returns:
             the methods return the object itself with mapped attributes
         """
+        
         machine = {}
+        
         for jj in range(self.Nbodies):
-            stro = 'turbine%d' %jj
+            
+            stro = 'turbine{}'.format(jj)
             pos = self.__turbines[stro]['position']
-            strn = 'Device%d'%jj
+            strn = 'Device{}'.format(jj)
             machine.update({strn:(pos[0],pos[1])})
             
         year_hours = 365 * 24
@@ -336,7 +336,7 @@ class CallTidal:
                             self.TI)
         
         return res
-
+    
     def __set_turbine_and_features(self):
         """
         __set_turbine_and_features: generates the required features and machine specification for each sea state.
