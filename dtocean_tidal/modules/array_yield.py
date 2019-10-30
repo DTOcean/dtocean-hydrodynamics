@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 
 #    Copyright (C) 2016 Thomas Roc
-#    Copyright (C) 2017-2018 Mathew Topper
+#    Copyright (C) 2017-2019 Mathew Topper
 #
 #    This program is free software: you can redistribute it and/or modify
 #    it under the terms of the GNU General Public License as published by
@@ -18,16 +18,17 @@
 
 from __future__ import division
 
-# Start logging
 import logging
-module_logger = logging.getLogger(__name__)
 
 import matplotlib.pyplot as plt
 import numpy as np
 from scipy.interpolate import interp1d
 
-#Local import
 from dtocean_tidal.utils.misc import natural_sort
+
+# Start logging
+module_logger = logging.getLogger(__name__)
+
 
 class ArrayYield:
     """
@@ -35,21 +36,26 @@ class ArrayYield:
     
     Args:
       Array (dtocean_tidal.main.Array): array class
-
+    
     Kwargs:
       debug (bool): debug flag
       debug_plot (bool): debug plot flag
-
+    
     Attributes:
-      turbine_capacity (dict): gathers wake induced turbines' capacities, Watts. Dictionary with turbine's ID as key
-      turbine_capacity_no_interaction (dict): gathers turbines' capacities, Watts. Dictionary with turbine's ID as key
+      turbine_capacity (dict):
+          Gathers wake induced turbines' capacities, Watts. Dictionary with
+          turbine's ID as key
+      turbine_capacity_no_interaction (dict):
+          Gathers turbines' capacities, Watts. Dictionary with turbine's ID as
+          key
       array_capacity (float): array's capacity, Watts
       array_capacity_no_interaction (float): array's capacity, Watts
-
+    
     Note:
        wake interactions are not accounted here
     """
     def __init__(self, array, debug=False, debug_plot=False):
+        
         self._debug = debug
         self._debug_plot = debug_plot
         self._array = array
@@ -86,7 +92,7 @@ class ArrayYield:
             diam = self._array.features[key]['Diam']
             cutIn = self._array.features[key]['cutIO'][0]
             cutOut = self._array.features[key]['cutIO'][1]
-            ry = self._array.features[key]['RY']  # relative yawing angle
+            ry = self._array.features[key]['RY']  # angle of attack
             rating = self._array.features[key]['Rating']
             
             # Rotor area (as an ellipse due to yawing)
@@ -155,18 +161,17 @@ class ArrayYield:
             turbGeneIni[i] = powerIni
             turbID.append(key)
             
-            #load in attributs
             self.turbine_capacity[key] = power
             self.turbine_capacity_no_interaction[key] = powerIni
         
         totGene = np.nansum(turbGene)
         totGeneIni = np.nansum(turbGeneIni)
         
-        #load in attributes
         self.array_capacity = totGene
         self.array_capacity_no_interaction = totGeneIni
         
         if debug_plot:
+            
             fig1 = plt.figure(figsize=(18,10))
             ax1 = fig1.add_subplot(1,1,1)
             x = np.arange(self._turbine_count)
@@ -178,19 +183,30 @@ class ArrayYield:
             ax1.grid(True)
             text = "{:,.2f}".format(totGene/1e6) + "MWatts"
             text2 = "{:,.2f}".format(totGeneIni/1e6) + "MWatts"
-            fig1.text(0.1,0.95, "Array production: "+text, color='k', fontsize = 14)
-            fig1.text(0.1,0.925, "Array production without interaction: "+text2, color='k', fontsize = 14)
-
+            fig1.text(0.1,
+                      0.95,
+                      "Array production: " + text,
+                      color='k',
+                      fontsize=14)
+            fig1.text(0.1,
+                      0.925,
+                      "Array production without interaction: " + text2,
+                      color='k',
+                      fontsize=14)
+        
+        return
+    
     def dissipated_mass_flow_rate(self, debug=False):
         """
         Computes the equivalent mass flow rate (kg/s) dissipated by turbine.
-
+        
         Kwargs:
           debug (bool): debug flag
-
+          
         Returns:
           float: dissipated mass flow rate
         """
+        
         debug = debug or self._debug
         if debug: module_logger.info("Computing dissipated power...")
         #Constants
@@ -198,14 +214,14 @@ class ArrayYield:
         #Initialize some stuffs
         l=natural_sort(self._array.velHub.keys())
         turbDiss = np.zeros(self._turbine_count)
-
+        
         for i, key in enumerate(l):
             # turbine features
             diam = self._array.features[key]['Diam']
             cutIn = self._array.features[key]['cutIO'][0]
             cutOut = self._array.features[key]['cutIO'][1]
-            ry = self._array.features[key]['RY']  # relative yawing angle
-            A = np.pi * ((diam/2.0)**2.0) * np.cos(np.radians(ry))  # ellipse area
+            ry = self._array.features[key]['RY']  # angle of attack
+            A = np.pi * ((diam/2.0)**2.0) * np.cos(np.radians(ry))  # ellipse
             # Flow speed at hub
             u = self._array.velHub[key][0]
             v = self._array.velHub[key][1]
@@ -222,7 +238,8 @@ class ArrayYield:
                 disspow = 0.0
             else:
                 disspow = rho*Ct*A*norm
-
+            
             turbDiss[i] = disspow
-
+        
         return np.nansum(turbDiss)
+
