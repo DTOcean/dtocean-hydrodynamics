@@ -64,10 +64,13 @@ class ArrayYield:
         self.array_capacity = 0.0
         self.array_capacity_no_interaction = 0.0
         self._turbine_count = len(array.positions.keys())
-
+        
+        return
+    
     def performance(self, debug=False, debug_plot=False):
         """
-        Method computes both array and device performance power capacity, Watts.
+        Method computes both array and device performance power capacity,
+        Watts.
         
         Kwargs:
           debug (bool): debug flag
