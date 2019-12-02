@@ -195,7 +195,9 @@ class CallTidal:
 
         Bathy = points_to_grid(WP2Hydro.bathy, x, y).T
         Geophy = points_to_grid(WP2Input.S_data.Geophysics, x, y).T
-
+        
+        rated_power = WP2Input.M_data.RatedPowerDevice
+        
         # By default the MCT is not considered.
         # patch for the MCT case
         if not np.size(char_len) == 1:
@@ -203,7 +205,8 @@ class CallTidal:
                 # this flag is used to trigger the case of the MCT on/off.
                 self.__mct_flag = True
                 self.__mct_dist = char_len[1]
-
+                rated_power /=  2.
+        
         # conditional reconstruction of some input
         if len(TI) == 1:
             TI = TI*np.ones((ny,nx,self.n_seastate))
@@ -224,7 +227,7 @@ class CallTidal:
                                'HAS': HAS,
                                'OA': OA,
                                '2way': Bidirection,
-                               'Rating': WP2Input.M_data.RatedPowerDevice}
+                               'Rating': rated_power}
 
         self.__data = {'U': None, 'V': None, 'TI': None,
                             'PLE': None, 'SSH': None, 'bathy': Bathy,
