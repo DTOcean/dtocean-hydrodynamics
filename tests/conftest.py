@@ -112,7 +112,6 @@ def tidalsite():
     # END of Statistical analysis generation
     # --------------------------------------- 
     Meteocean = {'V':V,'U':U,'p':p,'TI':TI,'x':x,'y':y,'SSH':SSH} 
-    VelocityShear = np.array([7.])
     MainDirection = None#np.array([1.,1.])
     #ang = np.pi*0.25
     #MainDirection = np.array([np.cos(ang),np.sin(ang)])
@@ -122,7 +121,6 @@ def tidalsite():
     #yb = np.linspace(0,50,5)
     
     Bathymetry = np.array([-60.])
-    Geophysics = np.array([0.3])
     
     BR = 1.
     electrical_connection_point = (-1000.0, -4000.0)
@@ -130,10 +128,10 @@ def tidalsite():
     out = [leaseAreaVertexUTM,
            Nogoareas_wave,
            Meteocean,
-           VelocityShear,
+           None,
+           None,
            MainDirection,
            Bathymetry,
-           Geophysics,
            BR,
            electrical_connection_point]
 
@@ -174,7 +172,6 @@ def wavesite():
     "---------------------------------------"
     
     Meteocean_wave = {'Te':T,'Hs':H,'B':B,'p':p,'specType':specType,'SSH':SSH}
-    VelocityShear_tidal =  np.empty(0)
     MainDirection = None
     
     x = np.linspace(0.,1000.,75)
@@ -187,17 +184,16 @@ def wavesite():
     xyz = np.vstack((X.ravel(),Y.ravel(),Z.ravel())).T
     Bathymetry = xyz
     
-    Geophysics =  np.empty(0)
     BR = np.empty(0)
     electrical_connection_point = (-1000.0, -4000.0)
 
     out = [leaseAreaVertexUTM,
            Nogoareas_wave,
            Meteocean_wave,
-           VelocityShear_tidal,
+           None,
+           None,
            MainDirection,
            Bathymetry,
-           Geophysics,
            BR,
            electrical_connection_point]
     
@@ -238,7 +234,6 @@ def wavesitebiggamma():
     "---------------------------------------"
     
     Meteocean_wave = {'Te':T,'Hs':H,'B':B,'p':p,'specType':specType,'SSH':SSH}
-    VelocityShear_tidal =  np.empty(0)
     MainDirection = None
     
     x = np.linspace(0.,1000.,75)
@@ -251,17 +246,16 @@ def wavesitebiggamma():
     xyz = np.vstack((X.ravel(),Y.ravel(),Z.ravel())).T
     Bathymetry = xyz
     
-    Geophysics =  np.empty(0)
     BR = np.empty(0)
     electrical_connection_point = (-1000.0, -4000.0)
 
     out = [leaseAreaVertexUTM,
            Nogoareas_wave,
            Meteocean_wave,
-           VelocityShear_tidal,
+           None,
+           None,
            MainDirection,
            Bathymetry,
-           Geophysics,
            BR,
            electrical_connection_point]
     

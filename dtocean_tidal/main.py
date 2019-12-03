@@ -62,6 +62,8 @@ class Hydro:
       Y (numpy.array): y data positions (South-North), assuming regular grid, 1d array, m
       dx (float): x spatial step, assuming regular grid, float, m
       dy (float): y spatial step, assuming regular grid, float, m
+      beta (float): bed roughness
+      alpha (float): power law exponent
 
     """
     def __init__(self, data, debug=False, debug_plot=False):
@@ -71,16 +73,16 @@ class Hydro:
         self.U = self.data['U']
         self.V = self.data['V']
         self.TI = self.data['TI']
-        self.PLE = self.data['PLE']
         self.SSH = self.data['SSH']
         self.bathy = self.data['bathy']
-        self.geophy = self.data['geophy']
         self.X = self.data['X']
         self.Y = self.data['Y']
         self.lease = Polygon(self.data['lease'])
         (xm, ym, xM, yM) = self.lease.bounds
         self.bounding_box = Polygon([[xm, ym], [xM, ym], [xM, yM], [xm, yM]])
         self.BR = self.data['BR'] # lease surface / site area, user input
+        self.beta = self.data['beta']
+        self.alpha = self.data['alpha']
 
         if debug_plot:
             plt.figure(figsize=(18,10))
@@ -200,46 +202,73 @@ class Array:
         else:
             
             if debug: module_logger.info("Single turbine...no streamlines")
-
+        
         # Velocity and TI at hub
         self.velHub = {}
         self.velHubIni = {}  # save initial velocity for computing Q factor
-        if debug: module_logger.info("Computing Hub velocities...")
+        
+        if debug:
+            module_logger.info("Computing Hub velocities...")
+        
         for i in range(self._turbine_count):
-            if debug: module_logger.info("Interpolating quantities...")
+            
+            if debug:
+                module_logger.info("Interpolating quantities...")
+            
             Q = [hydro.U,
                  hydro.V,
                  hydro.SSH,
                  hydro.bathy,
-                 hydro.geophy,
-                 hydro.PLE,
                  hydro.TI]
-            [u, v, el, h, n, ple, ti] = interp_at_point(
-                                        self.positions['turbine' + str(i)][0],
-                                        self.positions['turbine' + str(i)][1],
-                                        hydro.X, hydro.Y, Q)
-            # quantity formatting
+            
+            (u,
+             v,
+             el,
+             h,
+             ti) = interp_at_point(self.positions['turbine' + str(i)][0],
+                                   self.positions['turbine' + str(i)][1],
+                                   hydro.X,
+                                   hydro.Y,
+                                   Q)
+            
+            # Quantity formatting
             if h < 0.0: h *= -1.0
-            #  Hub height account for floating options
-            hh = self.positions['turbine' + str(i)][2]  # hub height, negative by convention
+            
+            # Get hub height accounting for floating options
+            hh = self.positions['turbine' + str(i)][2]
             if hh > 0.0: hh *= -1.0
+            
             if self.features['turbine' + str(i)]['floating']:
                 z = (el + h) + hh
             else:
                 z = -hh
+            
             # Computing velocity vertical profile weight
             radius = self.features['turbine' + str(i)]['Diam'] / 2.0
-            wTop = vvpw(u, v, z+radius, el, h, n, debug=debug)
-            wBottom = vvpw(u, v, z-radius, el, h, n, debug=debug)
-            # TR: alternative using Soulsby formulation
-#            wTop = vvpw_soulsby(z+radius, el, h, n, ple, debug=debug)
-#            wBottom = vvpw_soulsby(z-radius, el, h, n, ple, debug=debug)
-            w = (wTop + wBottom) / 2.0  # Linear interpolation along the vertical
-            self.velHub['turbine' + str(i)] = np.array([u * w, v * w])
-            self.velHubIni['turbine' + str(i)] = np.array([u * w, v * w])
+            z_top = z + radius
+            z_bottom = z - radius
+            args = [el,
+                    h,
+                    hydro.beta,
+                    hydro.alpha,
+                    debug]
+            
+            w_top = vvpw(z_top, *args)
+            w_bottom = vvpw(z_bottom, *args)
+            
+            # Linear interpolation along the vertical
+            w = (w_top + w_bottom) / 2.0
+            
+            urootw = u * np.sqrt(w)
+            vrootw = v * np.sqrt(w)
+            
+            self.velHub['turbine' + str(i)] = np.array([urootw, vrootw])
+            self.velHubIni['turbine' + str(i)] = np.array([urootw, vrootw])
             # Compute TIH, tubulence intensity at hub (%)
-            # TR: assuming TKE uniform throughout the water column height and TI = sqrt(2/3 * k) / U
+            # TR: assuming TKE uniform throughout the water column height and
+            # TI = sqrt(2/3 * k) / U
             wTI = 1/w # TR: due to above assumption
+            
             self.features['turbine' + str(i)]['TIH'] = wTI * ti
 
         # Computes actual yawing angles. Convention: angle between 0 and 2pi,
@@ -290,9 +319,6 @@ def wp2_tidal(data,
     Args:
       data (dict) dictionary gathering site information with the following entries:
         . 'bathy' = bathymetry (m), 2D numpy array, dimension: (ny,nx)
-        . 'geophy' = Manning's roughness coeff., 2D numpy array, dimension: (ny,nx)
-        . 'PLE' = Power law exponent for velocity vertical profile,
-                2D numpy array, dimension: (ny,nx)
         . 'SSH' = sea surface elevation (m), 2D numpy array, dimension: (ny,nx)
         . 'TI' = depth averaged turbulence intensity (m), 2D numpy array, dimension: (ny,nx)
         . 'U' = depth averaged West-East velocity component (m/s),
@@ -301,6 +327,8 @@ def wp2_tidal(data,
               2D numpy array, dimension: (ny,nx)
         . 'X' = West-East corrdinates (m), 1D numpy array, dimension: (nx)
         . 'Y' = South-North corrdinates (m), 1D numpy array, dimension: (ny)
+          'beta' = bed roughness
+          'alpha' = power law exponent
       turbines (dict): dictionary gathering turbines' locations (m), 1D numpy array [x,y,z].
       features (dict): dictionary gathering individual turbine's features with the following entries:
         . 'Cp' = Power curve, Cp vs flow speed, list of two 1D numpy arrays [speed, Cp] where
@@ -480,8 +508,6 @@ def test():
     x = np.linspace(0.0, xmax, (xmax/10)+1) # dx = 10 m
     y = np.linspace(0.0, ymax, (ymax/10)+1) # dy = 10 m
     X, Y = np.meshgrid(x,y)
-    nx = len(x)
-    ny = len(y)
     BR = 1.0  # blockage ratio
 
     umax = 3.69 # maximum velocity in the X direction
@@ -495,14 +521,9 @@ def test():
     SSH = np.ones(X.shape) * sshmax
     TI = np.ones(X.shape) * timax
     BATHY = np.ones(X.shape) * bathy
-    PLE = 12.0 * np.ones(X.shape)
-    # bed roughness coefficient here
-    manning = np.ones(X.shape) * 0.3
 
     data = {}
     data['TI'] = TI
-    data['PLE'] = PLE
-    data['geophy'] = manning
     data['X'] = x  # save only 1D array as structured grid assumed
     data['Y'] = y  # save only 1D array as structured grid assumed
     data['U'] = U
@@ -511,6 +532,8 @@ def test():
     data['bathy'] = BATHY
     data['BR'] = BR
     data['lease'] = lease
+    data['beta'] = 0.4
+    data['alpha'] = 7.
 
     ## Turbines positions
     z = bathy/2.0 # hub height/depth

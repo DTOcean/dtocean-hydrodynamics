@@ -73,18 +73,17 @@ Z = (-X*0.1-1)*0-60
 
 xyz = np.vstack((X.ravel(),Y.ravel(),Z.ravel())).T
 Bathymetry = np.array([-60.])
-Geophysics = np.array([0.003])
 
 BR = 1.
 
 Site = WP2_SiteData(leaseAreaVertexUTM,
                     Nogoareas_wave,
                     Meteocean,
-                    VelocityShear,
+                    None,
+                    None,
                     MainDirection,
                     Bathymetry,
-                    Geophysics,
-                    BR)        
+                    BR)
 
 
 # Machine data

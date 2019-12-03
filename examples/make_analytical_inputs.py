@@ -80,16 +80,10 @@ def main(input_dir):
     bathy = -60.0 * np.ones(X.shape)
     #Turbulence intensity
     ti = 0.05 * np.ones(X.shape)
-    #Power law exponent
-    ple = 7.0 * np.ones(X.shape)
-    #geophysic stuff ???
-    geo = np.ones(X.shape)
     
     #Save as pickle
     data = {}
     data['TI'] = ti
-    data['PLE'] = ple
-    data['geophy'] = geo
     data['X'] = x
     data['Y'] = y
     data['U'] = U

@@ -63,7 +63,6 @@ specType = ('Jonswap',3.3,0)
 "---------------------------------------"
 
 Meteocean_wave = {'Te':T,'Hs':H,'B':B,'p':p,'specType':specType,'SSH':SSH}
-VelocityShear_tidal =  np.empty(0)
 MainDirection = None
 
 x = np.linspace(0.,1000.,75)
@@ -78,22 +77,19 @@ Bathymetry = xyz
 Bathymetry[0,-1] = np.nan
 Bathymetry[1,-1] = 10.
 
-
-
-Geophysics =  np.empty(0)
 BR = np.empty(0)
 electrical_connection_point = (-1000.0, -4000.0)
 
 Site = WP2_SiteData(leaseAreaVertexUTM,
                     Nogoareas_wave,
                     Meteocean_wave,
-                    VelocityShear_tidal,
+                    None,
+                    None,
                     MainDirection,
                     Bathymetry,
-                    Geophysics,
                     BR,
                     electrical_connection_point,
-                    boundary_padding=10.)        
+                    boundary_padding=10.)
 
 
 " Machine data "

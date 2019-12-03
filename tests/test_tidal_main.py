@@ -70,8 +70,6 @@ def data():
     
     data = {}
     data['TI'] = TI
-    data['PLE'] = PLE
-    data['geophy'] = manning
     data['X'] = x  # save only 1D array as structured grid assumed
     data['Y'] = y  # save only 1D array as structured grid assumed
     data['U'] = U
