@@ -34,7 +34,7 @@ class Hydro_pkg(object):
     """
     Args:
         the number of args is variable, depending on the machine type:
-        Tidal: 8 inputs
+        Tidal: 10 inputs
             DeviceType (string): either a "T" or "W" for tidal or wave respectively
             V (numpy.ndarray): y-contribution (Northing) to the velocity field at each grid node
             U (numpy.ndarray): x-contribution (Easting) to the velocity field at each grid node
@@ -44,6 +44,8 @@ class Hydro_pkg(object):
             y (numpy.ndarray): y-coordinates (Northing) of the grid nodes
             wdepth (numpy.ndarray): sea surface elevation at each grid node for each sea state
             bathy (numpy.ndarray): bathymetry of the lease area at each grid node
+            beta (float): bed roughness
+            alpha (float): power law exponent
         Wave: 9 inputs
             DeviceType (string): : either a "T" or "W" for tidal or wave respectively
             B (numpy.ndarray): Sea state wave directions.
@@ -87,6 +89,8 @@ class Hydro_pkg(object):
             self.x = arg[5]
             self.y = arg[6]
             self.wdepth = arg[7]
-            self.bathy = arg[8]        
+            self.bathy = arg[8]
+            self.beta = arg[9]
+            self.alpha = arg[10]
         else:
             raise IOError('ERROR: Invalid input list to the Hydro class.')

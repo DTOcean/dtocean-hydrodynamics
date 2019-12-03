@@ -136,6 +136,7 @@ class WP2:
             bathy = WP2input.S_data.Bathymetry
 
             if WP2input.M_data.tidalFlag:
+                
                 devType = 'T'
                 V = WP2input.S_data.MeteoceanConditions['V']
                 U = WP2input.S_data.MeteoceanConditions['U']
@@ -144,8 +145,25 @@ class WP2:
                 x = WP2input.S_data.MeteoceanConditions['x']
                 y = WP2input.S_data.MeteoceanConditions['y']
                 SSH = WP2input.S_data.MeteoceanConditions['SSH']
-                self.iHydro = Hydro_pkg(devType, V, U, p, TI, x, y, SSH, bathy)
-
+                beta = WP2input.S_data.Beta
+                alpha = WP2input.S_data.Alpha
+                
+                # Defaults
+                if beta is None: beta = 0.4
+                if alpha is None: alpha = 7.
+                
+                self.iHydro = Hydro_pkg(devType,
+                                        V,
+                                        U,
+                                        p,
+                                        TI,
+                                        x,
+                                        y,
+                                        SSH,
+                                        bathy,
+                                        beta,
+                                        alpha)
+            
             else:
                 devType = 'W'
                 freqs = read_wec_sol.read_freq(

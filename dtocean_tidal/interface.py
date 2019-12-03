@@ -88,7 +88,6 @@ class CallTidal:
         __u_mean (float)[m/s]: mean Easting velocity
         __v_mean (float)[m/s]: mean Northing velocity
         __TI (numpy.ndarray)[-]: turbulence intensity at each grid node for each sea state
-        __PLE (numpy.ndarray) [-]: Tidal velocity shear formula (power law), used to evaluate the vertical velocity profile
         __SSH (numpy.ndarray)[m]: Sea Surface Height wrt the bathymetry datum, at each grid node for each sea state
         __base_feature (dict)[-]: contains the base feature of each turbine that need to be repeated for each body.
                                 The dictionary is only used to reduce the line of code.
@@ -118,7 +117,6 @@ class CallTidal:
                             U: see __U
                             V: see __V
                             TI: see __TI
-                            PLE: see __PLE
                             SSH: see __SSH
                             bathy (numpy.ndarray) [m]: Describes the vertical profile of the sea bottom
                                                     at each (given) UTM coordinate.
@@ -183,19 +181,13 @@ class CallTidal:
         self.__V = WP2Hydro.V
         TI = WP2Hydro.TI
         SSH = WP2Hydro.wdepth
-        PLE = WP2Input.S_data.VelocityShear
         self.__prob = WP2Hydro.p
         
         self.__u_mean = np.nanmean(self.__U)
         self.__v_mean = np.nanmean(self.__V)
         self.n_seastate = len(self.__prob)
-
-#        Bathy = WP2Hydro.bathy[:,-1].reshape((ny,nx))
-#        Geophy = WP2Input.S_data.Geophysics[:,-1].reshape((ny,nx))
-
-        Bathy = points_to_grid(WP2Hydro.bathy, x, y).T
-        Geophy = points_to_grid(WP2Input.S_data.Geophysics, x, y).T
         
+        Bathy = points_to_grid(WP2Hydro.bathy, x, y).T
         rated_power = WP2Input.M_data.RatedPowerDevice
         
         # By default the MCT is not considered.
@@ -210,14 +202,12 @@ class CallTidal:
         # conditional reconstruction of some input
         if len(TI) == 1:
             TI = TI*np.ones((ny,nx,self.n_seastate))
-        PLE = PLE*np.ones((ny,nx,self.n_seastate))
         if SSH.size == self.n_seastate:
             SSH = np.multiply(np.ones((ny,nx,self.n_seastate)),SSH)
         self.__TI = TI
-        self.__PLE = PLE
         self.__SSH = SSH
 
-        del TI, PLE, SSH
+        del TI, SSH
 
         self.__base_feature = {'Ct': Ct,
                                'Cp': Cp,
@@ -229,10 +219,17 @@ class CallTidal:
                                '2way': Bidirection,
                                'Rating': rated_power}
 
-        self.__data = {'U': None, 'V': None, 'TI': None,
-                            'PLE': None, 'SSH': None, 'bathy': Bathy,
-                            'geophy': Geophy, 'X': x, 'Y': y,
-                            'lease': WP2Input.S_data._LeaseArea, 'BR': WP2Input.S_data.BR}
+        self.__data = {'U': None,
+                       'V': None,
+                       'TI': None,
+                       'SSH': None,
+                       'bathy': Bathy,
+                       'X': x,
+                       'Y': y,
+                       'lease': WP2Input.S_data._LeaseArea,
+                       'BR': WP2Input.S_data.BR,
+                       'beta': WP2Hydro.beta,
+                       'alpha': WP2Hydro.alpha}
 
     def energy(self, coord):
         """
@@ -408,7 +405,6 @@ class CallTidal:
         self.__data['U'] = row_major(nx, ny, self.__U[:,:,ss_id])
         self.__data['V'] = row_major(nx, ny, self.__V[:,:,ss_id])
         self.__data['TI'] = row_major(nx, ny, self.__TI[:,:,ss_id])
-        self.__data['PLE'] = row_major(nx, ny, self.__PLE[:,:,ss_id])
         self.__data['SSH'] = row_major(nx, ny, self.__SSH[:,:,ss_id])
 
     def __set_coordinates(self, coord):
