@@ -188,9 +188,6 @@ class Array:
             diam = features['turbine0']['Diam']
             max_len = 20 * diam
             
-            if self._turbine_count == 2:
-                print positions
-            
             SLs = Streamlines(data,
                               positions,
                               self._turbine_count,
@@ -198,11 +195,11 @@ class Array:
                               debug=debug)
             
             if debug_plot: SLs.plot(self._turbine_count)
-
+            
             #Relative distance from streamlines
             self.streamlines={}
             self.distances={}
-
+            
             for i in range(self._turbine_count):
                 if debug:
                     module_logger.info("Streamline nb: {}".format(i))
@@ -213,10 +210,7 @@ class Array:
                                                      positions,
                                                      debug=debug,
                                                      debug_plot=debug_plot)
-            
-            if debug_plot:
-                SLs.plot(self._turbine_count)
-                
+        
         else:
             
             if debug: module_logger.info("Single turbine...no streamlines")

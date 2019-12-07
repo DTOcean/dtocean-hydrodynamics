@@ -245,14 +245,14 @@ def _solve_flow(turbine_count,
         for j in range(turbine_count):
             
             if j in turb_distances[turb].keys():
-                        
+                
                 (wake_mat[i, j],
                  tke_mat[i, j]) = turb_wakes[turb].get_velocity_TKE(
                                                  turb_distances[turb][j][:],
                                                  turb_velocity[:, j],
                                                  turb_TI[j],
                                                  debug=debug)
-                
+            
             else:
                 
                 wake_mat[i, j] = np.sqrt(turb_velocity[0, j] ** 2 +
