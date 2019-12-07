@@ -46,6 +46,9 @@ class WakeInteraction:
     def __init__(self, hydro,
                        array,
                        cfd_data,
+                       U_dict,
+                       V_dict,
+                       TKE_dict,
                        criterior=1e-4,
                        max_loop=50,
                        debug=False,
@@ -58,6 +61,9 @@ class WakeInteraction:
         self._bounding_box = hydro.bounding_box
         self._array = array
         self._df = cfd_data
+        self._U_dict = U_dict
+        self._V_dict = V_dict
+        self._TKE_dict = TKE_dict
         
         nan_array = np.empty(self._turbine_count)
         nan_array[:] = np.nan
@@ -106,6 +112,9 @@ class WakeInteraction:
             iniTKE[i] = _get_tke(iniTI[i], iniSpeed[i])
             
             self._wake[turb] = Wake(self._df,
+                                    self._U_dict,
+                                    self._V_dict,
+                                    self._TKE_dict,
                                     self._array.features[turb],
                                     self._blockage,
                                     debug=self._debug)
