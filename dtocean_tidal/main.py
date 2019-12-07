@@ -282,10 +282,14 @@ class Array:
             
             self.velHub['turbine' + str(i)] = np.array([urootw, vrootw])
             self.velHubIni['turbine' + str(i)] = np.array([urootw, vrootw])
+            
             # Compute TIH, tubulence intensity at hub (%)
             # TR: assuming TKE uniform throughout the water column height and
             # TI = sqrt(2/3 * k) / U
-            wTI = 1/w # TR: due to above assumption
+            if w == 0.:
+                wTI = 0.
+            else:
+                wTI = 1. / w # TR: due to above assumption
             
             self.features['turbine' + str(i)]['TIH'] = wTI * ti
 

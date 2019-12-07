@@ -52,8 +52,12 @@ def vvpw(z, el, h, beta, alpha, debug=False):
 
     """
     
-    total_hieght = (el + h)
-    w = (z / (beta * total_hieght)) ** (1.0 / alpha)
+    total_height = (el + h)
+    
+    if alpha <= 0. or beta <= 0. or total_height <= 0.:
+        return 0.
+    
+    w = (z / (beta * total_height)) ** (1.0 / alpha)
     
     if debug:
         log_msg = "Vertical velocity profile weight = {}".format(w)
