@@ -132,7 +132,9 @@ class CallTidal:
                                             area surface enclosed in a channel.
                                                     1. - closed channel
                                                     0. - open sea
-
+                            beta (float): bed roughness
+                            alpha (float): power law exponent
+    
     Returns:
         CallTidal (class): return the current class object.
     """    

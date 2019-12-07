@@ -18,27 +18,26 @@
 
 from __future__ import division
 
-# Start logging
-import logging
-module_logger = logging.getLogger(__name__)
-
 import time
-from shapely.geometry import Polygon
+import logging
+
 import numpy as np
 import matplotlib.pyplot as plt
+from scipy.interpolate import RectBivariateSpline
 
 # Local import
 from .utils import distance_from_streamline
-from .utils.interpolation import interpol_scatter2grid, interp_at_point
-from .utils.misc import pi2pi, deg360_to_radpi, vector_to_bearing
+from .utils.interpolation import interp_at_point
+from .utils.misc import deg360_to_radpi, vector_to_bearing
 from .modules.vertical_velocity_profile import vvpw
-# TR: alternative using Soulsby formulation
-#from .modules.vertical_velocity_profile import vvpw_soulsby
 from .modules import Streamlines, ArrayYield, HydroImpact
 from .submodel.WakeInteraction import WakeInteraction
 from .submodel.ParametricWake import read_database
 
-###Classes definition###
+# Start logging
+module_logger = logging.getLogger(__name__)
+
+
 class Hydro:
     """
     Site data & Hydrodynamic conditions
@@ -83,6 +82,13 @@ class Hydro:
         self.BR = self.data['BR'] # lease surface / site area, user input
         self.beta = self.data['beta']
         self.alpha = self.data['alpha']
+        
+        # Set up interpolators for U and V
+        U0 = np.nan_to_num(self.U)
+        V0 = np.nan_to_num(self.V)
+        
+        self.interpU = RectBivariateSpline(self.X, self.Y, U0.T)
+        self.interpV = RectBivariateSpline(self.X, self.Y, V0.T)
 
         if debug_plot:
             plt.figure(figsize=(18,10))
@@ -153,32 +159,43 @@ class Array:
             self.features['turbine' + str(i)] = features['turbine' + str(i)]
 
         # Streamlines
-        #  generate regular structured grid U, V, X, Y to pass on to Streamlines
         data = {}
-        x, y = np.meshgrid(hydro.X, hydro.Y)
         xn = hydro.X.shape[0]
         yn = hydro.Y.shape[0]
-        data['X'], data['Y'], data['U'] = interpol_scatter2grid(
-                                                            x.flatten(),
-                                                            y.flatten(),
-                                                            hydro.U.flatten(),
-                                                            xn,
-                                                            yn, 
-                                                            debug=debug)
-        data['X'], data['Y'], data['V'] = interpol_scatter2grid(
-                                                            x.flatten(),
-                                                            y.flatten(),
-                                                            hydro.V.flatten(),
-                                                            xn,
-                                                            yn,
-                                                            debug=debug)
+        
+        xmin = hydro.X.min()
+        xmax = hydro.X.max()
+        ymin = hydro.Y.min()
+        ymax = hydro.Y.max()
+        dx = (xmax - xmin) / (xn - 1)
+        dy = (ymax - ymin) / (yn - 1)
+        xi = np.arange(xmin, xmax + dx, dx)
+        yi = np.arange(ymin, ymax + dy, dy)
+        
+        data['X'] = xi
+        data['Y'] = yi
+        data['U'] = hydro.U
+        data['V'] = hydro.V
+        data['interpU'] = hydro.interpU
+        data['interpV'] = hydro.interpV
+        data['lease'] = hydro.lease
+        
         # In case there is only one turbine in the array
         if not self._turbine_count == 1:
             #  computes streamlines
+            
+            diam = features['turbine0']['Diam']
+            max_len = 20 * diam
+            
+            if self._turbine_count == 2:
+                print positions
+            
             SLs = Streamlines(data,
                               positions,
                               self._turbine_count,
+                              maxlen=max_len,
                               debug=debug)
+            
             if debug_plot: SLs.plot(self._turbine_count)
 
             #Relative distance from streamlines
