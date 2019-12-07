@@ -29,7 +29,7 @@ from scipy.interpolate import RectBivariateSpline
 # Local import
 from .utils import distance_from_streamline
 from .utils.interpolation import interp_at_point
-from .utils.misc import deg360_to_radpi, vector_to_bearing
+from .utils.misc import bearing_to_radians, vector_to_bearing
 from .modules.vertical_velocity_profile import vvpw
 from .modules import Streamlines, ArrayYield, HydroImpact
 from .submodel.WakeInteraction import WakeInteraction
@@ -297,10 +297,11 @@ class Array:
             
             # current angle of attack
             bearing = vector_to_bearing(u, v)
-            psi_current = deg360_to_radpi(bearing) + np.pi
+            psi_current = bearing_to_radians(bearing) + np.pi
             
             # turbine direction
-            psi_turb = deg360_to_radpi(self.features['turbine' + str(i)]['OA'])
+            psi_turb = bearing_to_radians(
+                                    self.features['turbine' + str(i)]['OA'])
             
             # maximum yaw
             psi_yaw = np.abs(
