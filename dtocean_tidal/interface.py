@@ -253,6 +253,10 @@ class CallTidal:
         pow_perf_array_no_int = np.zeros((n))
         resource_reduction_state = np.zeros((n))
         ti_dev_state = []
+        
+        U_dict = self.cfd_data['dfU'].to_dict()
+        V_dict = self.cfd_data['dfV'].to_dict()
+        TKE_dict = self.cfd_data['dfTKE'].to_dict()
 
         # iterate over the different sea states
         for seastate_id in range(self.n_seastate):
@@ -270,6 +274,9 @@ class CallTidal:
                              turb,
                              fea,
                              self.cfd_data,
+                             U_dict,
+                             V_dict,
+                             TKE_dict,
                              debug=self.debug,
                              debug_plot=self.debug_plot)
             ti_dev_state.append(ti)

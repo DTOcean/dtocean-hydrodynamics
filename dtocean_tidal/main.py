@@ -23,6 +23,7 @@ import logging
 
 import numpy as np
 import matplotlib.pyplot as plt
+from shapely.geometry import Polygon
 from scipy.interpolate import RectBivariateSpline
 
 # Local import
@@ -328,6 +329,9 @@ def wp2_tidal(data,
               turbines,
               features,
               cfd_data,
+              U_dict,
+              V_dict,
+              TKE_dict,
               debug=False,
               debug_plot=False):
     """
@@ -394,6 +398,9 @@ def wp2_tidal(data,
         interaction = WakeInteraction(hydro,
                                       array,
                                       cfd_data,
+                                      U_dict,
+                                      V_dict,
+                                      TKE_dict,
                                       debug=debug,
                                       debug_plot=debug_plot)
         interaction.solve_flow(debug=debug)

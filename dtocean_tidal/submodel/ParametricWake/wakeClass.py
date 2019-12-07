@@ -47,7 +47,13 @@ class Wake:
     
     """
     
-    def __init__(self, dataframe, turbParams, BR, debug=False):
+    def __init__(self, dataframe,
+                       U_dict,
+                       V_dict,
+                       TKE_dict,
+                       turbParams,
+                       BR,
+                       debug=False):
         
         self._debug = debug
         
@@ -83,9 +89,9 @@ class Wake:
         self.cutOut = turbParams['cutIO'][1]
         
         # database values
-        self._dfU = dataframe['dfU'].to_dict()
-        self._dfV = dataframe['dfV'].to_dict()
-        self._dfTKE = dataframe['dfTKE'].to_dict()
+        self._dfU = U_dict
+        self._dfV = V_dict
+        self._dfTKE = TKE_dict
         self._cts = np.copy(dataframe['cts'][:])
         self._tis = np.copy(dataframe['tis'][:])
         self._cts.sort()
