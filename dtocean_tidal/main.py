@@ -292,12 +292,8 @@ class Array:
                 wTI = 1. / w # TR: due to above assumption
             
             self.features['turbine' + str(i)]['TIH'] = wTI * ti
-
-        # Computes actual yawing angles. Convention: angle between 0 and 2pi,
-        # 0 of trigonometric circle coincides with East
-        if debug: module_logger.info("Computing yawing angles...")
-        
-        for i in range(self._turbine_count):
+            
+            if debug: module_logger.info("Computing yawing angles...")
             
             # current angle of attack
             bearing = vector_to_bearing(u, v)
