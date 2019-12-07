@@ -89,44 +89,58 @@ class Streamlines:
             # Make a streamline starting at the first unrepresented grid point
             self.streamlines.append(self._makeStreamline(self.driftPos[i,0],
                                                          self.driftPos[i,1]))
-
+    
     def plot(self, NbTurb, lw=1, ax=None, size=16):
         """
-        Draw the computed streamline segments with arrows indicating flow direction.
-
+        Draw the computed streamline segments with arrows indicating flow
+        direction.
+        
         Optional keyword arguments:
             lw - line width
             ax - axes to use for plotting
             size - size of the arrow head
-
+        
         """
         if ax is None:
             ax = plt.gca()
-
+        
+        speed = np.sqrt(self.u ** 2 + self.v ** 2)
+        cs = ax.contourf(self.x, self.y, speed,  extend='both')
+        ax.streamplot(self.x, self.y, self.u, self.v, color='0.8', density=2)
+        
         for streamline in self.streamlines:
             if (len(streamline[0]) > 1) or (len(streamline[1]) > 1):
                 ax.plot(streamline[0], streamline[1], 'k', lw=lw)
-
+        
         #Plot points and numbers
         ax.scatter(self.driftPos[:,0], self.driftPos[:,1])
         n = range(NbTurb)
+        
         for i, txt in enumerate(n):
-           ax.annotate(txt, (self.driftPos[i,0], self.driftPos[i,1]))
-
+            ax.annotate(txt, (self.driftPos[i,0], self.driftPos[i,1]))
+        
         for streamline in self.streamlines:
+            
             if (len(streamline[0]) > 1) or (len(streamline[1]) > 1):
-                path = mpl.path.Path(np.asarray((streamline[0], streamline[1])).T)
+                
+                path = mpl.path.Path(np.asarray((streamline[0],
+                                                 streamline[1])).T)
                 patch = mpl.patches.FancyArrowPatch(path=path,
                                                     arrowstyle='->',
                                                     mutation_scale=size,
                                                     lw=lw,
                                                     color='k')
                 ax.add_patch(patch)
-
+        
+        fig = plt.gcf()
+        cbar = fig.colorbar(cs)
+        
         ax.axis('tight')
         ax.set_aspect('equal')
         plt.show()
-
+        
+        return
+    
     def _makeStreamline(self, x0, y0):
         """
         Compute a streamline extending in both directions from the given point.
