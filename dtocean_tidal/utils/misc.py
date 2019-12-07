@@ -166,7 +166,7 @@ def pi2pi(angle):
     return angle
 
 
-def deg360_to_radpi(bearing):
+def bearing_to_radians(bearing):
     """converts from 0-to-360 deg (North = 0, East = 90) to -pi-to-pi radian
     (North = pi/2; East = 0)
 
