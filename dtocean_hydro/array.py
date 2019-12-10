@@ -119,22 +119,25 @@ class Array_pkg(object):
                     distance constraint is violated or not
 
         """
-        if not np.all(self.check_grid_distance(IR, IC, beta, psi)):
+        
+        if not np.all(self.check_grid_distance(IC, IR, beta, psi)):
             self.minDist_constraint = True
         else:
             self.minDist_constraint = False
-            
-        if not self.minDist_constraint:
         
-            # 2D rotation matrix to apply main angle rotation
-            Rz = np.array([[np.cos(self.mainAngle), -np.sin(self.mainAngle)],
-                           [np.sin(self.mainAngle), np.cos(self.mainAngle)]])
-            i, j = np.meshgrid(np.arange(NR), np.arange(NC))
-            i -= NR/2
-            j -= NC/2
+        if not self.minDist_constraint:
             
-            x = IR*np.cos(beta)*i+IC*np.cos(psi)*j
-            y = IR*np.sin(beta)*i+IC*np.sin(psi)*j
+            # 2D rotation matrix to apply main angle perpendicular rotation
+            rot_angle = self.mainAngle - np.pi / 2.
+            
+            Rz = np.array([[np.cos(rot_angle), -np.sin(rot_angle)],
+                           [np.sin(rot_angle), np.cos(rot_angle)]])
+            i, j = np.meshgrid(np.arange(NC), np.arange(NR))
+            i = i - NC / 2.
+            j = j - NR / 2.
+            
+            x = IC * np.cos(beta) * i + IR * np.cos(psi) * j
+            y = IC * np.sin(beta) * i + IR * np.sin(psi) * j
             
             coord_raw = np.zeros((2,NR*NC))
             coord_raw[0,:] = x.ravel()

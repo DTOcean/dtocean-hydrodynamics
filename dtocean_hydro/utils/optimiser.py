@@ -440,8 +440,9 @@ class SearchOptimum(object):
         # affect the calculation.
         NR = 10*int(sqrt(Nb))
         NC = 10*int(sqrt(Nb))+1
-        IC = int(x_scale[0])
+        
         IR = int(x_scale[1])
+        IC = int(x_scale[0])
         beta = int(x_scale[2]*100)/100.0
         psi = int(x_scale[3]*100)/100.0
         
