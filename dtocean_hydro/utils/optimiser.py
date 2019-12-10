@@ -435,19 +435,40 @@ class SearchOptimum(object):
             array_vals (list): conditioned scaled parameters
         """
         Nb = self._max_num_dev
-        # the factor 10 is used because for small skewing angles there is a
-        # risk to do not fill the lease area. The extra number of bodies do not 
-        # affect the calculation.
-        NR = 10*int(sqrt(Nb))
-        NC = 10*int(sqrt(Nb))+1
         
         IR = int(x_scale[1])
         IC = int(x_scale[0])
         beta = int(x_scale[2]*100)/100.0
         psi = int(x_scale[3]*100)/100.0
         
-        return NR, NC, IC, IR, beta, psi
-                
+        combos = np.array([[0, 0],
+                           [0, 1],
+                           [1, 0],
+                           [1, 1]])
+        devs = np.zeros(4)
+        
+        for i, combo in enumerate(combos):
+            
+            # the factor 10 is used because for small skewing angles there is a
+            # risk to do not fill the lease area. The extra number of bodies 
+            # do not affect the calculation.
+            NR = 10 * int(sqrt(Nb)) + combo[0]
+            NC = 10 * int(sqrt(Nb)) + combo[1]
+            
+            self._array.generator(NR, NC, IR, IC, beta, psi)
+            inside = self._array.checkout(nogo_list=self.nogo_areas)
+            n_devs = self._array.coord[inside].shape[0]
+            
+            devs[i] = n_devs
+        
+        most_devs_idx = np.argmax(devs)
+        bost_combo = combos[most_devs_idx]
+        
+        NR = 10 * int(sqrt(Nb)) + bost_combo[0]
+        NC = 10 * int(sqrt(Nb)) + bost_combo[1]
+        
+        return NR, NC, IR, IC, beta, psi
+    
     def scale_param(self, x_norm):
         """
         scale_param: the function denormalise the parameters.
