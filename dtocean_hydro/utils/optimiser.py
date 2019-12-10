@@ -100,7 +100,7 @@ class SearchOptimum(object):
 
         # set search space bounds
         self._min_bound = 0.
-        self._max_bound = 10.
+        self._max_bound = 50.
 
         # set result constraints
         self._min_q_factor = min_q_factor
