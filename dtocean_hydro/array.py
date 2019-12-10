@@ -95,12 +95,14 @@ class Array_pkg(object):
         self.coord = None
         self._actual_mindist = None
         self._debug = debug
-
+        
+        return
+    
     def generator(self, NR, NC, IR, IC, beta, psi):
         """
         generator: Generates coordinates of the grid nodes, in function of the
             input arguments
-
+        
         Args:
             NR (int): number of grid rows
             NC (int): number of grid columns
@@ -108,16 +110,16 @@ class Array_pkg(object):
             IC (float)[m]: columns interdistance
             beta (float)[rad]: angle between the rows and the main direction
             psi (float)[rad]: angle between the columns and the main direction
-
+        
         Attributes:
             same as the parent class
-
+        
         Note:
             The function update the following class attributes:
                 coord (numpy.ndarray): x,y coordinates of the array nodes
                 minDist_constraint (bool): flag identifying whether the min
                     distance constraint is violated or not
-
+        
         """
         
         if not np.all(self.check_grid_distance(IC, IR, beta, psi)):
@@ -139,17 +141,18 @@ class Array_pkg(object):
             x = IC * np.cos(beta) * i + IR * np.cos(psi) * j
             y = IC * np.sin(beta) * i + IR * np.sin(psi) * j
             
-            coord_raw = np.zeros((2,NR*NC))
+            coord_raw = np.zeros((2, NR * NC))
             coord_raw[0,:] = x.ravel()
             coord_raw[1,:] = y.ravel()
-            coord = np.dot(Rz,coord_raw).T
-    
+            coord = np.dot(Rz, coord_raw).T
+            
             # devices translation up to Lease's centroid
-            self.coord = coord + self.centroidLease  
+            self.coord = coord + self.centroidLease
         
         else:
             self.coord = np.zeros((1,2))
-
+        
+        return
     
     def check_grid_distance(self, x1, x2, a1, a2):
         """
@@ -315,7 +318,6 @@ class Array_pkg(object):
         if inside is None:
             inside = np.ones(len2(self.coord),dtype=bool)
         
-        
         Leasep_unbuffered = zeros((len2(self._lease_unbuffered)+1,2),dtype=float)
         Leasep_unbuffered[:-1]= self._lease_unbuffered
         Leasep_unbuffered[-1]= self._lease_unbuffered[0]
@@ -369,6 +371,7 @@ class Array_pkg(object):
 
         ax.axis('equal')
         plt.show()
+        
         return ax
         
 if __name__ == "__main__":

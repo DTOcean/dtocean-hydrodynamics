@@ -254,12 +254,12 @@ class SearchOptimum(object):
                            'for the optimiser, the centroid of the '
                            'parameter space is used instead')
             module_logger.warning(warning_str)
-            x0 = self.opt_dim * [(self._min_bound+self._max_bound)/2]
+            x0 = self.opt_dim * [(self._min_bound + self._max_bound) / 2.]
         
         es = cma.CMAEvolutionStrategy(
                         x0,
                         2,
-                        {'bounds': [self._min_bound,self._max_bound],
+                        {'bounds': [self._min_bound, self._max_bound],
                          'verb_disp': 0})
         
         es.opts.set('tolfun', tolfun)
@@ -334,7 +334,9 @@ class SearchOptimum(object):
         else:
             return xx[:,index].tolist()
     
+    # TODO: Staggered doesn't use column spacing?
     def estimate_start_point(self):
+        
         def remap(val, sc, IR, IC, beta, psi):
             if val == 'rectangular':
                 X_norm = ((float(IR)-sc)/sc, (float(IC)-sc)/sc)
@@ -351,8 +353,9 @@ class SearchOptimum(object):
             if abs(X_norm[0]-5) > 1:
                 sc = float(IR)/6
                 return remap(val, sc, IR, IC, beta, psi)
-            return (X_norm, sc)
             
+            return (X_norm, sc)
+        
         module_logger.info("Estimating the optimisation starting point")
         max_eval = 100
         
@@ -368,8 +371,7 @@ class SearchOptimum(object):
         else:
             par_a = self.par_a
             par_b = self.par_b
-           
-                    
+        
         # un-normalize optimization variable
         x_b = np.array([5,5],'f')
         xmap = np.dot(par_a, x_b)
@@ -381,11 +383,11 @@ class SearchOptimum(object):
         xmap[3] *= 0.1 * np.pi/2
         
         xNorm = xmap + par_b
-    
+        
         NR, NC, IR, IC, beta, psi = self.param_conditioning(xNorm)
         IC = self._array.Dmin[0]+1.01
         IR = self._array.Dmin[1]+1.01
-
+        
         ind = 0
         
         while True:
@@ -397,9 +399,9 @@ class SearchOptimum(object):
                 self._array.checkMinDist()
             else:
                 self._array.generator(NR, NC, IR, IC, beta, psi)
-    
+            
             inside = self._array.checkout()
-    
+            
             # check conditions prior to solve the array interaction
             if inside.any() and not self._array.minDist_constraint:
                 
@@ -413,7 +415,7 @@ class SearchOptimum(object):
                                  IR, 
                                  beta,
                                  psi)
-                    
+            
             else:
                 
                 IC /= 1.05
@@ -423,14 +425,16 @@ class SearchOptimum(object):
             
             if ind > max_eval:
                 return (), self._normalisation_point 
-                
+        
+        raise RuntimeError('Insufficient facts always invite danger.')
+    
     def param_conditioning(self, x_scale):
         """
         param_conditioning: the function applies truncation to the scale
             parameters.
         Args:
             x_scale (numpy.ndarray): array of scaled parameters
-
+        
         Returns:
             array_vals (list): conditioned scaled parameters
         """
@@ -508,26 +512,26 @@ class SearchOptimum(object):
         # call dernorm cost fun
         fval = self.optimCostFun(xNorm)
         return fval[0], fval[1]
-
+    
     def optimCostFun(self, x):
         """
         optimCostFun: the method calculate the AEP and q-factor for the given
             configuration, calling either the tidal or the wave modules
-
+        
         Args:
             x (list): list of 4 parameters used to build the array layout
-
+        
         Return:
             AEP (float): annual energy production for the given array
             q (float): q factor for the given array
         """
-                
+        
         NR, NC, IR, IC, beta, psi = self.param_conditioning(x)
         
-        if beta<0.05 and self._Opt != 3:
+        if beta < 0.05 and self._Opt != 3:
             module_logger.debug("The angle between rows and "
                                 "columns is too close to zero.")
-            
+        
         if self._Opt == 3:
             scaleX = IC/self._normalisation_point  
             scaleY = IR/self._normalisation_point
@@ -535,14 +539,13 @@ class SearchOptimum(object):
             self._array.checkMinDist()
         else:
             self._array.generator(NR, NC, IR, IC, beta, psi)
-
-        inside = self._array.checkout(nogo_list=self.nogo_areas)
-#        if self._debug:
-#            self._array.show(inside)
         
-        module_logger.debug("Array parameters: IC: {} IR: {} beta: {} "
+        inside = self._array.checkout(nogo_list=self.nogo_areas)
+        if self._debug: self._array.show(inside)
+        
+        module_logger.debug("Test array parameters: IC: {} IR: {} beta: {} "
                             "psi: {}".format(IC, IR, beta, psi))
-
+        
         # check conditions prior to solve the array interaction
         if inside.any() and not self._array.minDist_constraint:
             
@@ -560,18 +563,18 @@ class SearchOptimum(object):
                 
                 return maxdev_error, -1
             
-            else:
-                
-                if self._debug: module_logger.info("OK constr")
-
-                # solve the array interaction
-                res = self._hyd_obj.energy(self._array.coord[inside])
-
+            if self._debug: module_logger.info("OK constr")
+            
+            # solve the array interaction
+            res = self._hyd_obj.energy(self._array.coord[inside])
+            
+            module_logger.info("Array parameters: IC: {} IR: {} beta: {} "
+                               "psi: {}".format(IC, IR, beta, psi))
             module_logger.info("Number of devices: {} AEP: {} q-factor: "
                                "{}".format(self._array.coord[inside].shape[0],
                                            res.AEP_array,
                                            res.q_array))
-
+            
             if res.q_array >= self._min_q_factor:
                 
                 if self._debug:
@@ -582,24 +585,20 @@ class SearchOptimum(object):
                 
                 return res.AEP_array, res.q_array
             
-            else:
-                
-                if self._debug: module_logger.info("Not valid: q < q_min")
-                
-                # return the squared error from actual value and bound
-                qfactor_error = -((res.q_array /
-                                   self._min_q_factor - 1) * 100.) ** 2
-                
-                return qfactor_error, res.q_array
-
-        else:
+            if self._debug: module_logger.info("Not valid: q < q_min")
             
-            if self._debug:
-                module_logger.warning('WARNING! For the given configuration '
-                                      'no device is inside the active area!. '
-                                      'No calculation is performed!')
+            # return the squared error from actual value and bound
+            qfactor_error = -((res.q_array /
+                               self._min_q_factor - 1) * 100.) ** 2
             
-            mindist_error = -((self._array._actual_mindist / 
-                                           self._min_dist - 1) * 100.) ** 2
-            
-            return mindist_error, -1
+            return qfactor_error, res.q_array
+        
+        if self._debug:
+            module_logger.warning('WARNING! For the given configuration '
+                                  'no device is inside the active area!. '
+                                  'No calculation is performed!')
+        
+        mindist_error = -((self._array._actual_mindist / 
+                                       self._min_dist - 1) * 100.) ** 2
+        
+        return mindist_error, -1
