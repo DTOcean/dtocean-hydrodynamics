@@ -533,18 +533,21 @@ class SearchOptimum(object):
                                 "columns is too close to zero.")
         
         if self._Opt == 3:
+            
             scaleX = IC/self._normalisation_point  
             scaleY = IR/self._normalisation_point
             self._array.coord = self._Val*np.array([scaleX, scaleY])
             self._array.checkMinDist()
+            
         else:
+            
+            module_logger.info("Layout parameters: IC: {} IR: {} beta: {} "
+                               "psi: {}".format(IC, IR, beta, psi))
+            
             self._array.generator(NR, NC, IR, IC, beta, psi)
         
         inside = self._array.checkout(nogo_list=self.nogo_areas)
         if self._debug: self._array.show(inside)
-        
-        module_logger.debug("Test array parameters: IC: {} IR: {} beta: {} "
-                            "psi: {}".format(IC, IR, beta, psi))
         
         # check conditions prior to solve the array interaction
         if inside.any() and not self._array.minDist_constraint:
@@ -568,8 +571,6 @@ class SearchOptimum(object):
             # solve the array interaction
             res = self._hyd_obj.energy(self._array.coord[inside])
             
-            module_logger.info("Array parameters: IC: {} IR: {} beta: {} "
-                               "psi: {}".format(IC, IR, beta, psi))
             module_logger.info("Number of devices: {} AEP: {} q-factor: "
                                "{}".format(self._array.coord[inside].shape[0],
                                            res.AEP_array,
