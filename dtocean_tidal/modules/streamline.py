@@ -47,12 +47,13 @@ class Streamlines:
     def __init__(self, data, turbPos, NbTurb, maxlen=np.inf, debug=False):
         #Define attributs 
         self._debug = debug
-        res=0.125 #Sets the distance between successive points in each streamline
         spacing=4 #Sets the minimum density of streamlines, in grid points.
         detectLoops=True #Determines whether an attempt is made to stop extending
                          #a given streamline before reaching maxLen points if
                          #it forms a closed loop or reaches a velocity node.
         self.spacing = spacing
+        res = 0.25  # Sets the distance between successive points in each
+                    # streamline
         self.detectLoops = detectLoops
         self.maxlen = maxlen
         self.res = res
