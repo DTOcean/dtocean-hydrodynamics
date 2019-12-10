@@ -204,12 +204,19 @@ class Streamlines:
         
         return sx, sy
     
-    #TR comment: this might not be needed after all
-    def _detectLoop(self, xVals, yVals):
+    def _detectLoop(self, x, y):
         """ Detect closed loops and nodes in a streamline. """
-        if not xVals or not yVals: return False
-        x = xVals[-1]
-        y = yVals[-1]
-        D = np.array([np.hypot(x-xj, y-yj)
-                      for xj,yj in zip(xVals[:-1],yVals[:-1])])
-        return (D < 0.9 * self.dr).any()
+        
+        if not x or not y: return False
+        
+        x0 = x[-1]
+        y0 = y[-1]
+        
+        # TODO: In parallel
+        xd = x0 - x[:-1]
+        yd = y0 - y[:-1]
+        
+        D = np.hypot(xd, yd)
+        result = (D < 0.9 * self.dr).any()
+        
+        return result
