@@ -36,24 +36,19 @@ class Streamlines:
     grid points. The mesh spacing is assumed to be uniform
     in each dimension.
     U and V - 2D arrays of the velocity field.
-    spacing - Sets the minimum density of streamlines, in grid points.
     maxlen - The maximum length of an individual streamline segment.
-    detectLoops - Determines whether an attempt is made to stop extending
-                  a given streamline before reaching maxLen points if
-                  it forms a closed loop or reaches a velocity node.
 
     Plots are generated with the 'plot' or 'plotArrows' methods.
     """
     def __init__(self, data, turbPos, NbTurb, maxlen=np.inf, debug=False):
         #Define attributs 
         self._debug = debug
-        spacing=4 #Sets the minimum density of streamlines, in grid points.
-        detectLoops=True #Determines whether an attempt is made to stop extending
-                         #a given streamline before reaching maxLen points if
-                         #it forms a closed loop or reaches a velocity node.
-        self.spacing = spacing
         res = 0.25  # Sets the distance between successive points in each
                     # streamline
+        detectLoops = True  # Determines whether an attempt is made to stop 
+                            # extending a given streamline before reaching 
+                            # maxLen points if it forms a closed loop or 
+                            # reaches a velocity node.
         self.detectLoops = detectLoops
         self.maxlen = maxlen
         self.res = res
@@ -61,8 +56,8 @@ class Streamlines:
         self.lease = data['lease']
         self.x = data['X'][:]
         self.y = data['Y'][:]
-        self.dx = (self.x[-1]-self.x[0])/(self.x.size-1) # assume a regular grid
-        self.dy = (self.y[-1]-self.y[0])/(self.y.size-1) # assume a regular grid
+        self.dx = (self.x[-1]-self.x[0])/(self.x.size-1)
+        self.dy = (self.y[-1]-self.y[0])/(self.y.size-1)
         self.dr = self.res * np.sqrt(self.dx * self.dy)
         #initial drifter positions and velocities
         self.driftPos = turbPos
@@ -77,13 +72,14 @@ class Streamlines:
         self.used[-1] = True
         self.used[:,0] = True
         self.used[:,-1] = True
-
-        # Don't try to compute streamlines in regions where there is no velocity data
+        
+        # Don't try to compute streamlines in regions where there is no
+        # velocity data
         for i in range(self.y.size):
             for j in range(self.x.size):
                 if self.u[i,j] == 0.0 and self.v[i,j] == 0.0:
                     self.used[i,j] = True
-
+        
         # Make the streamlines
         self.streamlines = []
         for i in range(NbTurb):
