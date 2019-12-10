@@ -416,9 +416,9 @@ class SearchOptimum(object):
                     
             else:
                 
-                IC *= 1.05
-                IR *= 1.05
-                    
+                IC /= 1.05
+                IR /= 1.05
+            
             ind += 1
             
             if ind > max_eval:
