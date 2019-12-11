@@ -203,9 +203,12 @@ class WakeInteraction:
                                               self._bounding_box,
                                               debug=debug)#,
                                              #debug_plot=debug_plot)
+        
         if debug_plot:
+            
             fig = plt.figure(figsize=(18,10))
             ax = fig.add_subplot(111)
+            
             for i in range(self._turbine_count):
                 turb = 'turbine' + str(i)
                 x, y = self._wakeShape[turb].polygon.exterior.xy
@@ -216,6 +219,7 @@ class WakeInteraction:
                 ax.set_aspect('equal')
                 ax.set_ylabel('Distance (m)', fontsize = 12)
                 ax.set_xlabel('Distance (m)', fontsize = 12)
+            
             plt.show()
         
         return

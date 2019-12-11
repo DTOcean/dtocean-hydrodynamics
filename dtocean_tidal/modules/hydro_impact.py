@@ -76,7 +76,9 @@ class HydroImpact:
         x = self._hydro.X[:]
         y = self._hydro.Y[:]
 
-        if debug: module_logger.info('...find mesh elements within 5 diam circle..')        
+        if debug:
+            module_logger.info('...find mesh elements within 5 diam circle..')
+        
         for i in range(self._turbine_count):
             ID = 'turbine' + str(i)
             xt = self._array.positions[ID][0]
