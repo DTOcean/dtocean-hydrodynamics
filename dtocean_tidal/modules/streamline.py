@@ -209,7 +209,6 @@ class Streamlines:
         x0 = x[-1]
         y0 = y[-1]
         
-        # TODO: In parallel
         xd = x0 - x[:-1]
         yd = y0 - y[:-1]
         

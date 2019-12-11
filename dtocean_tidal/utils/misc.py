@@ -186,21 +186,23 @@ def bearing_to_radians(bearing):
 def transec_surf(hydro, array, debug=False):
     """
     Computes transect surface (m2) and first row of the array
-
+    
     Args:
       hydro (dtocean_tidal.main.Hydro): dtocean_tidal's Hydro object
       array (dtocean_tidal.main.Array): dtocean_tidal's Array object
-
+    
     Kwargs:
       debug (bool): debug flag
-
+    
     Returns:
       transect (float): lease's transect surface (m2), float
       first_row (list): first row of the array, list of ID numbers
       speed (float): averaged speed over transect (m/s), float
-
+    
     """
+    
     if debug: module_logger.info("Computing relative blockage ratio RBR...")
+    
     Nturb = len(array.positions.keys())
     (xm, ym, xM, yM) = hydro.lease.bounds
     l = []
@@ -214,23 +216,26 @@ def transec_surf(hydro, array, debug=False):
             for k2 in array.distances[k1].keys():
                 # find turbine away from 1 diam
                 diam = array.features[k1]['Diam']
-                if array.distances[k1][k2][0] > diam:  # check distance along streamline
+                # check distance along streamline
+                if array.distances[k1][k2][0] > diam:
                     l.append(k2)
-
+    
     # unique occurrence
     L = np.asarray(l).astype(int)
     un = np.unique(L)
+    
     # first row composed of
     first_row = list(set(ref)-set(un))
-
+    
     # Fix for odd cases/flows where no obvious first raw
     # First_row = to turbine with the least interactions (n.b.: first raw should not have any)
     if first_row == []:
         unique, counts = np.unique(L, return_counts=True)
         first_row = list(unique[np.where(counts == counts.min())])
-
+    
     # check for missing turbine in the first row within a diam radius
     iterlist = first_row[:]
+    
     for ii in iterlist:
         for jj in range(Nturb):
             diam = array.features['turbine'+str(ii)]['Diam']
@@ -247,6 +252,7 @@ def transec_surf(hydro, array, debug=False):
     y2 = array.positions['turbine'+str(first_row[-1])][1]
     a = np.array([[x1,1], [x2,1]])
     b = np.array([y1,y2])
+    
     try:
         coeffs = np.linalg.solve(a, b)
         ybm = coeffs[0] * xm + coeffs[1]
@@ -264,21 +270,26 @@ def transec_surf(hydro, array, debug=False):
             ybM = y1
             xbm = xm
             xbM = xM
-
+    
     # define lineString within lease
     box = hydro.lease
     line = LineString([[xbm,ybm],[xbM,ybM]])
     inter_line = box.intersection(line)
-
+    
     # calculate ratio between rotors surface and transect
     diam = array.features['turbine'+str(first_row[-1])]['Diam']
     n = inter_line.length//diam
     dl = inter_line.length / (n-1)
-    pts = map(inter_line.interpolate, np.arange(n) * dl)  # define points uniformly along line
+    
+    # define points uniformly along line
+    pts = map(inter_line.interpolate, np.arange(n) * dl)
+    
     #  interpolate bathymetry at those points
     Q = [hydro.SSH, hydro.bathy, hydro.U, hydro.V]
+    
     wh = 0.0  # water column height
     speed = 0.0  # speed over transect
+    
     for pt in pts:
         [el, h, u, v] = interp_at_point(pt.x, pt.y, hydro.X, hydro.Y, Q)
         # Don't allow NaNs
@@ -287,6 +298,7 @@ def transec_surf(hydro, array, debug=False):
         if h < 0.0: h *= -1.0
         wh += (h + el)
         speed += np.sqrt(u**2.0 + v**2.0)
+    
     # relative blockage ratio
     transect = (wh / n) * inter_line.length  # average transect surface
     speed = speed / n
