@@ -38,14 +38,18 @@ def main(input_dir, InpName='simple_inputs.p'):
     ymax = data['Y'].max().max()
     
     #random positions
+    #
+    #n_digits = len(str(nb))
+    #
     #for i in range(nb):
+    #    turb_name = 'turbine{:0{width}d}'.format(i, width=n_digits)
     #    randX = (np.random.rand()*(xmax-xmin)) + xmin
     #    randY = (np.random.random()*(ymax-ymin)) + ymin
     #    Z = -20.0
     #    xyz_turb = np.asarray((randX, randY, Z))
     #    xyz_turb = np.asarray((randX, randY, Z))
-    #    Data['turbine'+str(i)] = {}   
-    #    Data['turbine'+str(i)]['position'] = xyz_turb
+    #    Data[turb_name] = {}
+    #    Data[turb_name]['position'] = xyz_turb
     
     #staggered layout1
     #Xa = [15.0, 115.0, 215.0]
@@ -65,23 +69,29 @@ def main(input_dir, InpName='simple_inputs.p'):
     row = 1.0
     nb = 0
     
+    n_digits = len(str(len(Y)))
+    
     for i in range(len(Y)):
+        
+        turb_name = 'turbine{:0{width}d}'.format(nb, width=n_digits)
+        
         if row > 0.0:
             for x in Xa:
                 xyz = np.asarray((Y[i], x, -20.0))
-                Data['turbine'+str(nb)] = {}   
-                Data['turbine'+str(nb)]['position'] = xyz
+                Data[turb_name] = {}   
+                Data[turb_name]['position'] = xyz
                 print x, Y[i], nb
                 print xyz
                 nb += 1
         else:
             for x in Xb:
                 xyz = np.asarray((Y[i], x, -20.0))
-                Data['turbine'+str(nb)] = {}   
-                Data['turbine'+str(nb)]['position'] = xyz
+                Data[turb_name] = {}   
+                Data[turb_name]['position'] = xyz
                 print x, Y[i], nb
                 print xyz
                 nb += 1
+        
         row = row * (-1.0)
     
     print "Number of turb. :", nb

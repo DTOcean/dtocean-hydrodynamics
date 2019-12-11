@@ -47,9 +47,13 @@ def blockage_ratio(hydro, array, debug=False):
     
     transect, first_row, speed = transec_surf(hydro, array, debug=debug)
     rotor_surf = 0.0
+    
+    n_digits = len(str(array.turbine_count))
+    
     for i in first_row:
-        diam = array.features['turbine'+str(i)]['Diam']
-        ry = array.features['turbine'+str(i)]['RY']  # relative yawing angle
+        turb_name = 'turbine{:0{width}d}'.format(i, width=n_digits)
+        diam = array.features[turb_name]['Diam']
+        ry = array.features[turb_name]['RY']  # relative yawing angle
         surf = np.pi * ((diam/2.0)**2.0) * abs(np.cos(np.radians(ry)))  # ellipse area
         rotor_surf += surf
     

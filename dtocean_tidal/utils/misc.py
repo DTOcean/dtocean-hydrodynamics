@@ -204,6 +204,8 @@ def transec_surf(hydro, array, debug=False):
     if debug: module_logger.info("Computing relative blockage ratio RBR...")
     
     Nturb = len(array.positions.keys())
+    n_digits = len(str(Nturb))
+    
     (xm, ym, xM, yM) = hydro.lease.bounds
     l = []
     ref = np.arange(Nturb)
@@ -237,19 +239,37 @@ def transec_surf(hydro, array, debug=False):
     iterlist = first_row[:]
     
     for ii in iterlist:
+        
+        ii_turb_name = 'turbine{:0{width}d}'.format(ii, width=n_digits)
+        
+        diam = array.features[ii_turb_name]['Diam']
+        ii_x = array.positions[ii_turb_name][0]
+        ii_y = array.positions[ii_turb_name][1]
+        
         for jj in range(Nturb):
-            diam = array.features['turbine'+str(ii)]['Diam']
-            xdist = np.abs(array.positions['turbine'+str(ii)][0] - array.positions['turbine'+str(jj)][0])
-            ydist = np.abs(array.positions['turbine'+str(ii)][1] - array.positions['turbine'+str(jj)][1])
-            if np.sqrt(xdist**2.0 + ydist**2.0) < diam:
+            
+            jj_turb_name = 'turbine{:0{width}d}'.format(jj, width=n_digits)
+            
+            jj_x = array.positions[jj_turb_name][0]
+            jj_y = array.positions[jj_turb_name][1]
+            xdist = np.abs(ii_x - jj_x)
+            ydist = np.abs(ii_y - jj_y)
+            
+            if np.sqrt(xdist ** 2.0 + ydist ** 2.0) < diam:
                 first_row.append(jj)
+    
     first_row = np.unique(first_row)
-
+    
+    first_turb_name = 'turbine{:0{width}d}'.format(first_row[0],
+                                                   width=n_digits)
+    last_turb_name = 'turbine{:0{width}d}'.format(first_row[-1],
+                                                  width=n_digits)
+    
     # define linear function representative on the 1st row's ray line
-    x1 = array.positions['turbine'+str(first_row[0])][0]
-    y1 = array.positions['turbine'+str(first_row[0])][1]
-    x2 = array.positions['turbine'+str(first_row[-1])][0]
-    y2 = array.positions['turbine'+str(first_row[-1])][1]
+    x1 = array.positions[first_turb_name][0]
+    y1 = array.positions[first_turb_name][1]
+    x2 = array.positions[last_turb_name][0]
+    y2 = array.positions[last_turb_name][1]
     a = np.array([[x1,1], [x2,1]])
     b = np.array([y1,y2])
     
@@ -277,7 +297,7 @@ def transec_surf(hydro, array, debug=False):
     inter_line = box.intersection(line)
     
     # calculate ratio between rotors surface and transect
-    diam = array.features['turbine'+str(first_row[-1])]['Diam']
+    diam = array.features[last_turb_name]['Diam']
     n = inter_line.length//diam
     dl = inter_line.length / (n-1)
     
