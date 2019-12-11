@@ -552,11 +552,14 @@ class SearchOptimum(object):
         # check conditions prior to solve the array interaction
         if inside.any() and not self._array.minDist_constraint:
             
-            if self._array.coord[inside].shape[0] > self._max_num_dev:
+            n_devs = self._array.coord[inside].shape[0]
+            
+            if n_devs > self._max_num_dev:
                 
-                if self._debug: module_logger.info("Not valid: N_dev > "
-                                                   "N_max ({})".format(
-                                                           self._max_num_dev))
+                msg_str = ("Layout not valid: {} devices generated, "
+                           "but maximum is {}").format(n_devs,
+                                                       self._max_num_dev)
+                module_logger.info(msg_str)
                 
                 # return the squared error from actual value and bound
                 # due to the computational constraints this penality term is
