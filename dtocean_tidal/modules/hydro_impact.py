@@ -79,8 +79,10 @@ class HydroImpact:
         if debug:
             module_logger.info('...find mesh elements within 5 diam circle..')
         
+        n_digits = len(str(self._turbine_count))
+        
         for i in range(self._turbine_count):
-            ID = 'turbine' + str(i)
+            ID = 'turbine{:0{width}d}'.format(i, width=n_digits)
             xt = self._array.positions[ID][0]
             yt = self._array.positions[ID][1]
             diam = self._array.features[ID]['Diam']

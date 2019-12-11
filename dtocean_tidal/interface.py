@@ -334,10 +334,11 @@ class CallTidal:
         """
         
         machine = {}
+        n_digits = len(str(self.Nbodies))
         
         for jj in range(self.Nbodies):
             
-            stro = 'turbine{}'.format(jj)
+            stro = 'turbine{:0{width}d}'.format(jj, width=n_digits)
             pos = self.__turbines[stro]['position']
             strn = 'Device{}'.format(jj)
             machine.update({strn:(pos[0],pos[1])})
@@ -415,8 +416,10 @@ class CallTidal:
         else:
             nb = len(self.coord)
         
+        n_digits = len(str(nb))
+        
         for ii in range(nb):
-            strn = 'turbine%d'%ii
+            strn = 'turbine{:0{width}d}'.format(ii, width=n_digits)
             posxy = self.coord[ii, :]
             pxyz = np.array([posxy[0], posxy[1], self.hub_height])
             turbines.update({strn: {'position': pxyz}})
@@ -499,21 +502,50 @@ class CallTidal:
         nb /= 2
         ti_dev_state_n = []
         turbines_n = {}
-        for kk in range(nb):  # sum the power produced by the two rotors of the MCT machines
-            pow_perf_dev_state[kk, ] = pow_perf_dev_state[kk, ] + pow_perf_dev_state[kk+nb, ]
-            pow_perf_dev_state_ni[kk, ] = pow_perf_dev_state_ni[kk, ] + pow_perf_dev_state_ni[kk+nb, ]
-            turbines_n.update({'turbine{}'.format(kk):{'position':
-                                0.5*(turbines['turbine{}'.format(kk)]['position']+
-                                turbines['turbine{}'.format(kk+nb)]['position'])}})
+        
+        n_digits_old = len(str(nb * 2))
+        n_digits_new = len(str(nb))
+        
+        for kk in range(nb):
+            
+            left_turb_name = 'turbine{:0{width}d}'.format(kk,
+                                                          width=n_digits_old)
+            right_turb_name = 'turbine{:0{width}d}'.format(kk + nb,
+                                                           width=n_digits_old)
+            turb_name = 'turbine{:0{width}d}'.format(kk, width=n_digits_new)
+            
+            pow_perf_dev_state[kk, ] = (pow_perf_dev_state[kk, ] +
+                                                  pow_perf_dev_state[kk+nb, ])
+            pow_perf_dev_state_ni[kk, ] = (pow_perf_dev_state_ni[kk, ] +
+                                             pow_perf_dev_state_ni[kk+nb, ])
+            
+            turb_pos = 0.5 * (turbines[left_turb_name]['position'] +
+                              turbines[right_turb_name]['position'])
+            
+            turbines_n[turb_name] = {'position': turb_pos}
+        
         for ll in range(n):
+            
             local_dict = {}
+            
             for kk in range(nb):
-                strn = 'turbine{}'.format(kk)
-                local_dict.update({strn:
-                                   0.5*(ti_dev_state[ll]['turbine{}'.format(kk)]+
-                                   ti_dev_state[ll]['turbine{}'.format(kk+nb)])})
+                
+                left_turb_name = 'turbine{:0{width}d}'.format(
+                                                        kk,
+                                                        width=n_digits_old)
+                right_turb_name = 'turbine{:0{width}d}'.format(
+                                                        kk + nb,
+                                                        width=n_digits_old)
+                turb_name = 'turbine{:0{width}d}'.format(kk,
+                                                         width=n_digits_new)
+                
+                turb_ti = 0.5 * (ti_dev_state[ll][left_turb_name] +
+                                 ti_dev_state[ll][right_turb_name])
+                
+                local_dict[turb_name] = turb_ti
+            
             ti_dev_state_n.append(local_dict)
-
+        
         ti_dev_state = ti_dev_state_n
         pow_perf_dev_state = np.delete(pow_perf_dev_state,
                                        np.s_[-nb:],

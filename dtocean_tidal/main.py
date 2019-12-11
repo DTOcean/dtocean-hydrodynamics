@@ -142,23 +142,30 @@ class Array:
                        features,
                        debug=False,
                        debug_plot=False):
-        """ Initialise Array class"""
-        self._turbine_count = len(turbines.keys())
+        
+        turbine_count = len(turbines.keys())
+        n_digits = len(str(turbine_count))
+        
+        self.turbine_count = turbine_count
+        
         #Turn turbine positions into one big matrix
         self.positions = {}
-        for i in range(self._turbine_count):
-            p = turbines['turbine' + str(i)]['position']
+        
+        for i in range(turbine_count):
+            
+            turb_name = 'turbine{:0{width}d}'.format(i, width=n_digits)
+            
+            p = turbines[turb_name]['position']
+            
             if i == 0:
                 positions = p
             else:
                 positions = np.vstack((positions, p))
-            self.positions['turbine' + str(i)] = p            
- 
-        #Turn turbine features into one big matrix
-        self.features = {}
-        for i in range(self._turbine_count):
-            self.features['turbine' + str(i)] = features['turbine' + str(i)]
-
+            
+            self.positions[turb_name] = p
+        
+        self.features = features
+        
         # Streamlines
         data = {}
         xn = hydro.X.shape[0]
@@ -182,30 +189,36 @@ class Array:
         data['lease'] = hydro.lease
         
         # In case there is only one turbine in the array
-        if not self._turbine_count == 1:
-            #  computes streamlines
+        if not turbine_count == 1:
             
-            diam = features['turbine0']['Diam']
+            #  computes streamlines
+            turb_zero = 'turbine{:0{width}d}'.format(0, width=n_digits)
+            
+            diam = features[turb_zero]['Diam']
             max_len = 20 * diam
             
             SLs = Streamlines(data,
                               positions,
-                              self._turbine_count,
+                              turbine_count,
                               maxlen=max_len,
                               debug=debug)
             
-            if debug_plot: SLs.plot(self._turbine_count)
+            if debug_plot: SLs.plot(turbine_count)
             
             #Relative distance from streamlines
             self.streamlines={}
             self.distances={}
             
-            for i in range(self._turbine_count):
+            for i in range(turbine_count):
+                
                 if debug:
                     module_logger.info("Streamline nb: {}".format(i))
+                
+                turb_name = 'turbine{:0{width}d}'.format(i, width=n_digits)
                 streamline = SLs.streamlines[i]
-                self.streamlines['turbine' + str(i)] = streamline
-                self.distances['turbine' + str(i)] = \
+                
+                self.streamlines[turb_name] = streamline
+                self.distances[turb_name] = \
                             distance_from_streamline(streamline,
                                                      positions,
                                                      debug=debug,
@@ -222,10 +235,12 @@ class Array:
         if debug:
             module_logger.info("Computing Hub velocities...")
         
-        for i in range(self._turbine_count):
+        for i in range(turbine_count):
             
             if debug:
                 module_logger.info("Interpolating quantities...")
+            
+            turb_name = 'turbine{:0{width}d}'.format(i, width=n_digits)
             
             Q = [hydro.U,
                  hydro.V,
@@ -233,30 +248,26 @@ class Array:
                  hydro.bathy,
                  hydro.TI]
             
-            (u,
-             v,
-             el,
-             h,
-             ti) = interp_at_point(self.positions['turbine' + str(i)][0],
-                                   self.positions['turbine' + str(i)][1],
-                                   hydro.X,
-                                   hydro.Y,
-                                   Q)
+            (u, v, el, h, ti) = interp_at_point(self.positions[turb_name][0],
+                                                self.positions[turb_name][1],
+                                                hydro.X,
+                                                hydro.Y,
+                                                Q)
             
             # Quantity formatting
             if h < 0.0: h *= -1.0
             
             # Get hub height accounting for floating options
-            hh = self.positions['turbine' + str(i)][2]
+            hh = self.positions[turb_name][2]
             if hh > 0.0: hh *= -1.0
             
-            if self.features['turbine' + str(i)]['floating']:
+            if self.features[turb_name]['floating']:
                 z = (el + h) + hh
             else:
                 z = -hh
             
             # Computing velocity vertical profile weight
-            radius = self.features['turbine' + str(i)]['Diam'] / 2.0
+            radius = self.features[turb_name]['Diam'] / 2.0
             z_top = z + radius
             z_bottom = z - radius
             args = [el,
@@ -274,8 +285,8 @@ class Array:
             urootw = u * np.sqrt(w)
             vrootw = v * np.sqrt(w)
             
-            self.velHub['turbine' + str(i)] = np.array([urootw, vrootw])
-            self.velHubIni['turbine' + str(i)] = np.array([urootw, vrootw])
+            self.velHub[turb_name] = np.array([urootw, vrootw])
+            self.velHubIni[turb_name] = np.array([urootw, vrootw])
             
             # Compute TIH, tubulence intensity at hub (%)
             # TR: assuming TKE uniform throughout the water column height and
@@ -285,7 +296,7 @@ class Array:
             else:
                 wTI = 1. / w # TR: due to above assumption
             
-            self.features['turbine' + str(i)]['TIH'] = wTI * ti
+            self.features[turb_name]['TIH'] = wTI * ti
             
             if debug: module_logger.info("Computing yawing angles...")
             
@@ -294,26 +305,23 @@ class Array:
             psi_current = bearing_to_radians(bearing) + np.pi
             
             # turbine direction
-            psi_turb = bearing_to_radians(
-                                    self.features['turbine' + str(i)]['OA'])
+            psi_turb = bearing_to_radians(self.features[turb_name]['OA'])
             
             # maximum yaw
-            psi_yaw = np.abs(
-                    np.radians(self.features['turbine' + str(i)]['HAS'])) / 2.0
+            psi_yaw = np.abs(np.radians(self.features[turb_name]['HAS'])) / 2.0
             
             ry = _get_angle_of_attack(psi_turb,
                                       psi_yaw,
                                       psi_current,
                                       two_way=self.features[
-                                                 'turbine' + str(i)]['2way'])
-                
-            self.features['turbine' + str(i)]['RY'] = np.degrees(ry)
+                                                          turb_name]['2way'])
+            
+            self.features[turb_name]['RY'] = np.degrees(ry)
             
             if debug:
                 
                 logMsg = ("Relative yawing angle for turbine{} = "
-                          "{}").format(i, 
-                                       self.features['turbine' + str(i)]['RY'])
+                          "{}").format(i, self.features[turb_name]['RY'])
                 module_logger.info(logMsg)
         
         return
@@ -370,15 +378,35 @@ def wp2_tidal(data,
       ti (dict) turbulence intensities at hub height for each turbine
 
     Notes: the 'turbines', 'features' and output dictionaries have the following structure:
-      turbines[turbine's ID]['position'] where turbine's ID = 'turbine'+str(integer)
-      for integers going from 0 to infinity
+      turbines[turbine's ID]['position'] where turbine's ID = 'turbine{number}'
+      where the numbers should be padded so all ids are the same length
 
 
     """
     #performance benchmark
     if debug: start = time.time()
-
+    
+    # Check that the keys of turbines are the same length
+    key_lengths_set = set([len(k) for k in turbines.keys()])
+    
+    if not len(key_lengths_set) == 1:
+        
+        err_msg = ("Key lengths in turbines argument differ. Ensure turbine "
+                   "numbers are padded with zeros.")
+        raise ValueError(err_msg)
+    
+    # Check that the keys of turbines and features are equal
+    turbines_keys_set = set(turbines.keys())
+    features_keys_set = set(features.keys())
+    
+    if turbines_keys_set != features_keys_set:
+        
+        err_msg = ("The arguments 'turbines' and 'features' have "
+                   "non-matching keys")
+        raise ValueError(err_msg)
+    
     if debug: module_logger.info("initiating classes...")
+    
     hydro = Hydro(data, debug=debug, debug_plot=debug_plot)
     array = Array(hydro,
                   turbines,
@@ -437,8 +465,11 @@ def wp2_tidal(data,
     #  impacts
     ratio = impacts.diss_avai_mass_flow_rate
     ti = {}
+    
+    n_digits = len(str(NbTurb))
+    
     for i in range(NbTurb):
-        turb = 'turbine' + str(i)
+        turb = 'turbine{:0{width}d}'.format(i, width=n_digits)
         ti[turb] = array.features[turb]['TIH']
 
     #exit function

@@ -100,11 +100,13 @@ class WakeInteraction:
         iniTI = np.empty(self._turbine_count)
         iniTKE = np.empty(self._turbine_count)
         
+        n_digits = len(str(self._turbine_count))
+        
         for i in range(self._turbine_count):
             
-            turb = 'turbine' + str(i)
+            turb = 'turbine{:0{width}d}'.format(i, width=n_digits)
             
-            p = self._array.velHub['turbine' + str(i)]
+            p = self._array.velHub[turb]
             
             iniSpeed[i] = np.sqrt(p[0]**2.0 + p[1]**2.0)
             iniVel[:, i] = self._array.velHub[turb][:]
@@ -169,7 +171,7 @@ class WakeInteraction:
         
         for i in range(self._turbine_count):
             
-            turb = 'turbine' + str(i)
+            turb = 'turbine{:0{width}d}'.format(i, width=n_digits)
             
             self._array.velHub[turb][:] = newVel[:, i]
             self._array.features[turb]['TIH'] = newTI[i]
@@ -193,10 +195,12 @@ class WakeInteraction:
         """ 
         debug = self._debug or debug 
         debug_plot = debug_plot or self._debug_plot
-
+        
+        n_digits = len(str(self._turbine_count))
+        
         # Compute wake shape
         for i in range(self._turbine_count):
-            turb = 'turbine' + str(i)        
+            turb = 'turbine{:0{width}d}'.format(i, width=n_digits)
             self._wakeShape[turb] = WakeShape(self._array.velHub[turb][:],
                                               self._array.streamlines[turb][:],
                                               self._wake[turb],
@@ -210,7 +214,7 @@ class WakeInteraction:
             ax = fig.add_subplot(111)
             
             for i in range(self._turbine_count):
-                turb = 'turbine' + str(i)
+                turb = 'turbine{:0{width}d}'.format(i, width=n_digits)
                 x, y = self._wakeShape[turb].polygon.exterior.xy
                 patch = PolygonPatch(self._wakeShape[turb].polygon,
                         alpha=0.1, zorder=2)
@@ -242,9 +246,11 @@ def _solve_flow(turbine_count,
     wake_mat = np.empty((turbine_count, turbine_count))
     tke_mat = np.empty((turbine_count, turbine_count))
     
+    n_digits = len(str(turbine_count))
+    
     for i in range(turbine_count):
         
-        turb = 'turbine' + str(i)
+        turb = 'turbine{:0{width}d}'.format(i, width=n_digits)
         
         for j in range(turbine_count):
             

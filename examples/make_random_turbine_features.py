@@ -47,8 +47,10 @@ def main(input_dir):
     
     #Same features for all turbines here but could be different
     Data = {}
+    n_digits = len(str(nb))
     for i in range(nb):
-        Data['turbine'+str(i)] = turbParams
+        turb_name = 'turbine{:0{width}d}'.format(i, width=n_digits)
+        Data[turb_name] = turbParams
     
     #Save as pickle
     fpath = os.path.join(input_dir, 'turb_fea.p')
