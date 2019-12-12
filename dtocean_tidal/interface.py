@@ -423,7 +423,10 @@ class CallTidal:
             posxy = self.coord[ii, :]
             pxyz = np.array([posxy[0], posxy[1], self.hub_height])
             turbines.update({strn: {'position': pxyz}})
-            features.update({strn: self.__base_feature})
+            
+            # Shallow copy is OK here as any mutables should be invariant
+            # Worth checking if such features can be modified in the future.
+            features[strn] = self.__base_feature.copy()
         
         return (nb, features, turbines)
     
