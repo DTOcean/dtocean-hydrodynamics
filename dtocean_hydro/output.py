@@ -120,41 +120,6 @@ class WP2output(object):
         self.power_matrix_dims = power_matrix_dims
 
     def remap_res(self, connection_point):
-        def get_first_element(pcc, xy2):
-            diff = pcc-xy2
-            dist = np.hypot(diff[:,0], diff[:,1])
-
-            return (dist.argmin(), dist.min())
-
-        def array_indexing(pcc, array_layout):
-            n = len(array_layout)
-            Nbodies = len(array_layout)
-            d0 = np.subtract.outer(array_layout[:,0], array_layout[:,0])
-            d1 = np.subtract.outer(array_layout[:,1], array_layout[:,1])
-            dist = np.hypot(d0, d1)
-
-            (id_first, dist_first) = get_first_element(pcc, array_layout)
-
-            map_ids = [[0,id_first]]
-
-            id_prev = id_first
-
-            for nb in range(Nbodies-1):
-                ds = dist[id_prev,:]
-                result = min(enumerate(ds),
-                             key=lambda x: x[1] if x[1] > 0 else float('inf'))
-
-                map_ids.append([nb+1, result[0]])
-
-                mask = np.ones((n,n))
-                mask[id_prev,:] = 0
-                mask[:,id_prev] = 0
-
-                dist = dist*mask
-
-                id_prev = result[0]
-
-            return map_ids
 
         array_layout = np.zeros((self.Nbodies,2))
         for key in self.Array_layout.keys():
@@ -345,4 +310,41 @@ class ReducedOutput():
         self.TI = ti
         self.power_matrix_machine = power_matrix_machine
         self.power_matrix_dims = power_matrix_dims
+
+
+def array_indexing(pcc, array_layout):
+    
+    def get_first_element(pcc, xy2):
         
+        diff = pcc - xy2
+        dist = np.hypot(diff[:, 0], diff[:, 1])
+        
+        return dist.argmin(), dist.min()
+    
+    n = len(array_layout)
+    Nbodies = len(array_layout)
+    d0 = np.subtract.outer(array_layout[:, 0], array_layout[:, 0])
+    d1 = np.subtract.outer(array_layout[:, 1], array_layout[:, 1])
+    dist = np.hypot(d0, d1)
+    
+    id_first, dist_first = get_first_element(pcc, array_layout)
+    
+    map_ids = [[0, id_first]]
+    id_prev = id_first
+    
+    for nb in range(Nbodies - 1):
+        
+        ds = dist[id_prev,:]
+        result = min(enumerate(ds),
+                     key=lambda x: x[1] if x[1] > 0 else float('inf'))
+        
+        map_ids.append([nb + 1, result[0]])
+        
+        mask = np.ones((n, n))
+        mask[id_prev, :] = 0
+        mask[:, id_prev] = 0
+        
+        dist = dist * mask
+        id_prev = result[0]
+    
+    return map_ids
