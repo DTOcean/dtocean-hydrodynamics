@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 
 #    Copyright (C) 2016 Francesco Ferri
-#    Copyright (C) 2017-2018 Mathew Topper
+#    Copyright (C) 2017-2019 Mathew Topper
 #
 #    This program is free software: you can redistribute it and/or modify
 #    it under the terms of the GNU General Public License as published by
@@ -17,7 +17,8 @@
 #    along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 """
-This module contains the main class that generates the output format of the hydrodynamic module.
+This module contains the main class that generates the output format of the
+hydrodynamic module.
 
 .. module:: output
    :platform: Windows
@@ -26,13 +27,15 @@ This module contains the main class that generates the output format of the hydr
 .. moduleauthor:: Francesco Ferri <ff@civil.aau.dk>
 .. moduleauthor:: Mathew Topper <mathew.topper@dataonlygreater.com>
 """
-# Start logging
+
 import logging
+from pprint import pformat
+
+import numpy as np
+
+# Start logging
 module_logger = logging.getLogger(__name__)
 
-# External Package
-from pprint import pformat
-import numpy as np
 
 class WP2output(object):
     """
@@ -78,16 +81,18 @@ class WP2output(object):
          q_array (float)[]: q-factor for the array, calculated as energy
            produced by the array over the energy produced by the device without
            interaction times the number of devices.
-         TI (float)[TIDAL ONLY]: turbulence intensity within the array
-         power_matrix_machine (numpy.ndarray) [WAVE ONLY]: power matrix of the single WEC.
-         main_direction (numpy.ndarray): Easing and Northing coordinate of the main direction vector.
+         TI (float)[TIDAL ONLY]: turbulence intensity per seastate
+         power_matrix_machine (numpy.ndarray) [WAVE ONLY]:
+             power matrix of the single WEC.
+         main_direction (numpy.ndarray):
+             Easing and Northing coordinate of the main direction vector.
     
     Attributes:
            same as input arguments
     
     Returns: None
     """
-
+    
     def __init__(self,
                  AEP_array,
                  power_prod_perD_perS,
@@ -103,12 +108,12 @@ class WP2output(object):
                  TI=None,
                  power_matrix_machine=None,
                  power_matrix_dims=None):
-
+        
         self.Annual_Energy_Production_Array = AEP_array
         self.power_prod_perD_perS = power_prod_perD_perS
-        self.Annual_Energy_Production_perD= AEP_perD
+        self.Annual_Energy_Production_perD = AEP_perD
         self.power_prod_perD = power_prod_perD
-        self.Array_layout= Device_Positon
+        self.Array_layout = Device_Positon
         self.Nbodies= Nbodies
         self.Resource_Reduction = Resource_reduction
         self.Hydrodynamic_Parameters = Device_Model
@@ -118,81 +123,80 @@ class WP2output(object):
         self.TI = TI
         self.power_matrix_machine = power_matrix_machine
         self.power_matrix_dims = power_matrix_dims
-
+        
+        return
+    
     def remap_res(self, connection_point):
-
-        array_layout = np.zeros((self.Nbodies,2))
+        
+        array_layout = np.zeros((self.Nbodies, 2))
+        
         for key in self.Array_layout.keys():
-            ID = int(float(key[6:]))
+            ID = int(key[6:])
             array_layout[ID,:] = np.array(self.Array_layout[key])
+        
         index_remap = array_indexing(connection_point, array_layout)
-
+        
         power_prod_perD_perS = self.power_prod_perD_perS
         AEP_perD = self.Annual_Energy_Production_perD
         power_prod_perD = self.power_prod_perD
         Device_Positon = array_layout
-        Device_Model = self.Hydrodynamic_Parameters
         q_perD = self.q_factor_Per_Device
-
+        
         power_prod_perD_perS_n = np.zeros(power_prod_perD_perS.shape)
         AEP_perD_n = np.zeros(AEP_perD.shape)
         power_prod_perD_n = np.zeros(power_prod_perD.shape)
         Device_Positon_n = np.zeros(Device_Positon.shape)
-        Device_Model_n = Device_Model
         q_perD_n = np.zeros(q_perD.shape)
-
+        
         for ii in index_remap:
-            power_prod_perD_perS_n[ii[0],:] = power_prod_perD_perS[ii[1],:]
+            
+            power_prod_perD_perS_n[ii[0], :] = power_prod_perD_perS[ii[1], :]
             AEP_perD_n[ii[0]] = AEP_perD[ii[1]]
             power_prod_perD_n[ii[0]] = power_prod_perD[ii[1]]
-            Device_Positon_n[ii[0],:] = Device_Positon[ii[1],:]
-            #Device_Model_n['fex'][:,:,ii[0],:] = Device_Model['fex'][:,:,ii[1],:]
+            Device_Positon_n[ii[0], :] = Device_Positon[ii[1], :]
             q_perD_n[ii[0]] = q_perD[ii[1]]
-
+        
+        n_digits = len(str(self.Nbodies))
         Array_layout_dic = {}
+        
         for bd in range(self.Nbodies):
-            Array_layout_dic['Device{:03d}'.format(bd + 1)] = \
-                                            Device_Positon_n[bd].tolist()
-        #(nf, nd, nb, ndf) = Device_Model.shape
+            turb_name = 'Device{:0{width}d}'.format(bd + 1, width=n_digits)
+            Array_layout_dic[turb_name] = Device_Positon_n[bd].tolist()
+        
         self.power_prod_perD_perS = power_prod_perD_perS_n
-        self.Annual_Energy_Production_perD= AEP_perD_n
+        self.Annual_Energy_Production_perD = AEP_perD_n
         self.power_prod_perD = power_prod_perD_n
-        self.Array_layout= Array_layout_dic
-        self.Hydrodynamic_Parameters = Device_Model_n#.reshape(nf, nd, -1)
+        self.Array_layout = Array_layout_dic
         self.q_factor_Per_Device = q_perD_n
-
+        
+        return
+    
     def logRes(self):
         """
         logRes: log the class attributes in the main logger
-
-        Returns:
-
         """
         
         results = self._make_results()
         
         for line in results:
-                    
-            module_logger.info(line)
             
-        return
+            module_logger.info(line)
         
+        return
+    
     def printRes(self):
         """
         printRes: print the class attributes in the current stdout
-
-        Returns:
-
         """
         
         results = self._make_results()
         
         for line in results:
-                    
-            print line
             
-        return
+            print line
         
+        return
+    
     def _make_results(self):
         """
         _make_results: gathers the class attributes into a list
@@ -234,11 +238,12 @@ class WP2output(object):
         results.append(self.main_direction)
         
         return results
-        
+
 
 class ReducedOutput():
     """
-    ReducedOutput: class used to interface the wave and tidal module to the WP2 Output class
+    Class used to interface the wave and tidal module to the WP2 Output class
+    
     Args:
          aep_ar (float)[Wh]: annual energy production of the whole array
          aep_dev (numpy.ndarray)[Wh]: annual energy production of each device
@@ -260,7 +265,7 @@ class ReducedOutput():
            level.
          res_red (float)[]: ratio between absorbed and incoming
            energy.
-         ti (float)[TIDAL ONLY]: turbulence intensity within the array
+         ti (float)[TIDAL ONLY]: turbulence intensity per seastate
          dev_model (dictionary)[WAVE ONLY]: Simplified model of the wave
            energy converter. The dictionary keys are:
                 wave_fr (numpy.ndarray)[Hz]: wave frequencies used to
@@ -278,11 +283,13 @@ class ReducedOutput():
                                         intended for the whole array, which
                                         is considered as a single body with
                                         several dofs.
-         power_matrix_machine (numpy.ndarray) [WAVE ONLY]: power matrix of the single WEC.
+         power_matrix_machine (numpy.ndarray) [WAVE ONLY]:
+             power matrix of the single WEC.
          power_matrix_dims (numpy.ndarray) [WAVE ONLY]:
              dimensions for the power matrix of the single WEC.
-
+    
     """
+    
     def __init__(self, aep_ar,
                        aep_dev,
                        q_ar,

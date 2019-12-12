@@ -464,7 +464,7 @@ class WP2:
             hyd_res = hyd_obj.energy(self.iArray.coord[inside])
             norm_dir = (self.iInput.S_data.Main_Direction / 
                             np.linalg.norm(self.iInput.S_data.Main_Direction))
-
+            
             result = WP2output(hyd_res.AEP_array,
                                hyd_res.power_prod_perD_perS,
                                hyd_res.AEP_perD,
