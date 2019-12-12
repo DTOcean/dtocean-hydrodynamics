@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 
 #    Copyright (C) 2016 Thomas Roc
-#    Copyright (C) 2017-2018 Mathew Topper
+#    Copyright (C) 2017-2019 Mathew Topper
 #
 #    This program is free software: you can redistribute it and/or modify
 #    it under the terms of the GNU General Public License as published by
@@ -413,7 +413,7 @@ def wp2_tidal(data,
                   features,
                   debug=debug,
                   debug_plot=debug_plot)
-
+    
     # In case there is only one turbine in the array
     NbTurb = len(array.positions.keys())
     if not NbTurb == 1:
@@ -429,7 +429,7 @@ def wp2_tidal(data,
         interaction.solve_flow(debug=debug)
     else:
         if debug: module_logger.info("Single turbine...no interactions")
-
+        
     if debug: module_logger.info("Computing performances...")
     arrayYield = ArrayYield(array, debug=debug, debug_plot=debug_plot)
     arrayYield.performance()
