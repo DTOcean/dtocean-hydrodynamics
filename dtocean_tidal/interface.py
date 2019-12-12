@@ -341,7 +341,7 @@ class CallTidal:
             stro = 'turbine{:0{width}d}'.format(jj, width=n_digits)
             pos = self.__turbines[stro]['position']
             strn = 'Device{}'.format(jj)
-            machine.update({strn:(pos[0],pos[1])})
+            machine[strn] = (pos[0], pos[1])
             
         year_hours = 365 * 24
         
@@ -422,7 +422,7 @@ class CallTidal:
             strn = 'turbine{:0{width}d}'.format(ii, width=n_digits)
             posxy = self.coord[ii, :]
             pxyz = np.array([posxy[0], posxy[1], self.hub_height])
-            turbines.update({strn: {'position': pxyz}})
+            turbines[strn] =  {'position': pxyz}
             
             # Shallow copy is OK here as any mutables should be invariant
             # Worth checking if such features can be modified in the future.
