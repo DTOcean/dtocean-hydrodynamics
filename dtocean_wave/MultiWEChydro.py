@@ -301,7 +301,7 @@ class MultiBody(object):
         machine = {}
         for jj in range(NBo):
             strn = 'Device%d'%jj
-            machine.update({strn:(self.coord[jj,0],self.coord[jj,1])})
+            machine[strn] = (self.coord[jj, 0], self.coord[jj, 1])
 
         if self.debug:  # add attributes for inspection
             self.power_prod_perD_perS= Psd.T
