@@ -169,6 +169,19 @@ class WakeInteraction:
             module_logger.info("...done after " + str(end - start) +
                                                                " seconds.")
         
+        if ind_err <= self._criterior:
+            
+            log_msg = ("Device interaction solver converged in {} "
+                       "iteration(s)").format(loop_counter)
+            module_logger.info(log_msg)
+        
+        else:
+            
+            log_msg = ("Device interaction solver failed to converge after "
+                       "the maximum {} iterations. Residual at last "
+                       "interation was {}").format(self._max_loop, ind_err)
+            module_logger.warning(log_msg)
+        
         for i in range(self._turbine_count):
             
             turb = 'turbine{:0{width}d}'.format(i, width=n_digits)
