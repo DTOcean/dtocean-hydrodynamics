@@ -160,8 +160,8 @@ class WP2output(object):
         Array_layout_dic = {}
         
         for bd in range(self.Nbodies):
-            turb_name = 'Device{:0{width}d}'.format(bd + 1, width=n_digits)
-            Array_layout_dic[turb_name] = Device_Positon_n[bd].tolist()
+            Array_layout_dic['Device{:03d}'.format(bd + 1)] = \
+                                            Device_Positon_n[bd].tolist()
         
         self.power_prod_perD_perS = power_prod_perD_perS_n
         self.Annual_Energy_Production_perD = AEP_perD_n
