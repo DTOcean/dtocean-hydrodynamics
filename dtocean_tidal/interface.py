@@ -28,11 +28,16 @@ by Thomas Roc (ITPower).
 .. moduleauthor:: Mathew Topper <mathew.topper@dataonlygreater.com>
 """
 
+import logging
+
 import numpy as np
 from dtocean_hydro.output import ReducedOutput
 
 from .main import wp2_tidal
 from .utils.misc import bearing_to_radians, radians_to_bearing
+
+# Start logging
+module_logger = logging.getLogger(__name__)
 
 
 class CallTidal:
@@ -270,6 +275,8 @@ class CallTidal:
         
         # iterate over the different sea states
         for seastate_id in range(self.n_seastate):
+            
+            module_logger.info("Evaluating sea-state {}".format(seastate_id))
             
             self.__set_data(seastate_id)
             
