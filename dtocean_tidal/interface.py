@@ -276,7 +276,7 @@ class CallTidal:
         # iterate over the different sea states
         for seastate_id in range(self.n_seastate):
             
-            module_logger.info("Evaluating sea-state {}".format(seastate_id))
+            module_logger.debug("Evaluating sea-state {}".format(seastate_id))
             
             self.__set_data(seastate_id)
             

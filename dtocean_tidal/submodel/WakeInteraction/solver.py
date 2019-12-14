@@ -152,16 +152,6 @@ class WakeInteraction:
             ind_err = norm(abs(old_coefficient - new_coefficient))
             old_coefficient = new_coefficient
             
-            coef_metric = new_coefficient.mean()
-            tke_metric = newTKE.mean()
-            
-            debug_msg = ("loop: {}; error: {}; coefficient {}; tke "
-                         "{}").format(loop_counter,
-                                      ind_err,
-                                      coef_metric,
-                                      tke_metric)
-            module_logger.debug(debug_msg)
-            
             loop_counter += 1
         
         if debug:
@@ -173,7 +163,7 @@ class WakeInteraction:
             
             log_msg = ("Device interaction solver converged in {} "
                        "iteration(s)").format(loop_counter)
-            module_logger.info(log_msg)
+            module_logger.debug(log_msg)
         
         else:
             
