@@ -102,6 +102,7 @@ class Array_pkg(object):
         self._nogo_P = None
         self.coord = None
         self._actual_mindist = None
+        self._mindist_percent_max = None
         self._debug = debug
         
         return
@@ -215,14 +216,23 @@ class Array_pkg(object):
         
         dist = distances(self.coord, self.coord)
         self._actual_mindist = np.min(dist)
-        if np.min(dist) < min(self.Dmin):
+        
+        angle = np.pi / 2 - self.mainAngle % np.pi
+        grid_inside_percent = get_grid_inside_ellipse_percent(self.coord,
+                                                              angle,
+                                                              self.Dmin[0],
+                                                              self.Dmin[1])
+        
+        if len(grid_inside_percent) > 0:
             self.minDist_constraint = True
+            self._mindist_percent_max = max(grid_inside_percent)
         else:
             self.minDist_constraint = False
+            self._mindist_percent_max = None
             
         return
 
-    def checkout(self, nogo_list=None):
+    def checkout(self, nogo_list=None, mindist_raise=False):
         """
         checkout: return a boolean mask representing the feasible nodes in the 
         self.coord attribute.
@@ -230,11 +240,23 @@ class Array_pkg(object):
         Args:
             nogo_list (list)[m]:
                 list of nogo areas vertex given by the user or by other WPs
+            mindist_raise (bool):
+                raise a RuntimeError if True or log a warning otherwise
+        
         """
+        
         if self.minDist_constraint:
-            module_logger.warning('Violation of the minimum distance '
-                                  'constraint between one or more devices')
-            machine_mask = np.zeros(self.coord.shape[0],dtype=bool)
+            
+            msg_str = ('Violation of the minimum distance constraint between '
+                       'at least one device. Maximum ellipse transect '
+                       'percentage: {}').format(self._mindist_percent_max)
+            
+            if mindist_raise:
+                raise RuntimeError(msg_str)
+            
+            module_logger.warning(msg_str)
+            machine_mask = np.zeros(self.coord.shape[0], dtype=bool)
+        
         else:
             
             original_el = MultiPoint(self.coord)
