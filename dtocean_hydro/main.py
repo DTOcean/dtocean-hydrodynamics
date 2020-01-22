@@ -408,8 +408,13 @@ class WP2:
         module_logger.info('Finishing the WP2 task: Evaluation of the '
                            'final array layout interaction')
         
+        mindist_raise = False
+        if Opt == 2: mindist_raise = True
+        
         inside = self.iArray.checkout(
                                     nogo_list=self.iInput.S_data.NogoAreas,
+                                    mindist_raise=mindist_raise)
+        
         if self._debug: self.iArray.show(inside)
         
         if not np.any(inside):
