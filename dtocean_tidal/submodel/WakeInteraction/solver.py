@@ -262,34 +262,32 @@ def _solve_flow(turbine_count,
                 (wake_mat[i, j],
                  tke_mat[i, j]) = turb_wakes[turb].get_velocity_TKE(
                                                  turb_distances[turb][j][:],
-                                                 turb_velocity[:, j],
-                                                 turb_TI[j],
+                                                 turb_velocity[:, i],
+                                                 turb_TI[i],
                                                  debug=debug)
             
             else:
                 
-                wake_mat[i, j] = np.sqrt(turb_velocity[0, j] ** 2 +
-                                                     turb_velocity[1, j] ** 2)
-                tke_mat[i, j] = turb_TKE[j]
+                wake_mat[i, j] = np.sqrt(turb_velocity[0, i] ** 2 +
+                                                     turb_velocity[1, i] ** 2)
+                tke_mat[i, j] = np.nan
     
     superposition_model = DominantWake(turb_velocity,
                                        wake_mat)
-    coefficient = superposition_model.coefficient
+    coefficients = superposition_model.coefficients
+    wake_TKE = superposition_model.get_dominant(tke_mat)
     
-    wake_TKE = tke_mat[range(tke_mat.shape[0]), superposition_model.indexes]
     
     # Replace any nan values with TKE of turbines
-    gamma_TKE = turb_TKE[superposition_model.indexes]
-    
     if np.isnan(wake_TKE).any():
-        wake_TKE = np.where(np.isnan(wake_TKE), gamma_TKE, wake_TKE)
+        wake_TKE = np.where(np.isnan(wake_TKE), turb_TKE, wake_TKE)
     
-    TKE_coefficient = wake_TKE / gamma_TKE
+    TKE_coefficient = wake_TKE / turb_TKE
     new_TKE = base_TKE * TKE_coefficient
     
     for i in range(turbine_count):
         
-        new_vel[:,i] = base_velocity[:, i] * coefficient[i]
+        new_vel[:,i] = base_velocity[:, i] * coefficients[i]
         new_speed[i] = np.sqrt(new_vel[0, i] ** 2 + new_vel[1, i] ** 2)
         new_TI[i] = _get_ti(new_TKE[i], new_speed[i])
     

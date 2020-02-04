@@ -28,25 +28,37 @@ class DominantWake(object):
     def __init__(self, turb_velocity,
                        wake_matrix):
         
-        self._coefficient = _get_wake_coefficients(turb_velocity,
-                                                   wake_matrix)
-        self.indexes = np.argmin(self._coefficient, axis=1)
+        self._coefficients = _get_wake_coefficients(turb_velocity,
+                                                    wake_matrix)
+        self.indexes = np.argmin(self._coefficients, axis=0)
         
         return
     
     @property
-    def coefficient(self):
+    def coefficients(self):
         
-        coefficient = self._coefficient[range(self._coefficient.shape[0]),
-                                        self.indexes]
+        coefficients = self.get_dominant(self._coefficients)
         
-        return coefficient
+        return coefficients
+    
+    def get_dominant(self, matrix):
+        
+        if matrix.shape != self._coefficients.shape:
+            
+            err_str = ("Supplied matrix must have shape "
+                       "{}x{}").format(self._coefficienst.shape)
+            raise ValueError(err_str)
+        
+        dominant = matrix[self.indexes,
+                          range(self._coefficients.shape[1])]
+        
+        return dominant
 
 
 def _get_wake_coefficients(turb_velocity,
                            wake_matrix):
     
     turb_speed = np.sqrt(turb_velocity[0, :] ** 2 + turb_velocity[1, :] ** 2)
-    coefficient = wake_matrix / turb_speed
+    coefficient = wake_matrix / turb_speed[:, None]
     
     return coefficient
