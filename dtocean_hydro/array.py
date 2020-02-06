@@ -131,6 +131,8 @@ class Array_pkg(object):
         
         """
         
+        self._mindist_percent_max = None
+        
         if not np.all(self.check_grid_distance(IC, IR, beta, psi)):
             self.minDist_constraint = True
         else:
@@ -212,6 +214,7 @@ class Array_pkg(object):
             raise IOError("No coordinates provided")
         elif len(self.coord) == 1:
             self.minDist_constraint = False
+            self._mindist_percent_max = None
             return
         
         dist = distances(self.coord, self.coord)
@@ -248,8 +251,11 @@ class Array_pkg(object):
         if self.minDist_constraint:
             
             msg_str = ('Violation of the minimum distance constraint between '
-                       'at least one device. Maximum ellipse transect '
-                       'percentage: {}').format(self._mindist_percent_max)
+                       'at least one device')
+            
+            if self._mindist_percent_max is not None:
+                msg_str += ('. Maximum ellipse transect '
+                            'percentage: {}').format(self._mindist_percent_max)
             
             if mindist_raise:
                 raise RuntimeError(msg_str)
