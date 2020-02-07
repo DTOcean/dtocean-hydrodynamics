@@ -275,15 +275,11 @@ def _solve_flow(turbine_count,
     superposition_model = DominantWake(turb_velocity,
                                        wake_mat)
     coefficients = superposition_model.coefficients
-    wake_TKE = superposition_model.get_dominant(tke_mat)
-    
+    new_TKE = superposition_model.get_dominant(tke_mat)
     
     # Replace any nan values with TKE of turbines
-    if np.isnan(wake_TKE).any():
-        wake_TKE = np.where(np.isnan(wake_TKE), turb_TKE, wake_TKE)
-    
-    TKE_coefficient = wake_TKE / turb_TKE
-    new_TKE = base_TKE * TKE_coefficient
+    if np.isnan(new_TKE).any():
+        new_TKE = np.where(np.isnan(new_TKE), turb_TKE, new_TKE)
     
     for i in range(turbine_count):
         
