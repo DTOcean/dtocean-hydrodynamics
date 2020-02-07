@@ -316,7 +316,7 @@ class Wake:
             u, v, tke = self.read_at_point(x, y, Ct, tiHub, debug=debug)
             
             indFac = np.sqrt(u**2.0 + v**2.0)
-            newTKE = tke
+            newTKE = norm * tke
         
         else:
             
