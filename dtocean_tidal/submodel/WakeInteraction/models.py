@@ -28,8 +28,11 @@ class DominantWake(object):
     def __init__(self, turb_velocity,
                        wake_matrix):
         
-        self._coefficients = _get_wake_coefficients(turb_velocity,
-                                                    wake_matrix)
+        turb_speed = np.sqrt(turb_velocity[0, :] ** 2 +
+                                                 turb_velocity[1, :] ** 2)
+        
+        self._coefficients = get_wake_coefficients(turb_speed,
+                                                   wake_matrix)
         self.indexes = np.argmin(self._coefficients, axis=0)
         
         return
@@ -55,10 +58,9 @@ class DominantWake(object):
         return dominant
 
 
-def _get_wake_coefficients(turb_velocity,
-                           wake_matrix):
+def get_wake_coefficients(baseline,
+                          interaction_matrix):
     
-    turb_speed = np.sqrt(turb_velocity[0, :] ** 2 + turb_velocity[1, :] ** 2)
-    coefficient = wake_matrix / turb_speed[:, None]
+    coefficient = interaction_matrix / baseline[:, None]
     
     return coefficient

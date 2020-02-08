@@ -27,7 +27,7 @@ from numpy.linalg import norm
 from descartes import PolygonPatch
 
 # Local import
-from .models import DominantWake
+from .models import DominantWake, get_wake_coefficients
 from ..ParametricWake import WakeShape, Wake
 from ...modules.blockage_ratio import blockage_ratio
 
@@ -49,7 +49,7 @@ class WakeInteraction:
                        U_dict,
                        V_dict,
                        TKE_dict,
-                       criterior=1e-4,
+                       criterior=1e-8,
                        max_loop=50,
                        debug=False,
                        debug_plot=False):
@@ -275,7 +275,11 @@ def _solve_flow(turbine_count,
     superposition_model = DominantWake(turb_velocity,
                                        wake_mat)
     coefficients = superposition_model.coefficients
-    new_TKE = superposition_model.get_dominant(tke_mat)
+    
+    TKE_coeff_mat = get_wake_coefficients(turb_TKE,
+                                          tke_mat)
+    TKE_coeff = superposition_model.get_dominant(TKE_coeff_mat)
+    new_TKE = TKE_coeff * base_TKE
     
     # Replace any nan values with TKE of turbines
     if np.isnan(new_TKE).any():
