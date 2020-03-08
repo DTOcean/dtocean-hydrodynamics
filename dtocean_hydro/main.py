@@ -432,10 +432,10 @@ class WP2:
                                     for xy in self.iArray.coord[~inside]]
             exc_string = ", ".join(exc_strings)
             
-            infoStr = ("Devices at positions {} have been excluded. Check "
+            err_msg = ("Devices at positions {} have been excluded. Check "
                        "lease area boundary, depth constraints, and no-go "
                        "areas").format(exc_string)
-            module_logger.info(infoStr)
+            raise RuntimeError(err_msg)
         
         if not self.iInput.M_data.tidalFlag:
             
