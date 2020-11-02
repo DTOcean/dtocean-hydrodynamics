@@ -85,6 +85,8 @@ class ArrayYield:
         rho = 1025.0
         
         l = natural_sort(self._array.velHub.keys())
+        turbNorm = np.zeros(self._turbine_count)
+        turbNormIni = np.zeros(self._turbine_count)
         turbGene = np.zeros(self._turbine_count)
         turbGeneIni = np.zeros(self._turbine_count)
         turbID = []
@@ -134,6 +136,8 @@ class ArrayYield:
                                           normIni,
                                           rho=rho)
             
+            turbNorm[i] = norm
+            turbNormIni[i] = normIni 
             turbGene[i] = power
             turbGeneIni[i] = powerIni
             turbID.append(key)
@@ -170,6 +174,17 @@ class ArrayYield:
                       "Array production without interaction: " + text2,
                       color='k',
                       fontsize=14)
+            plt.show()
+            
+            fig2 = plt.figure(figsize=(18,10))
+            ax2 = fig2.add_subplot(1,1,1)
+            x = np.arange(self._turbine_count)
+            ax2.scatter(x, turbNorm, s=20)
+            ax2.scatter(x, turbNormIni, s=20)
+            plt.xticks(x, turbID, rotation=90)
+            ax1.set_ylabel('Normal Velocity (m/s)', fontsize = 12)
+            ax1.grid(True)
+            plt.show()
         
         return
     
