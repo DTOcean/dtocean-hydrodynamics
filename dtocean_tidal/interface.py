@@ -624,7 +624,7 @@ def _get_perp_positions(main_bearing, separation_len, centre_coord):
     perp_bearing = (main_bearing + 90) % 360
     perp_angle = bearing_to_radians(perp_bearing)
     perp_vector = np.array([np.cos(perp_angle), np.sin(perp_angle)])
-    separation_vector = perp_vector * separation_len / 2.
+    separation_vector = perp_vector * separation_len
     
     turb_coords = np.vstack((centre_coord + separation_vector,
                              centre_coord - separation_vector))
