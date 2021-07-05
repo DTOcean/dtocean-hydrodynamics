@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-#    Copyright (C) 2017-2018 Mathew Topper
+#    Copyright (C) 2017-2021 Mathew Topper
 #
 #    This program is free software: you can redistribute it and/or modify
 #    it under the terms of the GNU General Public License as published by
@@ -285,7 +285,6 @@ def tidal():
             
     pos = [item for item in pos if item[1] >= 0]
     FixedArrayLayout = np.array(pos, dtype=float) + 0.1
-    print FixedArrayLayout
     
     UserArray = {'Option': 2,
                  'Value': FixedArrayLayout}
