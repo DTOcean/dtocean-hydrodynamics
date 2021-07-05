@@ -8,7 +8,7 @@ import pytest
 
 from dtocean_tidal.submodel.WakeInteraction.models import (
                                                     DominantWake,
-                                                    _get_wake_coefficients)
+                                                    get_wake_coefficients)
 
 
 @pytest.fixture(scope="module")
@@ -28,7 +28,7 @@ def test_get_wake_coefficients():
     wake_matrix = np.array([[5., 20., 60.], [20., 60., 5.], [60., 5., 20.]])
     expected = np.array([[1., 2., 3.], [4., 6., 0.25], [12., 0.5, 1.]])
     
-    test = _get_wake_coefficients(turb_velocity, wake_matrix)
+    test = get_wake_coefficients(turb_velocity, wake_matrix)
     
     assert np.isclose(test, expected).all()
 

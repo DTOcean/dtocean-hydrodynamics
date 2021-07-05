@@ -50,7 +50,7 @@ Conda can be used to install dependencies into a dedicated environment from
 the source code root directory:
 
 ```
-conda create -n _dtocean_hydro python=2.7 pip
+conda create -y -n _dtocean_hydro python=2.7 pip
 ```
 
 Activate the environment, then copy the `.condrc` file to store installation  
@@ -66,7 +66,7 @@ example, if installing it from source:
 
 ```
 $ cd \\path\\to\\polite
-$ conda install --file requirements-conda-dev.txt
+$ conda install -y --file requirements-conda-dev.txt
 $ pip install -e .
 ```
 
@@ -89,7 +89,7 @@ C:\mingw\mingw64\bin
 The numpy and libpython packages are also required for compilation:
 
 ```
-$ conda install -y numpy libpython
+$ conda install -y numpy=1.11.3=py27hfef472a_4 libpython
 ```
 
 Now compile the modules:
@@ -102,7 +102,7 @@ $ python setup.py bootstrap
 Finally, install dtocean-hydrodynamics and its dependencies using conda and pip:
 
 ```
-$ conda install --file requirements-conda-dev.txt
+$ conda install -y --file requirements-conda-dev.txt
 $ pip install -e .
 ```
 
