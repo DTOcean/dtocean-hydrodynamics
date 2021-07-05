@@ -25,6 +25,9 @@ skip_commits:
 # version format
 version: 2.0.0.build{build}
 
+image:
+  - Visual Studio 2015
+
 environment:
   matrix:
     - PYTHON_VERSION: 2.7
@@ -51,11 +54,11 @@ install:
   - activate _dtocean_hydro
   - copy .condarc %CONDA_PREFIX%
   - conda install polite=0.10.0
-  - conda install numpy libpython
+  - conda install -y numpy=1.11.3=py27hfef472a_4 libpython
   - python setup.py bootstrap
   - conda install --file requirements-conda-dev.txt
   - pip install -e .
-  - conda install pytest pytest-cov
+  - conda install pytest pytest-cov=2.5.1
   
 build: off
   

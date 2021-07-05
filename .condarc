@@ -1,8 +1,10 @@
 pinned_packages:
-  - python=2
-  - pyqt=4
-  - numpy=1.11.3
+  - python =2
+  - pyqt =4.11.4=py27_5
+  - numpy =1.11.3=py27hfef472a_4
+  - mkl >=2019.1,<2020.0a0
 
 channels:
   - defaults
+  - free
   - dataonlygreater
