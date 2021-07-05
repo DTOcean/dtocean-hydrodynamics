@@ -54,7 +54,7 @@ install:
   - activate _dtocean_hydro
   - copy .condarc %CONDA_PREFIX%
   - conda install polite=0.10.0
-  - conda install -y numpy=1.11.3=py27hfef472a_4 mkl=2017.0.3 libpython
+  - conda install -y numpy=1.11.3=py27hfef472a_4 libpython
   - python setup.py bootstrap
   - conda install --file requirements-conda-dev.txt
   - pip install -e .
