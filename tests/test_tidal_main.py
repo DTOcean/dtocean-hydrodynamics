@@ -64,9 +64,8 @@ def data():
     SSH = np.ones(X.shape) * sshmax
     TI = np.ones(X.shape) * timax
     BATHY = np.ones(X.shape) * bathy
-    PLE = 12.0 * np.ones(X.shape)
-    # bed roughness coefficient here
-    manning = np.ones(X.shape) * 0.3
+    beta = 0.4
+    alpha = 7.
     
     data = {}
     data['TI'] = TI
@@ -78,6 +77,8 @@ def data():
     data['bathy'] = BATHY
     data['BR'] = BR
     data['lease'] = lease
+    data['beta'] = beta
+    data['alpha'] = alpha
     
     return data
 
