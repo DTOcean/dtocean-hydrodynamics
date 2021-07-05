@@ -44,6 +44,6 @@ def test_dominantwake_indexes(dominantwake):
 def test_dominantwake_coefficient(dominantwake):
     
     expected = [1., 0.25, 0.5]
-    test = dominantwake.coefficient
+    test = dominantwake.coefficients
     
     assert np.isclose(test, expected).all()
