@@ -25,10 +25,11 @@ def dominantwake():
 def test_get_wake_coefficients():
     
     turb_velocity = np.array([[3., 6., 12.], [4., 8., 16.]])
+    turb_speed = np.sqrt(turb_velocity[0, :] ** 2 + turb_velocity[1, :] ** 2)
     wake_matrix = np.array([[5., 20., 60.], [20., 60., 5.], [60., 5., 20.]])
-    expected = np.array([[1., 2., 3.], [4., 6., 0.25], [12., 0.5, 1.]])
+    expected = np.array([[1., 4., 12.], [2., 6., 0.5], [3., 0.25, 1.]])
     
-    test = get_wake_coefficients(turb_velocity, wake_matrix)
+    test = get_wake_coefficients(turb_speed, wake_matrix)
     
     assert np.isclose(test, expected).all()
 

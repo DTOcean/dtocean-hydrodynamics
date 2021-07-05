@@ -104,8 +104,8 @@ def tidalsite():
     U = np.dstack(u_arrays)
     V = np.dstack(v_arrays)
     SSH = np.dstack(ssh_arrays)
-    U = U*0+2
-    V = V*0+0
+    U = U*0+0
+    V = V*0+2
     TI = np.array([0.1])
     p = np.ones(U.shape[-1])
     
@@ -272,25 +272,20 @@ def tidal():
     YawAngle = 0./180*np.pi#Need to be clarified
     Float_flag = False
     InstalDepth = [-np.inf,0]
-    MinDist = (150,)
+    MinDist = (100,25)
     OpThreshold = 0
     
-    MinDist = (150,)
-    dx = MinDist[0] * 4
-    dy = dx/4
+    dx = MinDist[0]
+    dy = dx / 4
     pos = []
     for i in range(5):
         for j in range(5):
-            if not (i)%2:
-                temp = [i*dx,j*dy-dy/2]
-            else:
-                temp = [i*dx,j*dy]
-            
+            temp = [i*dx + 70, j*dy + 70]
             pos.append(temp)
             
     pos = [item for item in pos if item[1] >= 0]
-
     FixedArrayLayout = np.array(pos, dtype=float) + 0.1
+    print FixedArrayLayout
     
     UserArray = {'Option': 2,
                  'Value': FixedArrayLayout}
@@ -392,8 +387,7 @@ def wave():
     InstalDepth = [-np.inf,0]
     MinDist = (80,)
     OpThreshold = 0.8
-
-    MinDist = (150,)
+    
     dx = MinDist[0] * 4
     dy = dx/4
     pos = []
@@ -407,7 +401,7 @@ def wave():
             pos.append(temp)
             
     pos = [item for item in pos if item[1] >= 0]
-
+    
     FixedArrayLayout = np.array(pos, dtype=float) + 0.1
     
     UserArray = {'Option': 2,
