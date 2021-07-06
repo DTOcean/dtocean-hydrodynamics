@@ -232,7 +232,8 @@ setup(name='dtocean-hydrodynamics',
                'dtocean-wec = dtocean_wec:gui_interface',
                ]},
       zip_safe=False, # Important for reading config files
-      tests_require=['pytest'],
+      tests_require=['pytest',
+                     'pytest-mock'],
       cmdclass={'bootstrap': Bootstrap,
                 'test': PyTest,
                 'cleantest': CleanTest}

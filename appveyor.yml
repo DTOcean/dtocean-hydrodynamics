@@ -58,7 +58,7 @@ install:
   - python setup.py bootstrap
   - conda install --file requirements-conda-dev.txt
   - pip install -e .
-  - conda install pytest pytest-cov=2.5.1
+  - conda install pytest pytest-cov=2.5.1 pytest-mock
   
 build: off
   

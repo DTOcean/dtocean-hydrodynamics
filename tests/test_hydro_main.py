@@ -136,7 +136,7 @@ def test_WP2_optimisationLoop_tidal(tidalsite, tidal, tidal_kwargs):
 
 
 def test_WP2_optimisationLoop_one_outside(tidalsite, tidal, tidal_kwargs):
-
+    
     # Append position
     tidal = deepcopy(tidal)
     tidal[-3]['Value'] = np.append(tidal[-3]['Value'], [[1100., 400.]],
@@ -155,7 +155,7 @@ def test_WP2_optimisationLoop_one_outside(tidalsite, tidal, tidal_kwargs):
 
 
 def test_WP2_optimisationLoop_all_outside(tidalsite, tidal, tidal_kwargs):
-
+    
     # Change all positions
     tidal = deepcopy(tidal)
     tidal[-3]['Value'] = np.array([[1100., 400.]])
@@ -169,7 +169,7 @@ def test_WP2_optimisationLoop_all_outside(tidalsite, tidal, tidal_kwargs):
     assert test.optimisationLoop() == -1
 
 
-def test_WP2_optimisationLoop_cma(tidalsite, tidal, tidal_kwargs):
+def test_WP2_optimisationLoop_cma_rectangular(tidalsite, tidal, tidal_kwargs):
     
     # Change all positions
     tidal = deepcopy(tidal)
@@ -185,12 +185,12 @@ def test_WP2_optimisationLoop_cma(tidalsite, tidal, tidal_kwargs):
     assert test.optimisationLoop()
 
 
-def test_WP2_optimisationLoop_monte(tidalsite, tidal, tidal_kwargs):
+def test_WP2_optimisationLoop_monte_staggered(tidalsite, tidal, tidal_kwargs):
     
     # Change all positions
     tidal = deepcopy(tidal)
     tidal[-3]['Option'] = 1
-    tidal[-3]['Value'] = "rectangular"
+    tidal[-3]['Value'] = 'staggered'
     
     site = WP2_SiteData(*tidalsite)
     machine = WP2_MachineData(*tidal, **tidal_kwargs)
@@ -201,12 +201,12 @@ def test_WP2_optimisationLoop_monte(tidalsite, tidal, tidal_kwargs):
     assert test.optimisationLoop()
 
 
-def test_WP2_optimisationLoop_brute(tidalsite, tidal, tidal_kwargs):
+def test_WP2_optimisationLoop_brute_full(tidalsite, tidal, tidal_kwargs):
     
     # Change all positions
     tidal = deepcopy(tidal)
     tidal[-3]['Option'] = 1
-    tidal[-3]['Value'] = "rectangular"
+    tidal[-3]['Value'] = 'full'
     
     site = WP2_SiteData(*tidalsite)
     machine = WP2_MachineData(*tidal, **tidal_kwargs)
