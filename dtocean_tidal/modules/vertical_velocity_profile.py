@@ -62,5 +62,5 @@ def vvpw(z, el, h, beta, alpha, debug=False):
     if debug:
         log_msg = "Vertical velocity profile weight = {}".format(w)
         module_logger.debug(log_msg)
-        
+    
     return w
