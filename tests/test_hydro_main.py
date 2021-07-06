@@ -24,6 +24,8 @@ import numpy as np
 
 from dtocean_hydro.input import WP2input, WP2_MachineData, WP2_SiteData
 from dtocean_hydro.main import get_device_depths, WP2
+from dtocean_hydro.utils.optimiser import SearchOptimum
+
 
 def test_get_device_depths():
 
@@ -116,3 +118,24 @@ def test_WP2_optimisationLoop_tidal(tidalsite, tidal, tidal_kwargs):
     
     assert result
 
+
+def test_WP2_optimisationLoop_stop(tidalsite, tidal, tidal_kwargs):
+    
+    class StopOptim(SearchOptimum):
+        def method_optimiser(self):
+            return -1
+    
+    # Change to optimisation
+    tidal[-3]['Option'] = 1
+    tidal[-3]['Value'] = 'rectangular'
+    
+    site = WP2_SiteData(*tidalsite)
+    machine = WP2_MachineData(*tidal, **tidal_kwargs)
+    
+    data = WP2input(machine, site)
+    test = WP2(data, optim_method=StopOptim)
+    
+    with pytest.raises(ValueError) as excinfo:
+        test.optimisationLoop()
+    
+    assert "No array configuration" in str(excinfo.value)
