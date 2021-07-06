@@ -122,7 +122,7 @@ class SearchOptimum(object):
         self.opt_dim = 4  # default case
         self.par_a = np.eye(self.opt_dim)
         self.par_b = np.zeros(self.opt_dim)
-
+        
         if self._Opt == 1:
             if self._Val == 'rectangular':
                 self.opt_dim = 2

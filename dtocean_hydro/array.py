@@ -427,15 +427,3 @@ class Array_pkg(object):
         plt.show()
         
         return ax
-
-if __name__ == "__main__":
-    
-    lease = np.array([[-100,-100],[100,-100],[100,100],[-100,100]],'f')
-    arr = Array_pkg(lease,
-                    lease * 1.05,
-                    (10, 10),
-                    45.0 / 180 * np.pi,
-                    Polygon(lease * 0.2),
-                    True)
-    arr.generator(10, 10, 20, 20, 0.0 / 180 * np.pi, -45.0 / 180 * np.pi)
-    arr.show(arr.checkout())

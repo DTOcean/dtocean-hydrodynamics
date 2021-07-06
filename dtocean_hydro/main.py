@@ -377,46 +377,13 @@ class WP2:
         Value = self.iInput.M_data.UserArray['Value']
         
         # initialise either the tidal or wave object
-        if self.iInput.M_data.tidalFlag:
-            
-            hyd_obj = CallTidal(self.iHydro,
-                                self.iInput,
-                                self.cfd_data,
-                                debug=self._debug,
-                                debug_plot=self._debug)
-        
-        else:
-            
-            hyd_obj = MultiBody(self.iHydroMB,
-                                self.iWEC,
-                                cylamplitude=True)
+        hyd_obj = self._get_hyd_obj()
         
         if Opt == 2:
-            
             self.iArray.coord = Value
             self.iArray.checkMinDist()
-        
         else:
-            
-            if self._optim_method == 1:
-                opt_func = optimiser.method_cma_es
-            elif self._optim_method == 2:
-                opt_func = optimiser.method_monte_carlo
-            elif self._optim_method == 3:
-                opt_func = optimiser.method_brutal_force
-            else:
-                raise IOError("The specified optimisation method ID is out of "
-                              "range.")
-            
-            opt_obj = self._search_class(opt_func,
-                                         hyd_obj,
-                                         self.iArray,
-                                         Value,
-                                         Opt,
-                                         self.iInput.M_data.MaxNumDevices,
-                                         self.iInput.M_data.OptThreshold,
-                                         self.iInput.S_data.NogoAreas,
-                                         debug=False)
+            opt_obj = self._get_optim_obj(hyd_obj)
             opt_obj.eval_optimal_layout()
         
         # Regenerate the optimal array layout
@@ -510,6 +477,49 @@ class WP2:
         result.logRes()
         
         return result
+    
+    def _get_hyd_obj(self):
+        
+        # initialise either the tidal or wave object
+        if self.iInput.M_data.tidalFlag:
+            
+            hyd_obj = CallTidal(self.iHydro,
+                                self.iInput,
+                                self.cfd_data,
+                                debug=self._debug,
+                                debug_plot=self._debug)
+        
+        else:
+            
+            hyd_obj = MultiBody(self.iHydroMB,
+                                self.iWEC,
+                                cylamplitude=True)
+        
+        return hyd_obj
+    
+    def _get_optim_obj(self, hyd_obj):
+        
+        if self._optim_method == 1:
+            opt_func = optimiser.method_cma_es
+        elif self._optim_method == 2:
+            opt_func = optimiser.method_monte_carlo
+        elif self._optim_method == 3:
+            opt_func = optimiser.method_brutal_force
+        else:
+            raise IOError("The specified optimisation method ID is out of "
+                          "range.")
+        
+        opt_obj = self._search_class(opt_func,
+                                     hyd_obj,
+                                     self.iArray,
+                                     self.iInput.M_data.UserArray['Value'],
+                                     self.iInput.M_data.UserArray['Option'],
+                                     self.iInput.M_data.MaxNumDevices,
+                                     self.iInput.M_data.OptThreshold,
+                                     self.iInput.S_data.NogoAreas,
+                                     debug=False)
+        
+        return opt_obj
 
 
 def get_device_depths(bathymetry, layout):
