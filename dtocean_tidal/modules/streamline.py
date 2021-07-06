@@ -87,7 +87,7 @@ class Streamlines:
             self.streamlines.append(self._makeStreamline(self.driftPos[i,0],
                                                          self.driftPos[i,1]))
     
-    def plot(self, NbTurb, lw=1, ax=None, size=16):
+    def plot(self, NbTurb=None, lw=1, ax=None, size=16):
         """
         Draw the computed streamline segments with arrows indicating flow
         direction.
@@ -100,6 +100,9 @@ class Streamlines:
         """
         if ax is None:
             ax = plt.gca()
+        
+        if NbTurb is None:
+            NbTurb = len(self.driftPos)
         
         speed = np.sqrt(self.u ** 2 + self.v ** 2)
         cs = ax.contourf(self.x, self.y, speed,  extend='both')
@@ -138,21 +141,7 @@ class Streamlines:
         
         return
     
-    def _makeStreamline(self, x0, y0):
-        """
-        Compute a streamline extending in both directions from the given point.
-        """
-
-        sx, sy = self._makeHalfStreamline(x0, y0, 1) # forwards
-        #rx, ry = self._makeHalfStreamline(x0, y0, -1) # backwards
-
-        #rx.reverse()
-        #ry.reverse()
-
-        return [x0]+sx, [y0]+sy
-        #return rx+[x0]+sx, ry+[y0]+sy
-
-    def _makeHalfStreamline(self, x0, y0, sign):
+    def _makeStreamline(self, x0, y0, sign=1):
         """
         Compute a streamline extending in one direction from the given point.
         """
@@ -180,7 +169,7 @@ class Streamlines:
             u = self.interpU(x, y)[0][0]
             v = self.interpV(x, y)[0][0]
             
-            if u == 0. or v == 0.:
+            if u == 0. and v == 0.:
                 break
             
             theta = np.arctan2(v,u)
@@ -199,7 +188,7 @@ class Streamlines:
             sx.append(x)
             sy.append(y)
         
-        return sx, sy
+        return [x0] + sx, [y0] + sy
     
     def _detectLoop(self, x, y):
         """ Detect closed loops and nodes in a streamline. """
@@ -209,8 +198,8 @@ class Streamlines:
         x0 = x[-1]
         y0 = y[-1]
         
-        xd = x0 - x[:-1]
-        yd = y0 - y[:-1]
+        xd = x0 - np.array(x[:-1])
+        yd = y0 - np.array(y[:-1])
         
         D = np.hypot(xd, yd)
         result = (D < 0.9 * self.dr).any()
