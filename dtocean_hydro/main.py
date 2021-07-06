@@ -116,6 +116,7 @@ class WP2:
                        Kfit=None,
                        pickup=False,
                        debug=False,
+                       search_class=None,
                        optim_method=1):
         
         # The input object is passed for use in the optimisation loop method
@@ -128,8 +129,14 @@ class WP2:
                                 WP2input.S_data.mainAngle,
                                 WP2input.S_data.NogoAreas_bathymetry)
         self._debug = debug
+        
+        if search_class is None:
+            self._search_class = optimiser.SearchOptimum
+        else:
+            self._search_class = search_class
+        
         self._optim_method = optim_method
-
+        
         if not WP2input.internalOptim:
             module_logger.info("The user provided an external map of the "
                                "hydrodynamic interaction. No internal model "
@@ -366,7 +373,6 @@ class WP2:
         if not self.iInput.internalOptim:
             return self.optimiseExternalTab()
         
-        stopRun = False
         Opt = self.iInput.M_data.UserArray['Option']
         Value = self.iInput.M_data.UserArray['Value']
         
@@ -392,32 +398,26 @@ class WP2:
         
         else:
             
-            if issubclass(self._optim_method, optimiser.SearchOptimum):
-                OptClass = self._optim_method
-            elif self._optim_method == 1:
-                OptClass = optimiser.CMAES
+            if self._optim_method == 1:
+                opt_func = optimiser.method_cma_es
             elif self._optim_method == 2:
-                OptClass = optimiser.MonteCarlo
+                opt_func = optimiser.method_monte_carlo
             elif self._optim_method == 3:
-                OptClass = optimiser.BruteForce
+                opt_func = optimiser.method_brutal_force
             else:
                 raise IOError("The specified optimisation method ID is out of "
                               "range.")
             
-            opt_obj = OptClass(hyd_obj,
-                               self.iArray,
-                               Value,
-                               Opt,
-                               self.iInput.M_data.MaxNumDevices,
-                               self.iInput.M_data.OptThreshold,
-                               self.iInput.S_data.NogoAreas,
-                               debug=False)
-            
-            stat = opt_obj.eval_optimal_layout()
-            
-            if stat < 0: stopRun = True
-        
-        if stopRun: return -1
+            opt_obj = self._search_class(opt_func,
+                                         hyd_obj,
+                                         self.iArray,
+                                         Value,
+                                         Opt,
+                                         self.iInput.M_data.MaxNumDevices,
+                                         self.iInput.M_data.OptThreshold,
+                                         self.iInput.S_data.NogoAreas,
+                                         debug=False)
+            opt_obj.eval_optimal_layout()
         
         # Regenerate the optimal array layout
         module_logger.info('Finishing the WP2 task: Evaluation of the '
