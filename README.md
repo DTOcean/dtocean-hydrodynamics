@@ -1,6 +1,6 @@
 [![appveyor](https://ci.appveyor.com/api/projects/status/github/DTOcean/dtocean-hydrodynamics?branch=master&svg=true)](https://ci.appveyor.com/project/DTOcean/dtocean-hydrodynamics)
 [![codecov](https://codecov.io/gh/DTOcean/dtocean-hydrodynamics/branch/master/graph/badge.svg)](https://codecov.io/gh/DTOcean/dtocean-hydrodynamics)
-[![Codacy Badge](https://api.codacy.com/project/badge/Grade/f96b19d24ee9465899a888515c9bdade)](https://www.codacy.com/project/H0R5E/dtocean-hydrodynamics/dashboard?utm_source=github.com&amp;utm_medium=referral&amp;utm_content=DTOcean/dtocean-hydrodynamics&amp;utm_campaign=Badge_Grade_Dashboard&amp;branchId=11701799)
+[![Codacy Badge](https://app.codacy.com/project/badge/Grade/0ba57ae117cb4cb8b284635638f7c5a2)](https://www.codacy.com/gh/DTOcean/dtocean-hydrodynamics/dashboard?utm_source=github.com&amp;utm_medium=referral&amp;utm_content=DTOcean/dtocean-hydrodynamics&amp;utm_campaign=Badge_Grade)
 [![release](https://img.shields.io/github/release/DTOcean/dtocean-hydrodynamics.svg)](https://github.com/DTOcean/dtocean-hydrodynamics/releases/latest)
 
 # DTOcean Hydrodynamics Module

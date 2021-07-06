@@ -386,20 +386,15 @@ class Array_pkg(object):
             for NG in self._nogo_P:
                 plotCompositePolygon(NG, ax)
         
-        patterns = ['\\','/','-', '+', 'x', 'o', 'O', '.', '*']
         scale = np.mean(np.max(self.Lease,0)-np.min(self.Lease,0))
         ax.add_patch(
             patches.Arrow(
                 self.centroidLease[0]-scale*np.cos(self.mainAngle-2*np.pi),
                 self.centroidLease[1]-scale*np.sin(self.mainAngle-2*np.pi),
-                0.5*scale*np.cos(self.mainAngle),            # dx
-                0.5*scale*np.sin(self.mainAngle),            # dy
-                width=0.3*scale,       # optional - defaults to 1.0
+                0.5*scale*np.cos(self.mainAngle),
+                0.5*scale*np.sin(self.mainAngle),
+                width=0.3*scale,
                 alpha=0.5,
-                #facecolor="#00ffff",#'none' no background
-                #linewidth=3,
-                #linestyle='dashdot',
-                #hatch=patterns[-2],
                 fill='#0000dd',
                 edgecolor='k'))
         

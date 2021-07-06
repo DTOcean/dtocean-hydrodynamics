@@ -130,7 +130,7 @@ class Streamlines:
                 ax.add_patch(patch)
         
         fig = plt.gcf()
-        cbar = fig.colorbar(cs)
+        fig.colorbar(cs)
         
         ax.axis('tight')
         ax.set_aspect('equal')
