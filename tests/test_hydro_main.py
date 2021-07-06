@@ -139,3 +139,35 @@ def test_WP2_optimisationLoop_stop(tidalsite, tidal, tidal_kwargs):
         test.optimisationLoop()
     
     assert "No array configuration" in str(excinfo.value)
+
+
+def test_WP2_optimisationLoop_one_outside(tidalsite, tidal, tidal_kwargs):
+
+    # Change to position
+    tidal[-3]['Value'] = np.append(tidal[-3]['Value'], [[1100., 400.]],
+                                   axis=0)
+    
+    site = WP2_SiteData(*tidalsite)
+    machine = WP2_MachineData(*tidal, **tidal_kwargs)
+    
+    data = WP2input(machine, site)
+    test = WP2(data)
+    
+    with pytest.raises(RuntimeError) as excinfo:
+        test.optimisationLoop()
+    
+    assert "have been excluded." in str(excinfo.value)
+
+
+def test_WP2_optimisationLoop_all_outside(tidalsite, tidal, tidal_kwargs):
+
+    # Change to position
+    tidal[-3]['Value'] = np.array([[1100., 400.]])
+    
+    site = WP2_SiteData(*tidalsite)
+    machine = WP2_MachineData(*tidal, **tidal_kwargs)
+    
+    data = WP2input(machine, site)
+    test = WP2(data)
+    
+    assert test.optimisationLoop() == -1
