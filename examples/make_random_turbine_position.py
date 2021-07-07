@@ -78,7 +78,7 @@ def main(input_dir, InpName='simple_inputs.p'):
         if row > 0.0:
             for x in Xa:
                 xyz = np.asarray((Y[i], x, -20.0))
-                Data[turb_name] = {}   
+                Data[turb_name] = {}
                 Data[turb_name]['position'] = xyz
                 print x, Y[i], nb
                 print xyz

@@ -44,7 +44,7 @@ def data():
     
     x = np.linspace(0.0, xmax, (xmax/10)+1) # dx = 10 m
     y = np.linspace(0.0, ymax, (ymax/10)+1) # dy = 10 m
-    X, Y = np.meshgrid(x,y)
+    X, _ = np.meshgrid(x,y)
     BR = 1.0  # blockage ratio
     
     umax = 3.69 # maximum velocity in the X direction

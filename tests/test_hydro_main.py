@@ -39,7 +39,7 @@ class MockSearch(SearchOptimum):
             NR, NC, IR, IC, beta, psi = self.param_conditioning(xmap)
             self._array.generator(NR, NC, IR, IC, beta, psi)
         else:
-            self._array.coord = (self._Val*int(xmap[0]) / 
+            self._array.coord = (self._Val*int(xmap[0]) /
                                                  self._normalisation_point)
 
 

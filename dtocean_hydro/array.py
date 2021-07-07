@@ -50,7 +50,7 @@ class Array_pkg(object):
     
     Args:
         Lease (numpy.ndarray)[m]:
-            lease area (polygon) defined in northing-easting coordinates with 
+            lease area (polygon) defined in northing-easting coordinates with
             mooring contraction strategy applied
         Lease_unbuffered (numpy.ndarray)[m]:
             lease area (polygon) defined in northing-easting coordinates
@@ -61,16 +61,16 @@ class Array_pkg(object):
             (multi)polygons object describing unfeasible areas for the device
             positioning
         debug (boolean, optional):
-            if set to True, plots and additional command line outputs are 
+            if set to True, plots and additional command line outputs are
             issued.
     
     Attributes:
         same as Args, plus:
         _lease_P (shapely.polygon):
-            shapely polygon of the lease area verted specified in the Lease 
+            shapely polygon of the lease area verted specified in the Lease
             attribute
         minDist_constraint (bool):
-            flag identifying whether the min disance constriant is violated or 
+            flag identifying whether the min disance constriant is violated or
             not
         centroidLease (numpy.ndarray)[m]:
             x and y coordiantes of the Lease area centroid
@@ -199,7 +199,7 @@ class Array_pkg(object):
     
     def checkMinDist(self):
         """
-        Warn the class whether the given grid nodes fulfil the minDist 
+        Warn the class whether the given grid nodes fulfil the minDist
         constraints
         """
         
@@ -237,7 +237,7 @@ class Array_pkg(object):
 
     def checkout(self, nogo_list=None, mindist_raise=False):
         """
-        checkout: return a boolean mask representing the feasible nodes in the 
+        checkout: return a boolean mask representing the feasible nodes in the
         self.coord attribute.
         
         Args:
@@ -330,14 +330,17 @@ class Array_pkg(object):
     
     def inner_region(self, points):
         """
-        inner_region: used to verify whether the grid nodes adiacent to the first node passed
-        are inside the ellipse generated using the Dmin attribute
-
+        inner_region: used to verify whether the grid nodes adiacent to the
+        first node passed are inside the ellipse generated using the Dmin
+        attribute
+        
         Args:
-            points (numpy.ndarray): array of nodes. The first element is used as reference point
-
+            points (numpy.ndarray): array of nodes. The first element is used
+            as reference point
+        
         Returns:
-            out (list): list of boolean used to identify which point does not fulfil the Dmin attributes
+            out (list): list of boolean used to identify which point does not
+            fulfil the Dmin attributes
         """
         a = self.Dmin[0]
         b = self.Dmin[1]
@@ -351,7 +354,7 @@ class Array_pkg(object):
     
     def show(self, inside=None, ax=None):
         """
-        show: visualise the feasible and unfeasible grid nodes along with the 
+        show: visualise the feasible and unfeasible grid nodes along with the
         Lease area and Nogo areas
         
         Args:
