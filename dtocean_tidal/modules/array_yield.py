@@ -137,7 +137,7 @@ class ArrayYield:
                                           rho=rho)
             
             turbNorm[i] = norm
-            turbNormIni[i] = normIni 
+            turbNormIni[i] = normIni
             turbGene[i] = power
             turbGeneIni[i] = powerIni
             turbID.append(key)

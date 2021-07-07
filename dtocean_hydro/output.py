@@ -156,7 +156,6 @@ class WP2output(object):
             Device_Positon_n[ii[0], :] = Device_Positon[ii[1], :]
             q_perD_n[ii[0]] = q_perD[ii[1]]
         
-        n_digits = len(str(self.Nbodies))
         Array_layout_dic = {}
         
         for bd in range(self.Nbodies):
@@ -334,7 +333,7 @@ def array_indexing(pcc, array_layout):
     d1 = np.subtract.outer(array_layout[:, 1], array_layout[:, 1])
     dist = np.hypot(d0, d1)
     
-    id_first, dist_first = get_first_element(pcc, array_layout)
+    id_first, _ = get_first_element(pcc, array_layout)
     
     map_ids = [[0, id_first]]
     id_prev = id_first
