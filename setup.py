@@ -6,6 +6,8 @@ import shutil
 import tempfile
 import platform
 
+import yaml
+
 from setuptools import Command, find_packages, setup
 from setuptools.command.test import test as TestCommand
 
@@ -38,15 +40,15 @@ packageData = {'dtocean_tidal': tidal_data,
 class Bootstrap(Command):
     
     user_options = []
-
+    
     def initialize_options(self):
         """Abstract method that is required to be overwritten"""
-
+    
     def finalize_options(self):
         """Abstract method that is required to be overwritten"""
-
-    def run(self):
     
+    def run(self):
+        
         # Clean libraries
         clean = Cleaner("library files",
                         ['.pyd', '.so', '.dll'])
@@ -67,9 +69,9 @@ class Bootstrap(Command):
             build_file_name = "{}.so".format(mod_root)
             system_call = ("f2py -c {} -m {}").format(src_file_path,
                                                       mod_root)
-
-        else:
         
+        else:
+            
             # Get mingw path from MINGW_BIN_PATH environment variable
             mingw_bin_path = os.getenv('MINGW_BIN_PATH')
             
@@ -77,58 +79,58 @@ class Bootstrap(Command):
                 errStr = ("Environment variable MINGW_BIN_PATH must contain "
                           "path to folder containing mingw binaries")
                 raise ValueError(errStr)
-
+            
             # Add mingw to the path
             os.environ["PATH"] = mingw_bin_path + os.pathsep + \
                                                         os.environ["PATH"]
-
+            
             # Prepare build command
             build_file_name = "{}.pyd".format(mod_root)
             system_call = ("f2py -c {} -m {} "
                            "--compiler=mingw32").format(src_file_path,
                                                         mod_root)
-
+        
         # Build the file
         os.chdir(temp_dir)
         os.system(system_call)
         os.chdir(start_dir)
-
+        
         # Move the file
         build_file_path = os.path.join(temp_dir, build_file_name)
         dst_file_path = os.path.join(dst_dir, build_file_name)
         shutil.move(build_file_path, dst_file_path)
-                
+        
         # On Windows copy DLLs 
         if platform.system() == 'Windows': 
             for dll in mingw_dlls:
                 dll_path = os.path.join(mingw_bin_path, dll)
                 shutil.copy(dll_path, dst_dir)
-
+        
         # Clean up the directory 
         os.removedirs(temp_dir)
         
         return
-        
-                     
+
+
 class PyTest(TestCommand):
-
+    
     user_options = [('pytest-args=', 'a', "Arguments to pass to py.test")]
-
+    
     def initialize_options(self):
         TestCommand.initialize_options(self)
         self.pytest_args = []
-
+    
     def finalize_options(self):
         TestCommand.finalize_options(self)
         self.test_args = []
         self.test_suite = True
-
-    def run_tests(self):
     
+    def run_tests(self):
+        
         #import here, cause outside the eggs aren't loaded
         import pytest
         import shlex
-
+        
         # Run the tests
         if self.pytest_args:
             opts = shlex.split(self.pytest_args)
@@ -154,8 +156,8 @@ class CleanTest(Command):
         clean = Cleaner("test files",
                         ['.pyc', '.pkl'])
         clean()
- 
-        
+
+
 class Cleaner(object):
      
     def __init__(self, description='some files',
@@ -202,14 +204,33 @@ class Cleaner(object):
         print "end cleanup"
 
 
+def read_yaml(rel_path):
+    with open(rel_path, 'r') as stream:
+        data_loaded = yaml.safe_load(stream)
+    return data_loaded
+
+
+def get_appveyor_version():
+    
+    data = read_yaml("appveyor.yml")
+    
+    if "version" not in data:
+        raise RuntimeError("Unable to find version string.")
+    
+    appveyor_version = data["version"]
+    last_dot_idx = appveyor_version.rindex(".")
+    
+    return appveyor_version[:last_dot_idx]
+
+
 ## Proceed to standard setup
 setup(name='dtocean-hydrodynamics',
-      version='2.1.dev1',
+      version=get_appveyor_version(),
       description='Hydrodynamics module for the DTOcean tools',
       maintainer='Mathew Topper',
       maintainer_email='mathew.topper@dataonlygreater.com',
       license = "GPLv3",
-      setup_requires=['numpy'],
+      setup_requires=['numpy', 'pyyaml'],
       packages=find_packages(),
       install_requires=['cma',
                         'descartes',
