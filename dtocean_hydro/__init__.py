@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-#    Copyright (C) 2016-2019 Mathew Topper
+#    Copyright (C) 2016-2021 Mathew Topper
 #
 #    This program is free software: you can redistribute it and/or modify
 #    it under the terms of the GNU General Public License as published by
@@ -21,12 +21,8 @@ from pkg_resources import get_distribution
 from polite.paths import ObjDirectory, UserDataDirectory, DirectoryMap
 from polite.configuration import Logger
 
-# Define build number for packaging test
-from ._build import BUILD
-
 # credentials
 __authors__ = ['DTOcean Developers']
-__build__ = BUILD
 __version__ = get_distribution('dtocean-hydrodynamics').version
 
 # Set default logging handler to avoid "No handler found" warnings.
