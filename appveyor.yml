@@ -7,21 +7,6 @@
 #      general configuration      #
 #---------------------------------#
 
-# Build only for commits to certain locations
-only_commits:
-  files:
-    - dtocean_hydro/
-    - dtocean_tidal/
-    - dtocean_wave/
-    - dtocean_wec/
-    - src/
-    - tests/
-    - setup.py
-    
-skip_commits:
-  files:
-    - dtocean_hydro/config/
-
 # version format
 version: 2.1.dev1.build{build}
 
