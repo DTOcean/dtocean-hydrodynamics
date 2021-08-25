@@ -3,6 +3,10 @@ pinned_packages:
   - pyqt =4.11.4=py27_5
   - numpy =1.11.3=py27hfef472a_4
   - mkl >=2019.1,<2020.0a0
+  - xlrd <2
+
+disallow:
+  - matplotlib-base
 
 channels:
   - defaults
