@@ -8,7 +8,7 @@
 #---------------------------------#
 
 # version format
-version: 2.1.dev1.build{build}
+version: 3.0.0.build{build}
 
 image:
   - Visual Studio 2015
