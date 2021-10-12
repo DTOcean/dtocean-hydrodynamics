@@ -8,7 +8,7 @@
 #---------------------------------#
 
 # version format
-version: 2.1.dev1.build{build}
+version: 3.0.0.build{build}
 
 image:
   - Visual Studio 2015
@@ -43,14 +43,13 @@ install:
   - python setup.py bootstrap
   - conda install --file requirements-conda-dev.txt
   - pip install -e .
-  - conda install pytest pytest-cov=2.5.1 pytest-mock
-  
+  - conda install mock pytest pytest-cov=2.5.1 pytest-mock
+
 build: off
-  
+
 test_script:
   - python setup.py test -a "--cov dtocean_hydro --cov dtocean_tidal --cov dtocean_wave --cov dtocean_wec"
-  
+
 after_test:
  - pip install codecov
  - codecov
-  
