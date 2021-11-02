@@ -52,13 +52,13 @@ def tidalsite():
     # # Statistical analysis generation
     # # --------------------------------           
     x = np.linspace(0., 1000., 100)
-    y = np.linspace(0., 300., 30)
+    y = np.linspace(0., 500., 50)
     
     # Lease Area
     leaseAreaVertexUTM = np.array([[50., 50.],
                                    [950., 50.],
-                                   [950., 250.],
-                                   [50., 250.]],dtype=float)
+                                   [950., 500.],
+                                   [50., 500.]],dtype=float)
     
     # Nogo areas
     Nogoareas_wave = [] 
@@ -104,8 +104,100 @@ def tidalsite():
     U = np.dstack(u_arrays)
     V = np.dstack(v_arrays)
     SSH = np.dstack(ssh_arrays)
-    U = U*0+0
-    V = V*0+2
+    TI = np.array([0.1])
+    p = np.ones(U.shape[-1])
+    
+    # END of Statistical analysis generation
+    # --------------------------------------- 
+    Meteocean = {'V':V,'U':U,'p':p,'TI':TI,'x':x,'y':y,'SSH':SSH} 
+    MainDirection = None#np.array([1.,1.])
+    #ang = np.pi*0.25
+    #MainDirection = np.array([np.cos(ang),np.sin(ang)])
+    
+    #Temp check nogo areas
+    #xb = np.linspace(0,100,10)
+    #yb = np.linspace(0,50,5)
+    
+    Bathymetry = np.array([-60.])
+    
+    BR = 1.
+    electrical_connection_point = (-1000.0, -4000.0)
+    
+    out = [leaseAreaVertexUTM,
+           Nogoareas_wave,
+           Meteocean,
+           None,
+           None,
+           MainDirection,
+           Bathymetry,
+           BR,
+           electrical_connection_point]
+
+    return out
+
+
+@pytest.fixture
+def tidalsite_simple():
+    
+    MinDist = 20
+    dx = MinDist*4
+    dy = dx/4
+    pos = []
+    for i in range(5):
+        for j in range(5):
+            if not (i)%2:
+                temp = [i*dx,j*dy-dy/2]
+            else:
+                temp = [i*dx,j*dy]
+            
+            pos.append(temp)
+    
+    pos = [item for item in pos if item[1] >= 0]
+    
+    # #x,y coordinate of the statistical analysis
+    # # Statistical analysis generation
+    # # --------------------------------
+    x = np.linspace(0., 1000., 100)
+    y = np.linspace(0., 300., 30)
+    
+    # Lease Area
+    leaseAreaVertexUTM = np.array([[50., 50.],
+                                   [950., 50.],
+                                   [950., 250.],
+                                   [50., 250.]],dtype=float)
+    
+    # Nogo areas
+    Nogoareas_wave = [] 
+    
+    nx = len(x)
+    ny = len(y)
+    
+    # Tidal time series
+    time_points = 1
+    
+    xgrid, ygrid = np.meshgrid(x,y)
+    pos = np.dstack((xgrid, ygrid))
+    
+    u_max = 0.
+    v_max = -5.
+    ssh_max = 0.
+    
+    u_scaled = np.ones((ny, nx)) * u_max
+    v_scaled = np.ones((ny, nx)) * v_max
+    ssh_scaled = np.ones((ny, nx)) * ssh_max
+    
+    u_arrays = []
+    v_arrays = []
+    ssh_arrays = []
+    
+    for _ in xrange(time_points):
+        u_arrays.append(u_scaled)
+        v_arrays.append(v_scaled)
+        ssh_arrays.append(ssh_scaled)
+    
+    U = np.dstack(u_arrays)
+    V = np.dstack(v_arrays)
+    SSH = np.dstack(ssh_arrays)
     TI = np.array([0.1])
     p = np.ones(U.shape[-1])
     
@@ -276,7 +368,7 @@ def tidal():
     OpThreshold = 0
     
     dx = MinDist[0]
-    dy = dx / 4
+    dy = dx
     pos = []
     for i in range(5):
         for j in range(5):

@@ -21,6 +21,7 @@ Created on Tue Sep 25 16:28:33 2018
 .. moduleauthor:: Mathew Topper <mathew.topper@dataonlygreater.com>
 """
 
+import numpy as np
 
 from dtocean_hydro.input import WP2input, WP2_MachineData, WP2_SiteData
 
@@ -69,3 +70,23 @@ def test_WP2input_tidal_init(tidalsite, tidal, tidal_kwargs):
     WP2input(machine, site)
     
     assert True
+
+
+def test_WP2input_tidal_mainAngle(tidalsite_simple, tidal, tidal_kwargs):
+    
+    site = WP2_SiteData(*tidalsite_simple)
+    machine = WP2_MachineData(*tidal, **tidal_kwargs)
+    test = WP2input(machine, site)
+    
+    assert np.isclose(test.S_data.mainAngle, np.pi/2)
+
+
+def test_WP2input_tidal_MainDirection(tidalsite_simple, tidal, tidal_kwargs):
+    
+    tidalsite_simple[5] = np.array((-1, 0))
+    
+    site = WP2_SiteData(*tidalsite_simple)
+    machine = WP2_MachineData(*tidal, **tidal_kwargs)
+    test = WP2input(machine, site)
+    
+    assert np.isclose(test.S_data.mainAngle, np.pi)
