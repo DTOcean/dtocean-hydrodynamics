@@ -28,7 +28,7 @@ These installation instructions are for WINDOWS ONLY.
 
 The latest version of the hydrodynamic data package 
 (`dtocean-hydrodynamic-data-*.exe`) must be installed. This can be downloaded 
-from the [Releases](https://github.com/DTOcean/dtocean-hydrodynamics/releases)
+from the [Releases](https://github.com/DTOcean/dtocean-hydrodynamics/releases/tag/v2.0.0)
 page.
 
 Once downloaded execute the file to install. If upgrading from version 1,
