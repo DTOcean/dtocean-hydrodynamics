@@ -8,7 +8,7 @@
 #---------------------------------#
 
 # version format
-version: 3.0.0.build{build}
+version: 3.1.0.build{build}
 
 image:
   - Visual Studio 2015
@@ -29,8 +29,6 @@ init:
   - "ECHO %PYTHON_VERSION% %MINICONDA%"
 
 install:
-  - ps: Start-FileDownload 'https://github.com/DTOcean/dtocean-hydrodynamics/releases/download/v2.0.0/dtocean-hydrodynamic-data-2.0.exe' 'dtocean-hydrodynamic-data-2.0.exe'
-  - dtocean-hydrodynamic-data-2.0.exe /verysilent
   - "set PATH=%MINICONDA%;%MINICONDA%\\Scripts;%PATH%"
   - conda config --set always_yes yes --set changeps1 no
   - conda update --quiet conda
@@ -43,6 +41,7 @@ install:
   - python setup.py bootstrap
   - conda install --file requirements-conda-dev.txt
   - pip install -e .
+  - conda install dtocean-data
   - conda install mock pytest pytest-cov=2.5.1 pytest-mock
 
 build: off

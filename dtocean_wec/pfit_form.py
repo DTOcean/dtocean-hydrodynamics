@@ -79,7 +79,7 @@ class PowerPerformance(QWidget, Ui_Fit):
         self.trigger_results.connect(parent.task_end_pfit)  
         self.trigger_save.connect(parent.set_pfit_data)
         
-        self.db_folder = os.path.join(parent.wec_include_path, "wec_db")
+        self.db_folder = os.path.join(parent.wec_share_path, "wec_db")
         
         self.__yaw = 0.0
         self.__spectrum = "Jonswap"

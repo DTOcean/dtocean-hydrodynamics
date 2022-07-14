@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-#    Copyright (C) 2016-2018 Mathew Topper
+#    Copyright (C) 2016-2022 Mathew Topper
 #
 #    This program is free software: you can redistribute it and/or modify
 #    it under the terms of the GNU General Public License as published by
@@ -19,21 +19,91 @@
 .. moduleauthor:: Mathew Topper <mathew.topper@dataonlygreater.com>
 """
 
+import os
+
+import pytest
+
+from polite.paths import Directory
 from dtocean_hydro import start_logging
 from dtocean_hydro.configure import get_install_paths
 
-def test_get_install_paths():
+
+def test_start_logging():
+    start_logging()
+
+
+@pytest.fixture
+def install_lines():
+    
+    lines = [
+        "[dtocean_tidal]",
+        "share_path=dtocean_tidal_mock",
+        "",
+        "[dtocean_wec]",
+        "share_path=dtocean_wec_mock",
+        "",
+        "[global]",
+        "prefix=mock",
+        "bin_path=bin_mock"
+        ]
+    
+    return "\n".join(lines)
+
+
+def test_get_install_paths_conda(mocker, tmpdir, install_lines):
+    
+    exe_path = tmpdir / "python.exe"
+    ini_file = tmpdir / "etc" / "dtocean-data" / "install.ini"
+    ini_file.write(install_lines, ensure=True)
+    
+    mocker.patch('polite.paths.sys.executable', new=str(exe_path))
+    mocker.patch('polite.paths.system', new='win32')
+    mocker.patch('dtocean_hydro.configure.SiteDataDirectory',
+                 return_value=Directory(str(tmpdir)))
     
     paths = get_install_paths()
     
-    assert set(['bin',
-                'wec_include',
-                'tidal_include']) == set(paths.keys())
-    assert isinstance(paths["bin"], str)
-    
-def test_start_logging():
+    assert set(['bin_path',
+                'wec_share_path',
+                'tidal_share_path']) == set(paths.keys())
+    assert paths["bin_path"] == os.path.join("mock", "bin_mock")
+    assert paths["wec_share_path"] == os.path.join("mock", "dtocean_wec_mock")
+    assert paths["tidal_share_path"] == os.path.join("mock",
+                                                     "dtocean_tidal_mock")
 
-    start_logging()
-    
-    assert True
 
+def test_get_install_paths_installer(mocker, tmpdir, install_lines):
+    
+    ini_file = tmpdir / "install.ini"
+    ini_file.write(install_lines, ensure=True)
+    
+    mocker.patch('polite.paths.site_data_dir', return_value=str(tmpdir))
+    mocker.patch('dtocean_hydro.configure.EtcDirectory',
+                 return_value=Directory(str(tmpdir / "mock")))
+    
+    paths = get_install_paths()
+    
+    assert set(['bin_path',
+                'wec_share_path',
+                'tidal_share_path']) == set(paths.keys())
+    assert paths["bin_path"] == os.path.join("mock", "bin_mock")
+    assert paths["wec_share_path"] == os.path.join("mock", "dtocean_wec_mock")
+    assert paths["tidal_share_path"] == os.path.join("mock",
+                                                     "dtocean_tidal_mock")
+
+
+def test_get_install_paths_missing(mocker, tmpdir):
+    
+    etc_path = tmpdir / "etc"
+    site_path = tmpdir / "site"
+    
+    mocker.patch('dtocean_hydro.configure.EtcDirectory',
+                 return_value=Directory(str(etc_path)))
+    mocker.patch('dtocean_hydro.configure.SiteDataDirectory',
+                 return_value=Directory(str(site_path)))
+    
+    with pytest.raises(RuntimeError) as excinfo:
+        get_install_paths()
+    
+    assert str(etc_path) in str(excinfo)
+    assert str(site_path) in str(excinfo)

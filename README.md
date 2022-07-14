@@ -24,18 +24,6 @@ Distribution](https://www.anaconda.com/distribution/) (Python 2.7)
 
 These installation instructions are for WINDOWS ONLY.
 
-### Data Package (Required for ALL installation Methods)
-
-The latest version of the hydrodynamic data package 
-(`dtocean-hydrodynamic-data-*.exe`) must be installed. This can be downloaded 
-from the [Releases](https://github.com/DTOcean/dtocean-hydrodynamics/releases/tag/v2.0.0)
-page.
-
-Once downloaded execute the file to install. If upgrading from version 1,
-uninstall the old version first from the Windows start menu program folder,
-or using the control panel. For version 2 and beyond, the uninstaller will
-automatically remove the older version.
-
 ### Conda Package
 
 To install:
@@ -112,6 +100,20 @@ To deactivate the conda environment:
 $ conda deactivate
 ```
 
+### Data Package
+
+When installing from source, the DTOcean data package must also be installed. 
+This can either be installed using conda:
+
+```
+$ conda activate _dtocean_hydro
+$ conda install dtocean-data
+```
+
+Or it can be downloaded from the [dtocean-data](https://github.com/DTOcean/dtocean-data)
+repository, in the "Assets" section of the [latest release](
+https://github.com/DTOcean/dtocean-data/releases/latest).
+
 ### Tests
 
 A test suite is provided with the source code that uses [pytest](
@@ -127,13 +129,13 @@ $ conda activate _dtocean_hydro
 Install pytest to the environment (one time only):
 
 ```
-$ conda install -y pytest
+$ conda install -y mock pytest pytest-mock
 ```
 
 Run the tests:
 
 ``` 
-$ py.test tests
+$ pytest tests
 ```
 
 ### Uninstall

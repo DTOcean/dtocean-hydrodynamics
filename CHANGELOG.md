@@ -5,6 +5,19 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](http://keepachangelog.com/)
 and this project adheres to [Semantic Versioning](http://semver.org/).
 
+## [3.1.0] - 2022-07-14
+
+### Changed
+
+-   Changed the way that the non-code data is discovered. It now looks for
+    the dtocean-data conda package or the installer retrieved from the
+    https://github.com/DTOcean/dtocean-data repository.
+
+### Removed
+
+-   The paths to the non-code data can no longer be modified in the user
+    configuration.
+
 ## [3.0.0] - 2021-10-12
 
 ### Added
