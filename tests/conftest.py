@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-#    Copyright (C) 2017-2021 Mathew Topper
+#    Copyright (C) 2017-2022 Mathew Topper
 #
 #    This program is free software: you can redistribute it and/or modify
 #    it under the terms of the GNU General Public License as published by
@@ -26,6 +26,10 @@ import os
 import pytest
 import numpy as np
 from scipy.stats import multivariate_normal, norm
+from PyQt4 import QtGui
+
+from polite.paths import Directory
+from dtocean_wec.main import MainWindow
 
 this_dir = os.path.abspath(os.path.dirname(__file__))
 
@@ -518,7 +522,47 @@ def wave():
  
 @pytest.fixture
 def wave_data_folder():
+    return os.path.join(this_dir, "..", "examples", 'inputs_wave')
 
-    out = os.path.join(this_dir, "..", "examples", 'inputs_wave')
+
+@pytest.fixture
+def install_lines():
     
-    return out
+    lines = [
+        "[dtocean_tidal]",
+        "share_path=dtocean_tidal_mock",
+        "",
+        "[dtocean_wec]",
+        "share_path=dtocean_wec_mock",
+        "",
+        "[global]",
+        "prefix=mock",
+        "bin_path=bin_mock"
+        ]
+    
+    return "\n".join(lines)
+
+
+@pytest.fixture
+def main_window(mocker, qtbot, tmpdir, install_lines):
+    
+    from dtocean_wec.main import QMessageBox
+    
+    exe_path = tmpdir / "python.exe"
+    ini_file = tmpdir / "etc" / "dtocean-data" / "install.ini"
+    ini_file.write(install_lines, ensure=True)
+    
+    mocker.patch('polite.paths.sys.executable', new=str(exe_path))
+    mocker.patch('polite.paths.system', new='win32')
+    mocker.patch('dtocean_hydro.configure.SiteDataDirectory',
+                 return_value=Directory(str(tmpdir)))
+    
+    mocker.patch.object(QMessageBox,
+                        'question',
+                        return_value=QtGui.QMessageBox.Yes)
+    
+    window = MainWindow()
+    window.show()
+    qtbot.addWidget(window)
+    
+    return window
