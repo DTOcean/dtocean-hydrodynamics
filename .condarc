@@ -11,4 +11,5 @@ disallow:
 channels:
   - defaults
   - free
+  - conda-forge
   - dataonlygreater

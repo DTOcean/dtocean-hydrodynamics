@@ -74,7 +74,7 @@ class RunNemoh(QWidget, Ui_T2):
         self.trigger_save.connect(parent.task_save_hydrodynamic)
         self.trigger_reset_forms.connect(parent.task_reset_forms)
         self.trigger_mesh_view.connect(parent.task_show_mesh)
-        self.db_folder = os.path.join(parent.wec_include_path, "wec_db")
+        self.db_folder = os.path.join(parent.wec_share_path, "wec_db")
         self.bin_folder = parent.bin_path
         
         self._raw = "raw_data"

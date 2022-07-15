@@ -53,7 +53,7 @@ class ReadWamit(QWidget, Ui_T4):
         
         self.trigger_mesh_view.connect(parent.task_show_mesh)
         
-        self.db_folder = os.path.join(parent.wec_include_path, "wec_db")
+        self.db_folder = os.path.join(parent.wec_share_path, "wec_db")
         self.bin_folder = parent.bin_path
         self._raw = "raw_data"
         self._prj = parent._data["prj_folder"]

@@ -41,7 +41,7 @@ class ReadDb(QWidget, Ui_T1):
         self.setupUi(self)
         
         self.btn_load_data_t1.clicked.connect(self.load_data)
-        self._wec_db_folder = os.path.join(parent.wec_include_path, "wec_db")
+        self._wec_db_folder = os.path.join(parent.wec_share_path, "wec_db")
         self.trigger_results.connect(parent.set_wec_db_results)
         self.trigger_save.connect(parent.task_save_hydrodynamic)
         self.trigger_save_prj.connect(parent.save_project)

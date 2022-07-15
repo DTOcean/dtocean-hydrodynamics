@@ -82,14 +82,6 @@ class WP2:
                          outputs are issued.
      
     Attributes:
-            bin_dir (str): path name of the bin. The directory stores the
-                executable files for the BEM solver.
-            include_dir (str): path name of the include directory. The
-                directory stores the wave and tidal calculation and data
-            tidal_include (str): path name of the tida directory, where the
-                wake database is located.
-            wave_include (str): path name of the wave directory, where the BEM
-                solver results are located.
             iInput (WP2input class): copy of the input argument.
             iArray (Array_pkg class): contains the array related features as
                 lease area, active area, and generates the spatial arrangement
@@ -114,7 +106,6 @@ class WP2:
     def __init__(self, WP2input,
                        Cfit=None,
                        Kfit=None,
-                       pickup=False,
                        debug=False,
                        search_class=None,
                        optim_method=1):
@@ -224,7 +215,8 @@ class WP2:
                 if WP2input.M_data.tidal_data_folder is None:
                     # Get path to data dirs through configuration
                     path_dict = get_install_paths()
-                    self.cfd_data = read_database(path_dict["tidal_include"])
+                    self.cfd_data = read_database(
+                                            path_dict["tidal_share_path"])
                 else:
                     self.cfd_data = read_database(
                                         WP2input.M_data.tidal_data_folder)

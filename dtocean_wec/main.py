@@ -118,8 +118,8 @@ class MainWindow(QMainWindow, Ui_MainWindow):
         # Get path to data dirs through configuration
         path_dict = get_install_paths()
         
-        self.bin_path = path_dict["bin"]
-        self.wec_include_path = path_dict["wec_include"]
+        self.bin_path = path_dict["bin_path"]
+        self.wec_share_path = path_dict["wec_share_path"]
         
         return
         
