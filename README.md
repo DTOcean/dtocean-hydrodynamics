@@ -29,7 +29,7 @@ These installation instructions are for WINDOWS ONLY.
 To install:
 
 ```
-$ conda install -c dataonlygreater dtocean-hydrodynamics
+$ conda install  -c defaults -c free -c dataonlygreater dtocean-hydrodynamics
 ```
 
 ### Source Code
