@@ -36,7 +36,6 @@ def get_install_paths():
     # Get the root path from the possible site data paths
     site_data = SiteDataDirectory("DTOcean Data", "DTOcean")
     site_ini_reader = ReadINI(site_data, "install.ini")
-    print site_data
     
     if etc_ini_reader.config_exists():
         config = etc_ini_reader.get_config()
