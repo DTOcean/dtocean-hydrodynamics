@@ -78,8 +78,8 @@ class MeshBem():
         self.Connectivity = int_(connectivity)
         self.nP = len(connectivity)
         self.nV = len(vertices)
-        self.panels = [Panel(self.Vertex[panel-1, :])
-                                            for panel in self.Connectivity]
+        self.panels = [Panel(self.Vertex[panel, :])
+                                                for panel in self.Connectivity]
 
     def translate(self, x, y, z):
         """
@@ -91,7 +91,8 @@ class MeshBem():
             z (float) [m]: z-axis translation
         """
         self.Vertex += array([x,y,z])
-        self.panels = [ Panel(self.Vertex[panel-1,:]) for panel in self.Connectivity]
+        self.panels = [Panel(self.Vertex[panel, :])
+                                                for panel in self.Connectivity]
         
         #for pn in self.panels:
         #    pn.translate(delt=array([x, y, z]))
@@ -112,7 +113,8 @@ class MeshBem():
                    [0, 0, 1]])
                      
         self.Vertex = dot(R,v.T).T+pivot
-        self.panels = [ Panel(self.Vertex[panel-1,:]) for panel in self.Connectivity]
+        self.panels = [Panel(self.Vertex[panel, :])
+                                                for panel in self.Connectivity]
         #for pn in self.panels:
         #    pn.rotate(rotZ, pivot)
 
