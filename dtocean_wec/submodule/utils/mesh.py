@@ -36,7 +36,6 @@ from numpy import linalg as LA
 from mpl_toolkits.mplot3d import axes3d
 
 
-
 class MeshBem():
     """
     Mesh_BEM: class used to open, visualise, transform and save structured meshes
@@ -440,8 +439,8 @@ def read_NEMOH(f_n):
     if len(first_line) == 1:
         
         xsim = 0
-        nV = first_line
-        nP = array(lines.pop(0).split(), dtype=int)
+        nV = first_line[0]
+        nP = int(lines.pop(0))
         vertices = zeros((nV, 3))
         
         for vertex in range(nV):
