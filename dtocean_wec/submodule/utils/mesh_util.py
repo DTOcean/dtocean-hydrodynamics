@@ -55,63 +55,96 @@ class MeshBem():
         nV (int): number of vertex of the mesh
     """
     def __init__(self, file_name, path=""):
+        
         self.file_name = file_name
         self.path = path
-        self.mesh_fn = os.path.join(path,file_name)
-        if self.mesh_fn[-3:]=="gdf" or self.mesh_fn[-3:]=="GDF":
-            with open(self.mesh_fn,'r') as mesh_f: 
-                    burnheader= mesh_f.readline(); del(burnheader)
-                    burnheader= mesh_f.readline(); del(burnheader)
-                    self.xsim= array(mesh_f.readline().split()[0],dtype=int)
-                    nP = array(mesh_f.readline().partition('!')[0],dtype=int)
-                    Vertex = zeros((nP*4,3))
-                    for vertex in range(nP*4):
-                        Vertex[vertex,:] = array(mesh_f.readline().partition('!')[0].split(),dtype=float)
-                    Connectivity = zeros((nP,4))
-                    vertex = 1
-                    for panel in range(nP):
-                        Connectivity[panel,:] = array([vertex,vertex+1,vertex+2,vertex+3])
-                        vertex +=4
-        elif self.mesh_fn[-3:]=="dat":
-            f = open(self.mesh_fn,'r')
-            first_line = array(f.readline().split(),dtype = int)
-            if len(first_line) == 1:
-                nV = first_line
-                nP = array(f.readline().split(),dtype = int)
-                Vertex = zeros((nV,3))
-                for vertex in range(nV):
-                    Vertex[vertex,:] = array(f.readline().split(),dtype=float)
-                Connectivity = zeros((nP,4))
-                for panel in range(nP):
-                    Connectivity[panel,:] = array(f.readline().split(),dtype=float)
-            elif len(first_line) == 2:
-                self.xsim = first_line[1]
-                Vertex = []
-                Connectivity = []
-                pass_to_connectivity = False
-                for line in f:
-                    temp = array(line.split(),dtype = float)
-                    if not int(temp[0]) == 0 and not pass_to_connectivity:
-                        Vertex.append(temp[1:].tolist())
-                    else:
-                        pass_to_connectivity = True
-                        Connectivity.append(temp.tolist())
+        self.mesh_fn = os.path.join(path, file_name)
+        
+        extension = self.mesh_fn[-3:].lower()
+        
+        if extension == "gdf":
+            
+            with open(self.mesh_fn, 'r') as mesh_f: 
                     
-                Vertex = array(Vertex)
-                Connectivity.pop(0)
-                Connectivity.pop(-1)
-                Connectivity = array(Connectivity,dtype=int)
+                    mesh_f.readline()
+                    mesh_f.readline()
+                    
+                    self.xsim = array(mesh_f.readline().split()[0], dtype=int)
+                    nP = array(mesh_f.readline().partition('!')[0], dtype=int)
+                    vertices = zeros((nP*4, 3))
+                    
+                    for vertex in range(nP*4):
+                        vertices[vertex, :] = array(
+                                mesh_f.readline().partition('!')[0].split(),
+                                dtype=float)
+                    
+                    connectivity = zeros((nP,4))
+                    vertex = 1
+                    
+                    for panel in range(nP):
+                        connectivity[panel, :] = array(
+                                [vertex, vertex + 1, vertex + 2, vertex + 3])
+                        vertex +=4
+        
+        elif extension == "dat":
+            
+            with open(self.mesh_fn, 'r') as mesh_f: 
                 
-            else:
-                pass
+                first_line = array(mesh_f.readline().split(), dtype = int)
+                
+                if len(first_line) == 1:
+                    
+                    nV = first_line
+                    nP = array(mesh_f.readline().split(), dtype = int)
+                    vertices = zeros((nV, 3))
+                    
+                    for vertex in range(nV):
+                        vertices[vertex, :] = array(mesh_f.readline().split(),
+                                                    dtype=float)
+                    
+                    connectivity = zeros((nP, 4))
+                    
+                    for panel in range(nP):
+                        connectivity[panel, :] = array(
+                                                    mesh_f.readline().split(),
+                                                    dtype=float)
+                
+                elif len(first_line) == 2:
+                    
+                    self.xsim = first_line[1]
+                    vertices = []
+                    connectivity = []
+                    pass_to_connectivity = False
+                    
+                    for line in mesh_f:
+                        
+                        temp = array(line.split(), dtype=float)
+                        
+                        if not int(temp[0]) == 0 and not pass_to_connectivity:
+                            vertices.append(temp[1:].tolist())
+                        else:
+                            pass_to_connectivity = True
+                            connectivity.append(temp.tolist())
+                    
+                    vertices = array(vertices)
+                    connectivity.pop(0)
+                    connectivity.pop(-1)
+                    connectivity = array(connectivity, dtype=int)
+                
+                else:
+                    
+                    raise IOError("Mesh file has incorrect format")
+        
         else:
-            pass
-        self.Connectivity = int_(Connectivity)
-        self.Vertex = Vertex
-        self.nP = len(Connectivity)
-        self.nV = len(Vertex)
-
-        self.panels = [ Panel(self.Vertex[panel-1,:]) for panel in self.Connectivity]
+            
+            raise IOError("Mesh file type not supported. Use GDF or dat.")
+        
+        self.Connectivity = int_(connectivity)
+        self.Vertex = vertices
+        self.nP = len(connectivity)
+        self.nV = len(vertices)
+        self.panels = [Panel(self.Vertex[panel-1, :])
+                                            for panel in self.Connectivity]
 
     def translate(self, x, y, z):
         """

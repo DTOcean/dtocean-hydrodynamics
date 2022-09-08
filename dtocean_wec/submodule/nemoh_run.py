@@ -198,29 +198,44 @@ class NemohExecute():
             self.mesh_obj += [msh_obj]
 
         # identify the size of the circumscribing cylinder
-        if self.Cyl_Nzeta == 0 or self.Cyl_Ntheta == 0 or (not self.__get_array_mat):
+        if (self.Cyl_Nzeta == 0 or
+            self.Cyl_Ntheta == 0 or
+            (not self.__get_array_mat)):
+            
             self.Cyl_radius = 0
-        else :
+        
+        else:
+            
             coord = np.empty((0, 3))
+            d = None
+            
             for b_mesh in self.mesh_obj:
+                
                 coord = np.vstack((coord, b_mesh.Vertex))
                 area = 0.0
+                
                 for panel in b_mesh.panels:
+                    
                     if panel.area > area:
                         area = panel.area
-                        d = max([(panel.x[0]-panel.x[s])**2+(panel.y[0]-panel.y[s])**2+
-                                 (panel.z[0]-panel.z[s])**2 for s in [1,-1]])
-
+                        d = max([(panel.x[0] - panel.x[s]) ** 2 +
+                                 (panel.y[0] - panel.y[s]) ** 2 +
+                                 (panel.z[0] - panel.z[s]) ** 2
+                                                         for s in [1, -1]])
+            
+            if d is None:
+                raise RuntimeError("Zero area panels detected in mesh")
+            
             centroid = coord.mean(0)
             if not np.sqrt(np.sum(centroid[:2]**2))/coord.max() < 1e-3:
-                module_logger.warning("WARNING: the centroid of the mesh file is not centered in the"
-                        " origin of the mesh coordinate system. \nConsider to regenerate"
-                        " a mesh that satisfy this condition.")
-
+                module_logger.warning(
+                    "WARNING: the centroid of the mesh file is not centered "
+                    "at the origin of the mesh coordinate system.\n"
+                    "Consider regenerating a mesh to satisfy this condition.")
+            
             self.Cyl_radius = (np.sqrt(coord[:,0]**2+coord[:,1]**2)).max()
             self.Cyl_radius += np.sqrt(d)
-            
-
+    
     def load_folder_tree(self):
         self.path_prj_hdy = os.path.join(self.prj_folder,'hydrodynamic')
         self.path_prj_dyn_res = os.path.join(self.path_prj_hdy,'results')
