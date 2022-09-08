@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 
 #    Copyright (C) 2016 Francesco Ferri
+#    Copyright (C) 2022 Mathew Topper
 #
 #    This program is free software: you can redistribute it and/or modify
 #    it under the terms of the GNU General Public License as published by
@@ -15,22 +16,25 @@
 #    You should have received a copy of the GNU General Public License
 #    along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-"""
-This module contains the classes used read and visualise the mesh of the WEC structure
-
-.. module:: input
-   :platform: Windows
-   :synopsis: Input module to DTOcean WP2
-
-.. moduleauthor:: Francesco Ferri <ff@civil.aau.dk>
-"""
 import os
+import re
+
 import matplotlib.animation as animation
 import matplotlib.pyplot as plt
-from numpy import array, zeros, cos, int_, cross, mean, dot
-from mpl_toolkits.mplot3d import axes3d
+from numpy import (array,
+                   cos,
+                   dot,
+                   cross,
+                   int_,
+                   mean,
+                   pi,
+                   reshape,
+                   sin,
+                   vstack,
+                   zeros)
 from numpy import linalg as LA
-import numpy as np
+from mpl_toolkits.mplot3d import axes3d
+
 
 
 class MeshBem():
@@ -63,84 +67,16 @@ class MeshBem():
         extension = self.mesh_fn[-3:].lower()
         
         if extension == "gdf":
-            
-            with open(self.mesh_fn, 'r') as mesh_f: 
-                    
-                    mesh_f.readline()
-                    mesh_f.readline()
-                    
-                    self.xsim = array(mesh_f.readline().split()[0], dtype=int)
-                    nP = array(mesh_f.readline().partition('!')[0], dtype=int)
-                    vertices = zeros((nP*4, 3))
-                    
-                    for vertex in range(nP*4):
-                        vertices[vertex, :] = array(
-                                mesh_f.readline().partition('!')[0].split(),
-                                dtype=float)
-                    
-                    connectivity = zeros((nP,4))
-                    vertex = 1
-                    
-                    for panel in range(nP):
-                        connectivity[panel, :] = array(
-                                [vertex, vertex + 1, vertex + 2, vertex + 3])
-                        vertex +=4
-        
+            xsim, vertices, connectivity = read_WAMIT(self.mesh_fn)
         elif extension == "dat":
-            
-            with open(self.mesh_fn, 'r') as mesh_f: 
-                
-                first_line = array(mesh_f.readline().split(), dtype = int)
-                
-                if len(first_line) == 1:
-                    
-                    nV = first_line
-                    nP = array(mesh_f.readline().split(), dtype = int)
-                    vertices = zeros((nV, 3))
-                    
-                    for vertex in range(nV):
-                        vertices[vertex, :] = array(mesh_f.readline().split(),
-                                                    dtype=float)
-                    
-                    connectivity = zeros((nP, 4))
-                    
-                    for panel in range(nP):
-                        connectivity[panel, :] = array(
-                                                    mesh_f.readline().split(),
-                                                    dtype=float)
-                
-                elif len(first_line) == 2:
-                    
-                    self.xsim = first_line[1]
-                    vertices = []
-                    connectivity = []
-                    pass_to_connectivity = False
-                    
-                    for line in mesh_f:
-                        
-                        temp = array(line.split(), dtype=float)
-                        
-                        if not int(temp[0]) == 0 and not pass_to_connectivity:
-                            vertices.append(temp[1:].tolist())
-                        else:
-                            pass_to_connectivity = True
-                            connectivity.append(temp.tolist())
-                    
-                    vertices = array(vertices)
-                    connectivity.pop(0)
-                    connectivity.pop(-1)
-                    connectivity = array(connectivity, dtype=int)
-                
-                else:
-                    
-                    raise IOError("Mesh file has incorrect format")
-        
+            xsim, vertices, connectivity = read_NEMOH(self.mesh_fn)
         else:
             
             raise IOError("Mesh file type not supported. Use GDF or dat.")
         
-        self.Connectivity = int_(connectivity)
+        self.xsim = xsim
         self.Vertex = vertices
+        self.Connectivity = int_(connectivity)
         self.nP = len(connectivity)
         self.nV = len(vertices)
         self.panels = [Panel(self.Vertex[panel-1, :])
@@ -155,11 +91,11 @@ class MeshBem():
             y (float) [m]: y-axis translation
             z (float) [m]: z-axis translation
         """
-        self.Vertex += np.array([x,y,z])
+        self.Vertex += array([x,y,z])
         self.panels = [ Panel(self.Vertex[panel-1,:]) for panel in self.Connectivity]
         
         #for pn in self.panels:
-        #    pn.translate(delt=np.array([x, y, z]))
+        #    pn.translate(delt=array([x, y, z]))
 
     def rotate(self, rotZ, pivot):
         """
@@ -172,11 +108,11 @@ class MeshBem():
         v = self.Vertex.copy()
         v -= pivot 
         
-        R = np.array([[np.cos(rotZ), -np.sin(rotZ), 0],
-                     [np.sin(rotZ), np.cos(rotZ), 0],
-                     [0, 0, 1]])
+        R = array([[cos(rotZ), -sin(rotZ), 0],
+                   [sin(rotZ), cos(rotZ), 0],
+                   [0, 0, 1]])
                      
-        self.Vertex = np.dot(R,v.T).T+pivot
+        self.Vertex = dot(R,v.T).T+pivot
         self.panels = [ Panel(self.Vertex[panel-1,:]) for panel in self.Connectivity]
         #for pn in self.panels:
         #    pn.rotate(rotZ, pivot)
@@ -331,7 +267,7 @@ class MeshBem():
             
             f.write('0 0.00 0.00 0.00\n')
             for panel in range(self.nP):
-                f.write('{} {} {} {}\n'.format(self.Connectivity[panel,0],self.Connectivity[panel,1],self.Connectivity[panel,2],self.Connectivity[panel,3]))
+                f.write('{} {} {} {}\n'.format(*(self.Connectivity[panel,:] + 1)))
             f.write('0 0 0 0\n')
             f.close()
         elif output_format == "mesh":
@@ -467,11 +403,11 @@ class Panel():
             rotZ (float) [rad]: angle defining the transformation
             pivot (numpy.ndarray): pivoting point coordinates
         """
-        vert = np.vstack((self.x, self.y, self.z)).T
-        R = np.array([[np.cos(rotZ), -np.sin(rotZ), 0],
-                     [np.sin(rotZ), np.cos(rotZ), 0],
-                     [0, 0, 1]])
-        vert_r = np.dot(R,(vert-pivot).T).T+pivot
+        vert = vstack((self.x, self.y, self.z)).T
+        R = array([[cos(rotZ), -sin(rotZ), 0],
+                   [sin(rotZ), cos(rotZ), 0],
+                   [0, 0, 1]])
+        vert_r = dot(R,(vert-pivot).T).T+pivot
 
         self.x = vert_r[:,0]
         self.y = vert_r[:,1]
@@ -491,6 +427,100 @@ class Panel():
         self.z = self.z+delt[2]
 
 
+def read_NEMOH(f_n):
+    
+    with open(f_n,'r') as mesh_f:
+        msg = mesh_f.read()
+    
+    msg = strip_comments(msg)
+    lines = msg.split('\n')
+    
+    first_line = array(lines.pop(0).split(), dtype=int)
+    
+    if len(first_line) == 1:
+        
+        xsim = 0
+        nV = first_line
+        nP = array(lines.pop(0).split(), dtype=int)
+        vertices = zeros((nV, 3))
+        
+        for vertex in range(nV):
+            vertices[vertex, :] = array(lines.pop(0).split(), dtype=float)
+        
+        connectivity = zeros((nP, 4))
+        
+        for panel in range(nP):
+            connectivity[panel, :] = array(lines.pop(0).split(),
+                                           dtype=float) - 1
+    
+    elif len(first_line) == 2:
+        
+        xsim = first_line[1]
+        vertices = []
+        connectivity = []
+        pass_to_connectivity = False
+        
+        for line in lines:
+            
+            if not line: continue
+            
+            temp = array(line.split(), dtype=float)
+            
+            if not int(temp[0]) == 0 and not pass_to_connectivity:
+                vertices.append(temp[1:].tolist())
+            else:
+                pass_to_connectivity = True
+                connectivity.append([v - 1 for v in temp.tolist()])
+        
+        vertices = array(vertices)
+        connectivity.pop(0)
+        connectivity.pop(-1)
+    
+    connectivity = array(connectivity, dtype=int)
+    
+    return xsim, vertices, connectivity
+
+
+def read_WAMIT(f_n):
+    
+    with open(f_n,'r') as mesh_f:
+        msg = mesh_f.read()
+    
+    msg = strip_comments(msg)
+    lines = msg.split('\n')
+    lines = lines[2:]
+    
+    xsim = array(lines.pop(0).split()[0], dtype=int)
+    nP = array(lines.pop(0), dtype=int)
+    nV = nP * 4
+    
+    points = array([float(val) for entries in lines
+                                               for val in entries.split()])
+    vertices = reshape(points, (-1, 3))
+    
+    assert vertices.shape[0] == nV
+    
+    connectivity = zeros((nP, 4))
+    vertex = 0
+    
+    for panel in range(nP):
+        connectivity[panel, :] = array([vertex,
+                                        vertex + 1,
+                                        vertex + 2,
+                                        vertex + 3])
+        vertex +=4
+    
+    connectivity = array(connectivity, dtype=int)
+    
+    return xsim, vertices, connectivity
+
+
+def strip_comments(code):
+    msg = re.sub('\s*!.*', '', code, re.MULTILINE)
+    msg = re.sub(r'^\n', '', msg)
+    return re.sub(r'\n\s*\n', '\n', msg, re.MULTILINE)
+
+
 if __name__== "__main__":
 
     path = r"C:\Users\francesco\Desktop\Nemoh_run"
@@ -499,10 +529,10 @@ if __name__== "__main__":
     m = MeshBem(name, path=path)
     m.visualise_mesh()
     m.translate(5,0,0)
-    m.rotate(90./180*np.pi, np.array([0,0,0]))
+    m.rotate(90./180*pi, array([0,0,0]))
     m.visualise_mesh()
-    m.rotate(-90./180*np.pi, np.array([0,0,0]))
-    m.rotate(90./180*np.pi, m.Vertex.mean(0))
+    m.rotate(-90./180*pi, array([0,0,0]))
+    m.rotate(90./180*pi, m.Vertex.mean(0))
     m.visualise_mesh()
 
 

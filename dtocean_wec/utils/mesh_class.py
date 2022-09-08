@@ -1,8 +1,13 @@
-import numpy as np
-from numpy import array, zeros
+
 import os
 
+import numpy as np
+
+from ..submodule.utils.mesh import read_NEMOH, read_WAMIT
+
+
 class Mesh():
+    
     def __init__(self, path, fn):
         self.fn = os.path.join(path, fn)
         self.path = path
@@ -11,11 +16,10 @@ class Mesh():
         mesh_type = self.fn[-3:]
         
         if mesh_type.lower() == "gdf":
-            v, p = self.readWAMIT(self.fn)
-            p -= 1
+            _, v, p = read_WAMIT(self.fn)
         elif mesh_type.lower() == "dat":
             # try to see if the specified filename is Nemoh format compliant
-            v, p = self.readNemoh(self.fn)
+            _, v, p = read_NEMOH(self.fn)
         else:
             raise IOError('Mesh type not understood')
         
@@ -24,7 +28,7 @@ class Mesh():
         n, c = self.__evalnorm()
         self.n = n
         self.c = c
-        
+    
     def __evalnorm(self):
         pan = self.p+1
         ver = self.v
@@ -78,58 +82,6 @@ class Mesh():
 #        n /= np.linalg.norm(n)
 #        print(np.linalg.norm(n))  
         return n, centroid
-        
-    def readNemoh(self, f_n):
-        with open(f_n,'r') as mesh_f: 
-            first_line = array(mesh_f.readline().split(),dtype = int)
-            if len(first_line) == 1:
-                nV = first_line
-                nP = array(mesh_f.readline().split(),dtype = int)
-                Vertex = zeros((nV,3))
-                for vertex in range(nV):
-                    Vertex[vertex,:] = array(mesh_f.readline().split(),dtype=float)
-                Connectivity = zeros((nP,4))
-                for panel in range(nP):
-                    Connectivity[panel,:] = array(mesh_f.readline().split(),dtype=float)
-            elif len(first_line) == 2:
-                self.xsim = first_line[1]
-                Vertex = []
-                Connectivity = []
-                pass_to_connectivity = False
-                for line in mesh_f:
-                    temp = array(line.split(),dtype = float)
-                    if not int(temp[0]) == 0 and not pass_to_connectivity:
-                        Vertex.append(temp[1:].tolist())
-                    else:
-                        pass_to_connectivity = True
-                        Connectivity.append(temp.tolist())
-                    
-                Vertex = array(Vertex)
-                Connectivity.pop(0)
-                Connectivity.pop(-1)
-                Connectivity = array(Connectivity,dtype=int)
-            else:
-                raise IOError('Mesh type not understood')
-                
-        return Vertex, Connectivity
-        
-    def readWAMIT(self, f_n):
-        
-        with open(f_n,'r') as mesh_f: 
-                burnheader= mesh_f.readline(); del(burnheader)
-                burnheader= mesh_f.readline(); del(burnheader)
-                xsim= array(mesh_f.readline().split()[0],dtype=int)
-                nP = array(mesh_f.readline().partition('!')[0],dtype=int)
-                Vertex = zeros((nP*4,3))
-                for vertex in range(nP*4):
-                    Vertex[vertex,:] = array(mesh_f.readline().partition('!')[0].split(),dtype=float)
-                Connectivity = zeros((nP,4),dtype=int)
-                vertex = 1
-                for panel in range(nP):
-                    Connectivity[panel,:] = array([vertex,vertex+1,vertex+2,vertex+3])
-                    vertex +=4
-                    
-        return Vertex, Connectivity
     
     def gen_vtpxml(self):
         points = self.v
@@ -202,10 +154,10 @@ class Mesh():
         
         print("vtk xml file (__Mesh.vtp) generated.")
         return 1
-        
+
+
 if __name__ == "__main__":
     fn = "mesh_test.gdf"
     path = ""
     ms = Mesh(fn, path)
     ms.generate_visualiser()
-    

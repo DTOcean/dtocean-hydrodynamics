@@ -35,7 +35,7 @@ import subprocess
 import numpy as np
 
 from hydrostatics import Hydrostatics_Nemohcal
-from utils.mesh_util import MeshBem
+from utils.mesh import MeshBem
 from utils.multibody_analysis import MultiBodyAnalysis
 
 # Start logging
