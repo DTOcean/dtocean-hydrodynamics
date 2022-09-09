@@ -19,7 +19,6 @@
 import os
 import re
 
-import matplotlib.animation as animation
 import matplotlib.pyplot as plt
 from numpy import (array,
                    cos,
@@ -38,25 +37,28 @@ from mpl_toolkits.mplot3d import axes3d
 
 class MeshBem():
     """
-    Mesh_BEM: class used to open, visualise, transform and save structured meshes
-
+    Mesh_BEM: class used to open, visualise, transform and save structured
+        meshes
+    
     Args:
         file_name (str): file name of the mesh to be read
-
+    
     Optional args:
         path (str): location of the mesh file
-
+    
     Attributes:
         file_name (str): file name of the mesh to be read
         path (str): location of the mesh file
         mesh_fn (str): full path name to the mesh file
         xsim (int): index identifying the symmetry around the x-axis
-        Connectivity (numpy.ndarray): vertex ID of each panel, listed in a counter-clockwise direction from the fluid perspective
+        Connectivity (numpy.ndarray): vertex ID of each panel, listed in a 
+            counter-clockwise direction from the fluid perspective
         Vertex (numpy.ndarray): x,y,z coordinates of the mesh vertex
         panels (list): list of panel objects
         nP (int): number of panel of the mesh
         nV (int): number of vertex of the mesh
     """
+    
     def __init__(self, file_name, path=""):
         
         self.file_name = file_name
@@ -70,7 +72,6 @@ class MeshBem():
         elif extension == "dat":
             xsim, vertices, connectivity = read_NEMOH(self.mesh_fn)
         else:
-            
             raise IOError("Mesh file type not supported. Use GDF or dat.")
         
         self.xsim = xsim
@@ -80,11 +81,11 @@ class MeshBem():
         self.nV = len(vertices)
         self.panels = [Panel(self.Vertex[panel, :])
                                                 for panel in self.Connectivity]
-
+    
     def translate(self, x, y, z):
         """
         translate: translates the mesh to the given point
-
+        
         Args:
             x (float) [m]: x-axis translation
             y (float) [m]: y-axis translation
@@ -93,14 +94,11 @@ class MeshBem():
         self.Vertex += array([x,y,z])
         self.panels = [Panel(self.Vertex[panel, :])
                                                 for panel in self.Connectivity]
-        
-        #for pn in self.panels:
-        #    pn.translate(delt=array([x, y, z]))
-
+    
     def rotate(self, rotZ, pivot):
         """
         rotate: rotates the mesh around the given pivoting point
-
+        
         Args:
             rotZ (float)[rad]: rotation angle
             pivot (numpy.ndarray) [m]: pivoting point coordinates
@@ -111,47 +109,48 @@ class MeshBem():
         R = array([[cos(rotZ), -sin(rotZ), 0],
                    [sin(rotZ), cos(rotZ), 0],
                    [0, 0, 1]])
-                     
+        
         self.Vertex = dot(R,v.T).T+pivot
         self.panels = [Panel(self.Vertex[panel, :])
                                                 for panel in self.Connectivity]
-        #for pn in self.panels:
-        #    pn.rotate(rotZ, pivot)
-
     
     def invertNorm(self,index=-1):
         """
         invertNorm: used to invert the direction of the specified panel norm
-
+        
         Args:
-            index: index of the panel subject to the transformation. If -1 all the panels will be transformed
+            index: index of the panel subject to the transformation. If -1 all
+                   the panels will be transformed
         """
         if index==-1:
             index = range(self.nP)
             
         for pn in index:
             self.panels[pn].invert_direction()
-            
+        
         Vertex = zeros((self.nP*4,3))
         ind_v = -1
+        
         for _p in self.panels:
             for _v in range(4):
                 ind_v +=1
-                Vertex[ind_v,:] = array([_p.x[_v],_p.y[_v],_p.z[_v]],dtype=float)
+                Vertex[ind_v,:] = array([_p.x[_v], _p.y[_v], _p.z[_v]],
+                                        dtype=float)
        
         Connectivity = zeros((self.nP,4))
         vertex = 1
+        
         for panel in range(self.nP):
             Connectivity[panel,:] = array([vertex,vertex+1,vertex+2,vertex+3])
             vertex +=4
-            
+        
         self.Connectivity = int_(Connectivity)
         self.Vertex = array(Vertex)
     
     def visualise_mesh(self, a=None, f=None):
         """
         visualise_mesh: plot the mesh grid
-
+        
         Optional args:
             a (matplotlib axes): parent figure axes pointer
             f (matplotlib figure): parent figure pointer
@@ -163,35 +162,34 @@ class MeshBem():
         a[0,0].margins(0.05)
         for elm in self.panels:
             elm.show(a[0,0],dimension=1)
-
+        
         a[0,0].set_aspect('equal')
-        plt.grid()        
+        plt.grid()
         
         a[0,1].margins(0.05)
         for elm in self.panels:
             elm.show(a[0,1],dimension=2)
-
+            
         a[0,1].set_aspect('equal')
-        plt.grid()        
+        plt.grid()
         
         a[1,0].margins(0.05)
         for elm in self.panels:
             elm.show(a[1,0],dimension=3)
-
+        
         a[1,0].set_aspect('equal')
         plt.grid()
         
-                      
         for elm in self.panels:
             elm.show(a[1,1])
-            
+        
         a[1,1].set_aspect('equal')
         plt.show()
-        
+    
     def visualise_norm(self, scale=1):
         """
         visualise_mesh: plot the mesh grid
-
+        
         Optional args:
             scale (float): scaling factor for the norm. Only for visualisation
         """
@@ -203,92 +201,89 @@ class MeshBem():
             elm.show_norm(a)
         a.set_aspect('equal')
         plt.show()
-        
-    def __animate(self,i,a):
-        """
-        Unused too slow
-        :param i:
-        :param a:
-        :return:
-        """
-        delta = [0.1*cos(i/10.*3.14),0,0]
-        a.clear()
-        a.set_aspect('equal')
-        a.set_xlim3d(-1, 1)
-        a.set_ylim3d(-1,1)
-        a.set_zlim3d(-1,1)
     
-        for elm in self.panels:
-            elm.update(delta)
-            elm.show(a)
-            
-    def animate_mesh(self):
-        """
-        Unused too slow
-        :return:
-        """
-        f = plt.figure()
-        a = f.add_subplot(111, projection='3d')
-        ani = animation.FuncAnimation(f, self.__animate , fargs=[a], repeat = "none", frames = 2 ,interval=10)
-        plt.show()
-        plt.close(f)
-        
-    def mesh_generation(self, output_format, output_path=""):
+    def mesh_generation(self, output_format, output_path=None):
         """
         mesh_generation: generate the mesh file specified in the output_format
-
+        
         Args:
             output_format (str): defines the output format of the saved files.
-                                    gdf: wamit standard
-                                    nemoh: nemoh dat file
-                                    mesh: nenoh dat file for hydrostatic calculation
-
+                            gdf: wamit standard
+                            nemoh: nemoh dat file
+                            mesh: nenoh dat file for hydrostatic calculation
+        
         Optional args:
             output_path (str): name of the location where to save the file
         """
-        if output_path=="":
-                output_path = self.path
+        
+        if output_path is None: output_path = self.path
+        
         if output_format == "gdf":
+            
             file_n = '{}gdf'.format(self.file_name[0:-3])
-            f = open(os.path.join(output_path,'{}gdf'.format(self.file_name[0:-3])), 'w')
-            f.write('WAMIT mesh file.\n')
-            f.write('1 9.82    ULEN GRAV\n')
-            f.write('{} 0 ISX ISY\n'.format(self.xsim))
-            f.write('{}\n'.format(self.nP))
-            for vertex in range(self.nV):
-                f.write('{} {} {}\n'.format(self.Vertex[vertex,0],self.Vertex[vertex,1],self.Vertex[vertex,2]))
+            file_p = os.path.join(output_path, file_n)
+            
+            with open(file_p, 'w') as f:
                 
-            f.close()
+                f.write('WAMIT mesh file.\n')
+                f.write('1 9.82    ULEN GRAV\n')
+                f.write('{} 0 ISX ISY\n'.format(self.xsim))
+                f.write('{}\n'.format(self.nP))
+                
+                for vertex in range(self.nV):
+                    f.write('{} {} {}\n'.format(self.Vertex[vertex, 0],
+                                                self.Vertex[vertex, 1],
+                                                self.Vertex[vertex, 2]))
+        
         elif output_format == "nemoh":
+            
             file_n = '{}dat'.format(self.file_name[0:-3])
-            f = open(os.path.join(output_path,'{}dat'.format(self.file_name[0:-3])), 'w')
-            f.write('2 0\n')
-            for vertex in range(self.nV):
-                f.write('{} {} {} {}\n'.format(vertex+1,self.Vertex[vertex,0],self.Vertex[vertex,1],self.Vertex[vertex,2]))
+            file_p = os.path.join(output_path, file_n)
             
-            f.write('0 0.00 0.00 0.00\n')
-            for panel in range(self.nP):
-                f.write('{} {} {} {}\n'.format(*(self.Connectivity[panel,:] + 1)))
-            f.write('0 0 0 0\n')
-            f.close()
+            with open(file_p, 'w') as f:
+                
+                f.write('2 0\n')
+                
+                for vertex in range(self.nV):
+                    f.write('{} {} {} {}\n'.format(vertex+1,
+                                                   self.Vertex[vertex, 0],
+                                                   self.Vertex[vertex, 1],
+                                                   self.Vertex[vertex, 2]))
+                
+                f.write('0 0.00 0.00 0.00\n')
+                
+                for panel in range(self.nP):
+                    f.write('{} {} {} {}\n'.format(*(
+                                            self.Connectivity[panel,:] + 1)))
+                
+                f.write('0 0 0 0\n')
+        
         elif output_format == "mesh":
+            
             file_n = '{}_mesh.dat'.format(self.file_name[0:-4])
-            f = open(os.path.join(output_path,'{}_mesh.dat'.format(self.file_name[0:-4])), 'w')
-            f.write('{}\n'.format(self.nV))
-            f.write('{}\n'.format(self.nP))
-            for vertex in range(self.nV):
-                f.write('{} {} {}\n'.format(self.Vertex[vertex,0],self.Vertex[vertex,1],self.Vertex[vertex,2]))
+            file_p = os.path.join(output_path, file_n)
             
-            for panel in range(self.nP):
-                f.write('{} {} {} {}\n'.format(self.Connectivity[panel,0],self.Connectivity[panel,1],self.Connectivity[panel,2],self.Connectivity[panel,3]))
-            f.close()
+            with open(file_p, 'w') as f:
             
+                f.write('{}\n'.format(self.nV))
+                f.write('{}\n'.format(self.nP))
+                
+                for vertex in range(self.nV):
+                    f.write('{} {} {}\n'.format(self.Vertex[vertex, 0],
+                                                self.Vertex[vertex, 1],
+                                                self.Vertex[vertex, 2]))
+                
+                for panel in range(self.nP):
+                    msg = '{} {} {} {}\n'.format(self.Connectivity[panel, 0],
+                                                 self.Connectivity[panel, 1],
+                                                 self.Connectivity[panel, 2],
+                                                 self.Connectivity[panel, 3])
+                    f.write(msg)
+        
         else:
-            #print "Error: wrong output_format!"
-            pass
-        
-        #print("File {} saved in {}".format(file_n,output_path))
-        
+            
+             raise ValueError("Unsupported output format. Use gdf, nemoh or "
+                              "mesh")
 
 
 class Panel():
@@ -536,8 +531,3 @@ if __name__== "__main__":
     m.rotate(90./180*pi, m.Vertex.mean(0))
     m.visualise_mesh()
 
-
-#path = "C:\\Users\\fferri\\Documents\\DTOcean\\Nemoh_module\\version0\\nemoh\\Cylsurface\\Mesh"
-#mesh = "Flap.dat"
-#mesh_obj = ConvertMesh(mesh,path)
-#mesh_obj.mesh_generation("gdf",output_path="..\\..\\..\\..\\PMfitting")
