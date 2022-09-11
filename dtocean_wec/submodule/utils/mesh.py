@@ -19,23 +19,13 @@
 import os
 import re
 
+import numpy as np
 import matplotlib.pyplot as plt
-from numpy import (array,
-                   cos,
-                   dot,
-                   cross,
-                   int_,
-                   mean,
-                   pi,
-                   reshape,
-                   sin,
-                   vstack,
-                   zeros)
 from numpy import linalg as LA
 from mpl_toolkits.mplot3d import axes3d
 
 
-class MeshBem():
+class MeshBem(object):
     """
     Mesh_BEM: class used to open, visualise, transform and save structured
         meshes
@@ -49,12 +39,10 @@ class MeshBem():
     Attributes:
         file_name (str): file name of the mesh to be read
         path (str): location of the mesh file
-        mesh_fn (str): full path name to the mesh file
         xsim (int): index identifying the symmetry around the x-axis
-        Connectivity (numpy.ndarray): vertex ID of each panel, listed in a 
+        connectivity (numpy.ndarray): vertex ID of each panel, listed in a 
             counter-clockwise direction from the fluid perspective
-        Vertex (numpy.ndarray): x,y,z coordinates of the mesh vertex
-        panels (list): list of panel objects
+        vertices (numpy.ndarray): x,y,z coordinates of the mesh vertex
         nP (int): number of panel of the mesh
         nV (int): number of vertex of the mesh
     """
@@ -63,24 +51,22 @@ class MeshBem():
         
         self.file_name = file_name
         self.path = path
-        self.mesh_fn = os.path.join(path, file_name)
         
-        extension = self.mesh_fn[-3:].lower()
+        mesh_fn = os.path.join(path, file_name)
+        _, extension = os.path.splitext(mesh_fn)
         
-        if extension == "gdf":
-            xsim, vertices, connectivity = read_WAMIT(self.mesh_fn)
-        elif extension == "dat":
-            xsim, vertices, connectivity = read_NEMOH(self.mesh_fn)
+        if extension.lower() == ".gdf":
+            xsim, vertices, connectivity = read_WAMIT(mesh_fn)
+        elif extension.lower() == "dat":
+            xsim, vertices, connectivity = read_NEMOH(mesh_fn)
         else:
             raise IOError("Mesh file type not supported. Use GDF or dat.")
         
         self.xsim = xsim
-        self.Vertex = vertices
-        self.Connectivity = int_(connectivity)
+        self.vertices = vertices
+        self.connectivity = np.int_(connectivity)
         self.nP = len(connectivity)
         self.nV = len(vertices)
-        self.panels = [Panel(self.Vertex[panel, :])
-                                                for panel in self.Connectivity]
     
     def translate(self, x, y, z):
         """
@@ -91,9 +77,7 @@ class MeshBem():
             y (float) [m]: y-axis translation
             z (float) [m]: z-axis translation
         """
-        self.Vertex += array([x,y,z])
-        self.panels = [Panel(self.Vertex[panel, :])
-                                                for panel in self.Connectivity]
+        self.vertices += np.array([x,y,z])
     
     def rotate(self, rotZ, pivot):
         """
@@ -103,87 +87,75 @@ class MeshBem():
             rotZ (float)[rad]: rotation angle
             pivot (numpy.ndarray) [m]: pivoting point coordinates
         """
-        v = self.Vertex.copy()
+        
+        v = self.vertices.copy()
         v -= pivot 
         
-        R = array([[cos(rotZ), -sin(rotZ), 0],
-                   [sin(rotZ), cos(rotZ), 0],
-                   [0, 0, 1]])
+        R = np.array([[np.cos(rotZ), -np.sin(rotZ), 0],
+                      [np.sin(rotZ), np.cos(rotZ), 0],
+                      [0, 0, 1]])
         
-        self.Vertex = dot(R,v.T).T+pivot
-        self.panels = [Panel(self.Vertex[panel, :])
-                                                for panel in self.Connectivity]
+        self.vertices = np.dot(R,v.T).T + pivot
     
-    def invertNorm(self,index=-1):
+    def invert_norm(self, index=None):
         """
-        invertNorm: used to invert the direction of the specified panel norm
+        invert_norm: used to invert the direction of the specified panel norm
         
         Args:
-            index: index of the panel subject to the transformation. If -1 all
+            index: index of the panel subject to the transformation. If None
                    the panels will be transformed
         """
-        if index==-1:
-            index = range(self.nP)
-            
-        for pn in index:
-            self.panels[pn].invert_direction()
         
-        Vertex = zeros((self.nP*4,3))
-        ind_v = -1
+        if index is None:
+            self.connectivity = np.fliplr(self.connectivity)
+            return
         
-        for _p in self.panels:
-            for _v in range(4):
-                ind_v +=1
-                Vertex[ind_v,:] = array([_p.x[_v], _p.y[_v], _p.z[_v]],
-                                        dtype=float)
-       
-        Connectivity = zeros((self.nP,4))
-        vertex = 1
-        
-        for panel in range(self.nP):
-            Connectivity[panel,:] = array([vertex,vertex+1,vertex+2,vertex+3])
-            vertex +=4
-        
-        self.Connectivity = int_(Connectivity)
-        self.Vertex = array(Vertex)
+        self.connectivity[index, :] = self.connectivity[index, ::-1]
     
-    def visualise_mesh(self, a=None, f=None):
+    def visualise_mesh(self, ax=None, fig=None):
         """
         visualise_mesh: plot the mesh grid
         
         Optional args:
-            a (matplotlib axes): parent figure axes pointer
-            f (matplotlib figure): parent figure pointer
+            ax (matplotlib axes): parent figure axes pointer
+            fig (matplotlib figure): parent figure pointer
         """
-        if a is None:
-            f, a = plt.subplots(2, 2)
-            a[1,1] = f.add_subplot(224, projection="3d")
         
-        a[0,0].margins(0.05)
-        for elm in self.panels:
-            elm.show(a[0,0],dimension=1)
+        panels = [Panel(self.vertices[panel, :])
+                                                for panel in self.connectivity]
         
-        a[0,0].set_aspect('equal')
+        if ax is None:
+            fig, ax = plt.subplots(2, 2)
+            ax[1, 1] = fig.add_subplot(224, projection="3d")
+        
+        ax[0, 0].margins(0.05)
+        
+        for elm in panels:
+            elm.show(ax[0,0 ], dimension=1)
+        
+        ax[0, 0].set_aspect('equal')
         plt.grid()
         
-        a[0,1].margins(0.05)
-        for elm in self.panels:
-            elm.show(a[0,1],dimension=2)
+        ax[0, 1].margins(0.05)
+        
+        for elm in panels:
+            elm.show(ax[0, 1], dimension=2)
             
-        a[0,1].set_aspect('equal')
+        ax[0, 1].set_aspect('equal')
         plt.grid()
         
-        a[1,0].margins(0.05)
-        for elm in self.panels:
-            elm.show(a[1,0],dimension=3)
+        ax[1, 0].margins(0.05)
         
-        a[1,0].set_aspect('equal')
+        for elm in panels:
+            elm.show(ax[1, 0], dimension=3)
+        
+        ax[1, 0].set_aspect('equal')
         plt.grid()
         
-        for elm in self.panels:
-            elm.show(a[1,1])
+        for elm in panels:
+            elm.show(ax[1, 1])
         
-        a[1,1].set_aspect('equal')
+        ax[1, 1].set_aspect('equal')
         plt.show()
     
     def visualise_norm(self, scale=1):
@@ -193,13 +165,18 @@ class MeshBem():
         Optional args:
             scale (float): scaling factor for the norm. Only for visualisation
         """
-        f = plt.figure()
-        a = f.add_subplot(111, projection='3d')
-        for elm in self.panels:
-            #elm.show(a)
+        
+        panels = [Panel(self.vertices[panel, :])
+                                                for panel in self.connectivity]
+        
+        fig = plt.figure()
+        ax = fig.add_subplot(111, projection='3d')
+        
+        for elm in panels:
             elm.norm(scale)
-            elm.show_norm(a)
-        a.set_aspect('equal')
+            elm.show_norm(ax)
+        
+        ax.set_aspect('equal')
         plt.show()
     
     def mesh_generation(self, output_format, output_path=None):
@@ -231,9 +208,9 @@ class MeshBem():
                 f.write('{}\n'.format(self.nP))
                 
                 for vertex in range(self.nV):
-                    f.write('{} {} {}\n'.format(self.Vertex[vertex, 0],
-                                                self.Vertex[vertex, 1],
-                                                self.Vertex[vertex, 2]))
+                    f.write('{} {} {}\n'.format(self.vertices[vertex, 0],
+                                                self.vertices[vertex, 1],
+                                                self.vertices[vertex, 2]))
         
         elif output_format == "nemoh":
             
@@ -246,15 +223,15 @@ class MeshBem():
                 
                 for vertex in range(self.nV):
                     f.write('{} {} {} {}\n'.format(vertex+1,
-                                                   self.Vertex[vertex, 0],
-                                                   self.Vertex[vertex, 1],
-                                                   self.Vertex[vertex, 2]))
+                                                   self.vertices[vertex, 0],
+                                                   self.vertices[vertex, 1],
+                                                   self.vertices[vertex, 2]))
                 
                 f.write('0 0.00 0.00 0.00\n')
                 
                 for panel in range(self.nP):
                     f.write('{} {} {} {}\n'.format(*(
-                                            self.Connectivity[panel,:] + 1)))
+                                            self.connectivity[panel,:] + 1)))
                 
                 f.write('0 0 0 0\n')
         
@@ -269,15 +246,15 @@ class MeshBem():
                 f.write('{}\n'.format(self.nP))
                 
                 for vertex in range(self.nV):
-                    f.write('{} {} {}\n'.format(self.Vertex[vertex, 0],
-                                                self.Vertex[vertex, 1],
-                                                self.Vertex[vertex, 2]))
+                    f.write('{} {} {}\n'.format(self.vertices[vertex, 0],
+                                                self.vertices[vertex, 1],
+                                                self.vertices[vertex, 2]))
                 
                 for panel in range(self.nP):
-                    msg = '{} {} {} {}\n'.format(self.Connectivity[panel, 0],
-                                                 self.Connectivity[panel, 1],
-                                                 self.Connectivity[panel, 2],
-                                                 self.Connectivity[panel, 3])
+                    msg = '{} {} {} {}\n'.format(self.connectivity[panel, 0],
+                                                 self.connectivity[panel, 1],
+                                                 self.connectivity[panel, 2],
+                                                 self.connectivity[panel, 3])
                     f.write(msg)
         
         else:
@@ -286,10 +263,10 @@ class MeshBem():
                               "mesh")
 
 
-class Panel():
+class Panel(object):
     """
-    Panel: the class is the base object of the mesh class. Each panel is defined by the four vertexs
-
+    Panel: a class for visualizing panels
+    
     Args:
         vertex (numpy.ndarray): coordinates of the vertexs
 
@@ -298,32 +275,22 @@ class Panel():
         y (numpy.ndarray): y coordinates of the vertexs
         z (numpy.ndarray): z coordinates of the vertexs
         centroid (numpy.ndarray): panel centroid
-        area (float): panel area
-        dr (numpy.ndarray): normal direction
         d (numpy.ndarray): normal direction applied at the panel centroid
     """
-    def __init__(self,vertex):
-        self.x = vertex[[0,1,2,3],0]
-        self.y = vertex[[0,1,2,3],1]
-        self.z = vertex[[0,1,2,3],2]
-        self.centroid = mean(vertex,axis=0)
-        self.norm()
-    
-    def invert_direction(self):
-        """
-        invert_direction: invert the direction of the panel vertex, inverting the normal direction
-
-        """
-        self.x = self.x[-1::-1]
-        self.y = self.y[-1::-1]
-        self.z = self.z[-1::-1]
+    def __init__(self, vertex):
         
-        self.norm()
-
-    def norm(self, scale=1):
+        self.x = vertex[[0, 1, 2, 3], 0]
+        self.y = vertex[[0 ,1 ,2, 3], 1]
+        self.z = vertex[[0, 1, 2, 3], 2]
+        self.centroid = np.mean(vertex,axis=0)
+        self.d = None
+        
+        self._init_norm()
+    
+    def _init_norm(self, scale=1):
         """
-        norm: calculated the panel norm
-
+        _init_norm: calculated the panel norm
+        
         Optional args:
             scale: scaling factor of the normal direction
         """
@@ -331,96 +298,60 @@ class Panel():
         y = self.y
         z = self.z
         
-        v12 = array([x[1]-x[0],y[1]-y[0],z[1]-z[0]])
-        v14 = array([x[3]-x[0],y[3]-y[0],z[3]-z[0]])
-        v34 = array([x[3]-x[2],y[3]-y[2],z[3]-z[2]])
-        v32 = array([x[1]-x[2],y[1]-y[2],z[1]-z[2]])
+        v12 = np.array([x[1] - x[0], y[1] - y[0], z[1] - z[0]])
+        v14 = np.array([x[3] - x[0], y[3] - y[0], z[3] - z[0]])
+        v34 = np.array([x[3] - x[2], y[3] - y[2], z[3] - z[2]])
+        v32 = np.array([x[1] - x[2], y[1] - y[2], z[1] - z[2]])
         
+        n1 = np.cross(v12, v14)
+        n2 = np.cross(v34, v32)
+        d1 = n1 / LA.norm(n1)
+        d2 = n2 / LA.norm(n2)
         
-        n1 = cross(v12,v14)
-        n2 = cross(v34,v32)
-        d1 = n1/LA.norm(n1)
-        d2 = n2/LA.norm(n2)
-        
-        self.area = (LA.norm(n1)+dot(d1,d2)*LA.norm(n2))/2.
-        
-        self.dr = (((d1+d2)/2.*self.area))*scale
-        self.d = self.dr+self.centroid
-        
-    def show_norm(self,a):
+        area = (LA.norm(n1) + np.dot(d1, d2) * LA.norm(n2)) / 2.
+        dr = (((d1 + d2) / 2. * area)) * scale
+        self.d = dr + self.centroid
+    
+    def show_norm(self, ax):
         """
         show_norm: plot the norm or the panel into the given axes
-
+        
         Args:
-            a (matplotlib axes): axes of the parent figure pointer
+            ax (matplotlib axes): axes of the parent figure pointer
         """
-        a.plot_wireframe(self.x,self.y,self.z,color="#000000")
-        a.plot_wireframe([self.centroid[0],self.d[0]],[self.centroid[1],self.d[1]],[self.centroid[2],self.d[2]],color="red")
-        a.scatter(self.centroid[0],self.centroid[1],self.centroid[2],c="r", marker="o")
-        #a.scatter(self.d[0],self.d[1],self.d[2],c="g", marker=">")
+        ax.plot_wireframe(self.x, self.y, self.z, color="#000000")
+        ax.plot_wireframe([self.centroid[0], self.d[0]],
+                          [self.centroid[1], self.d[1]],
+                          [self.centroid[2], self.d[2]],
+                          color="red")
+        ax.scatter(self.centroid[0],
+                   self.centroid[1],
+                   self.centroid[2],
+                   c="r",
+                   marker="o")
     
-    def show(self,a,dimension=None):
+    def show(self, ax, dimension=None):
         """
         show: plot the panel into the given axes
-
+        
         Args:
-            a (matplotlib axes): axes of the parent figure pointer
-
+            ax (matplotlib axes): axes of the parent figure pointer
+        
         Optional args:
             dimension (int):
         """
+        
         if not dimension is None:
+            
             V = [self.x,self.y,self.z]
-            Vred = [el for ind,el in enumerate(V) if not ind==dimension-1]
-            a.plot(Vred[0],Vred[1],'k')
-        else:                
-            a.plot_wireframe(self.x[[0,1,2,3,0]],self.y[[0,1,2,3,0]],self.z[[0,1,2,3,0]])
-    
-    def translate(self, delt):
-        """
-        translate: translates the panel by the amount specified in delt
-
-        Args:
-            delt (numpy.ndarray): transformation vector
-        """
-        self.x = self.x+delt[0]
-        self.y = self.y+delt[1]
-        self.z = self.z+delt[2]
-        self.centroid = array([mean(self.x),
-                               mean(self.y),
-                               mean(self.z)])
-        self.norm(scale=1)
-
-    def rotate(self,rotZ, pivot):
-        """
-        rotate: rotates the panel by the amount specified in rotZ, arount the pivoting point
-
-        Args:
-            rotZ (float) [rad]: angle defining the transformation
-            pivot (numpy.ndarray): pivoting point coordinates
-        """
-        vert = vstack((self.x, self.y, self.z)).T
-        R = array([[cos(rotZ), -sin(rotZ), 0],
-                   [sin(rotZ), cos(rotZ), 0],
-                   [0, 0, 1]])
-        vert_r = dot(R,(vert-pivot).T).T+pivot
-
-        self.x = vert_r[:,0]
-        self.y = vert_r[:,1]
-        self.centroid = array([mean(self.x),
-                               mean(self.y),
-                               mean(self.z)])
-        self.norm(scale=1)
-
-    def update(self,delt):  # not used now
-        """
-        unused
-        :param delt:
-        :return:
-        """
-        self.x = self.x+delt[0]
-        self.y = self.y+delt[1]
-        self.z = self.z+delt[2]
+            Vred = [el for ind, el in enumerate(V) if ind != dimension - 1]
+            ax.plot(Vred[0], Vred[1], 'k')
+        
+        else:
+            
+            ax.plot_wireframe(self.x[[0, 1, 2, 3, 0]],
+                              self.y[[0, 1, 2, 3, 0]],
+                              self.z[[0, 1, 2, 3, 0]])
 
 
 def read_NEMOH(f_n):
@@ -431,23 +362,23 @@ def read_NEMOH(f_n):
     msg = strip_comments(msg)
     lines = msg.split('\n')
     
-    first_line = array(lines.pop(0).split(), dtype=int)
+    first_line = np.array(lines.pop(0).split(), dtype=int)
     
     if len(first_line) == 1:
         
         xsim = 0
         nV = first_line[0]
         nP = int(lines.pop(0))
-        vertices = zeros((nV, 3))
+        vertices = np.zeros((nV, 3))
         
         for vertex in range(nV):
-            vertices[vertex, :] = array(lines.pop(0).split(), dtype=float)
+            vertices[vertex, :] = np.array(lines.pop(0).split(), dtype=float)
         
-        connectivity = zeros((nP, 4))
+        connectivity = np.zeros((nP, 4))
         
         for panel in range(nP):
-            connectivity[panel, :] = array(lines.pop(0).split(),
-                                           dtype=float) - 1
+            connectivity[panel, :] = np.array(lines.pop(0).split(),
+                                              dtype=float) - 1
     
     elif len(first_line) == 2:
         
@@ -460,7 +391,7 @@ def read_NEMOH(f_n):
             
             if not line: continue
             
-            temp = array(line.split(), dtype=float)
+            temp = np.array(line.split(), dtype=float)
             
             if not int(temp[0]) == 0 and not pass_to_connectivity:
                 vertices.append(temp[1:].tolist())
@@ -468,11 +399,11 @@ def read_NEMOH(f_n):
                 pass_to_connectivity = True
                 connectivity.append([v - 1 for v in temp.tolist()])
         
-        vertices = array(vertices)
+        vertices = np.array(vertices)
         connectivity.pop(0)
         connectivity.pop(-1)
     
-    connectivity = array(connectivity, dtype=int)
+    connectivity = np.array(connectivity, dtype=int)
     
     return xsim, vertices, connectivity
 
@@ -486,27 +417,27 @@ def read_WAMIT(f_n):
     lines = msg.split('\n')
     lines = lines[2:]
     
-    xsim = array(lines.pop(0).split()[0], dtype=int)
-    nP = array(lines.pop(0), dtype=int)
+    xsim = np.array(lines.pop(0).split()[0], dtype=int)
+    nP = np.array(lines.pop(0), dtype=int)
     nV = nP * 4
     
-    points = array([float(val) for entries in lines
+    points = np.array([float(val) for entries in lines
                                                for val in entries.split()])
-    vertices = reshape(points, (-1, 3))
+    vertices = np.reshape(points, (-1, 3))
     
     assert vertices.shape[0] == nV
     
-    connectivity = zeros((nP, 4))
+    connectivity = np.zeros((nP, 4))
     vertex = 0
     
     for panel in range(nP):
-        connectivity[panel, :] = array([vertex,
-                                        vertex + 1,
-                                        vertex + 2,
-                                        vertex + 3])
+        connectivity[panel, :] = np.array([vertex,
+                                           vertex + 1,
+                                           vertex + 2,
+                                           vertex + 3])
         vertex +=4
     
-    connectivity = array(connectivity, dtype=int)
+    connectivity = np.array(connectivity, dtype=int)
     
     return xsim, vertices, connectivity
 
@@ -525,9 +456,9 @@ if __name__== "__main__":
     m = MeshBem(name, path=path)
     m.visualise_mesh()
     m.translate(5,0,0)
-    m.rotate(90./180*pi, array([0,0,0]))
+    m.rotate(90./180*np.pi, np.array([0,0,0]))
     m.visualise_mesh()
-    m.rotate(-90./180*pi, array([0,0,0]))
-    m.rotate(90./180*pi, m.Vertex.mean(0))
+    m.rotate(-90./180*np.pi, np.array([0,0,0]))
+    m.rotate(90./180*np.pi, m.vertices.mean(0))
     m.visualise_mesh()
 

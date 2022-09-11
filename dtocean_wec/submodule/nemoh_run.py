@@ -211,7 +211,7 @@ class NemohExecute():
             
             for b_mesh in self.mesh_obj:
                 
-                coord = np.vstack((coord, b_mesh.Vertex))
+                coord = np.vstack((coord, b_mesh.vertices))
                 area = 0.0
                 
                 for panel in b_mesh.panels:
