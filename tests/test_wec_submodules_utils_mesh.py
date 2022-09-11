@@ -93,29 +93,53 @@ def test_read_wamit(test_data_folder,
     assert (connectivity == cube_connectivity).all()
 
 
-@pytest.fixture
-def mesh_bem(test_data_folder):
-    return MeshBem("cube.GDF", test_data_folder)
-
-
-def test_mesh_bem_init(mesh_bem,
-                       test_data_folder,
-                       cube_xsim,
-                       cube_vertices):
+@pytest.mark.parametrize("file_name", ["cube.GDF", "cube2.GDF"])
+def test_mesh_bem_init_gdf(file_name,
+                           test_data_folder,
+                           cube_xsim,
+                           cube_vertices):
     
     cube_connectivity = np.array([[ 0,  1,  2,  3],
                                   [ 4,  5,  6,  7],
                                   [ 8,  9, 10, 11],
                                   [12, 13, 14, 15],
                                   [16, 17, 18, 19]], dtype=int)
+    mesh_bem = MeshBem(file_name, test_data_folder)
     
-    assert mesh_bem.file_name == "cube.GDF"
+    assert mesh_bem.file_name == file_name
     assert mesh_bem.path == test_data_folder
     assert mesh_bem.xsim == cube_xsim
     assert (mesh_bem.vertices == cube_vertices).all()
     assert (mesh_bem.connectivity == cube_connectivity).all()
     assert mesh_bem.nP == len(cube_connectivity)
     assert mesh_bem.nV == len(cube_vertices)
+
+
+@pytest.mark.parametrize("file_name", ["cube.dat", "cube2.dat"])
+def test_mesh_bem_init_dat(file_name,
+                           test_data_folder,
+                           cube_xsim,
+                           cube_vertices):
+    
+    cube_connectivity = np.array([[ 2,  3,  4,  1],
+                                  [ 6,  7,  8,  5],
+                                  [10, 11, 12,  9],
+                                  [14, 15, 16, 13],
+                                  [18, 19, 20, 17]], dtype=int) - 1
+    mesh_bem = MeshBem(file_name, test_data_folder)
+    
+    assert mesh_bem.file_name == file_name
+    assert mesh_bem.path == test_data_folder
+    assert mesh_bem.xsim == cube_xsim
+    assert (mesh_bem.vertices == cube_vertices).all()
+    assert (mesh_bem.connectivity == cube_connectivity).all()
+    assert mesh_bem.nP == len(cube_connectivity)
+    assert mesh_bem.nV == len(cube_vertices)
+
+
+@pytest.fixture
+def mesh_bem(test_data_folder):
+    return MeshBem("cube.GDF", test_data_folder)
 
 
 @pytest.fixture

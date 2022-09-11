@@ -57,7 +57,7 @@ class MeshBem(object):
         
         if extension.lower() == ".gdf":
             xsim, vertices, connectivity = read_WAMIT(mesh_fn)
-        elif extension.lower() == "dat":
+        elif extension.lower() == ".dat":
             xsim, vertices, connectivity = read_NEMOH(mesh_fn)
         else:
             raise IOError("Mesh file type not supported. Use GDF or dat.")
