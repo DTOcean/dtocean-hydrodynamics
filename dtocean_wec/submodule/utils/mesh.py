@@ -275,7 +275,7 @@ class MeshBem(object):
 
 class Panel(object):
     """
-    Panel: a class representing a 4-node BEM panel
+    Panel: a class for visualizing a 4-node BEM panel
     
     Args:
         vertex (numpy.ndarray): coordinates of the vertexs
@@ -286,7 +286,6 @@ class Panel(object):
         z (numpy.ndarray): z coordinates of the vertexs
         centroid (numpy.ndarray): panel centroid
         n (numpy.ndarray): normal vector at the panel centroid
-        area (float): surface area of the panel
     """
     def __init__(self, vertex):
         
@@ -295,7 +294,6 @@ class Panel(object):
         self.z = vertex[[0, 1, 2, 3], 2]
         self.centroid = np.mean(vertex, axis=0)
         self.n = _get_panel_norm(self.x, self.y, self.z)
-        self.area = _get_panel_area(self.x, self.y, self.z)
     
     def show_norm(self, ax):
         """
@@ -366,21 +364,6 @@ def _get_panel_norm(x, y, z):
     dr = np.cross(v24, v31)
     
     return dr / LA.norm(dr)
-
-
-def _get_panel_area(x, y, z):
-    
-    v12 = np.array([x[1] - x[0], y[1] - y[0], z[1] - z[0]])
-    v14 = np.array([x[3] - x[0], y[3] - y[0], z[3] - z[0]])
-    v34 = np.array([x[3] - x[2], y[3] - y[2], z[3] - z[2]])
-    v32 = np.array([x[1] - x[2], y[1] - y[2], z[1] - z[2]])
-    
-    n1 = np.cross(v12, v14)
-    n2 = np.cross(v34, v32)
-    d1 = n1 / LA.norm(n1)
-    d2 = n2 / LA.norm(n2)
-    
-    return (LA.norm(n1) + np.dot(d1, d2) * LA.norm(n2)) / 2.
 
 
 def read_NEMOH(f_n):
