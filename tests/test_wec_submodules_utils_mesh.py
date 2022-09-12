@@ -3,11 +3,13 @@ import os
 
 import numpy as np
 import pytest
+import matplotlib.pyplot as plt
 
 from dtocean_wec.submodule.utils.mesh import (strip_comments,
                                               read_NEMOH,
                                               read_WAMIT,
-                                              MeshBem)
+                                              MeshBem,
+                                              Panel)
 
 
 @pytest.fixture
@@ -18,25 +20,25 @@ def cube_xsim():
 @pytest.fixture
 def cube_vertices():
     return np.array([[ 1., -1.,  0.],
-                     [ 1., -1., -2.],
-                     [-1., -1., -2.],
-                     [-1., -1.,  0.],
                      [-1., -1.,  0.],
                      [-1., -1., -2.],
-                     [-1.,  1., -2.],
-                     [-1.,  1.,  0.],
-                     [-1.,  1.,  0.],
-                     [-1.,  1., -2.],
-                     [ 1.,  1., -2.],
-                     [ 1.,  1.,  0.],
-                     [ 1.,  1.,  0.],
-                     [ 1.,  1., -2.],
                      [ 1., -1., -2.],
+                     [-1., -1.,  0.],
+                     [-1.,  1.,  0.],
+                     [-1.,  1., -2.],
+                     [-1., -1., -2.],
+                     [-1.,  1.,  0.],
+                     [ 1.,  1.,  0.],
+                     [ 1.,  1., -2.],
+                     [-1.,  1., -2.],
+                     [ 1.,  1.,  0.],
                      [ 1., -1.,  0.],
+                     [ 1., -1., -2.],
                      [ 1.,  1., -2.],
-                     [-1.,  1., -2.],
+                     [ 1.,  1., -2.],
+                     [ 1., -1., -2.],
                      [-1., -1., -2.],
-                     [ 1., -1., -2.]])
+                     [-1.,  1., -2.]])
 
 
 def test_strip_comments():
@@ -150,50 +152,50 @@ def mesh_bem_trans(mesh_bem):
 
 def test_mesh_bem_translate(mesh_bem_trans):
     assert (mesh_bem_trans.vertices == np.array([[ 2.,  0., -1.],
-                                                 [ 2.,  0., -3.],
-                                                 [ 0.,  0., -3.],
-                                                 [ 0.,  0., -1.],
                                                  [ 0.,  0., -1.],
                                                  [ 0.,  0., -3.],
-                                                 [ 0.,  2., -3.],
-                                                 [ 0.,  2., -1.],
-                                                 [ 0.,  2., -1.],
-                                                 [ 0.,  2., -3.],
-                                                 [ 2.,  2., -3.],
-                                                 [ 2.,  2., -1.],
-                                                 [ 2.,  2., -1.],
-                                                 [ 2.,  2., -3.],
                                                  [ 2.,  0., -3.],
+                                                 [ 0.,  0., -1.],
+                                                 [ 0.,  2., -1.],
+                                                 [ 0.,  2., -3.],
+                                                 [ 0.,  0., -3.],
+                                                 [ 0.,  2., -1.],
+                                                 [ 2.,  2., -1.],
+                                                 [ 2.,  2., -3.],
+                                                 [ 0.,  2., -3.],
+                                                 [ 2.,  2., -1.],
                                                  [ 2.,  0., -1.],
+                                                 [ 2.,  0., -3.],
                                                  [ 2.,  2., -3.],
-                                                 [ 0.,  2., -3.],
+                                                 [ 2.,  2., -3.],
+                                                 [ 2.,  0., -3.],
                                                  [ 0.,  0., -3.],
-                                                 [ 2.,  0., -3.]])).all()
+                                                 [ 0.,  2., -3.]])).all()
 
 
 def test_mesh_bem_rotate(mesh_bem_trans):
     
-    mesh_bem_trans.rotate(np.pi / 2, (0, 0, 0))
-    expected = np.array([[ 0.,  2., -1.],
-                         [ 0.,  2., -3.],
-                         [ 0.,  0., -3.],
-                         [ 0.,  0., -1.],
+    mesh_bem_trans.rotate(-np.pi / 2, (0, 0, 0))
+    expected = np.array([[ 0., -2., -1.],
                          [ 0.,  0., -1.],
                          [ 0.,  0., -3.],
-                         [-2.,  0., -3.],
-                         [-2.,  0., -1.],
-                         [-2.,  0., -1.],
-                         [-2.,  0., -3.],
-                         [-2.,  2., -3.],
-                         [-2.,  2., -1.],
-                         [-2.,  2., -1.],
-                         [-2.,  2., -3.],
-                         [ 0.,  2., -3.],
-                         [ 0.,  2., -1.],
-                         [-2.,  2., -3.],
-                         [-2.,  0., -3.],
+                         [ 0., -2., -3.],
+                         [ 0.,  0., -1.],
+                         [ 2.,  0., -1.],
+                         [ 2.,  0., -3.],
                          [ 0.,  0., -3.],
-                         [ 0.,  2., -3.]])
+                         [ 2.,  0., -1.],
+                         [ 2., -2., -1.],
+                         [ 2., -2., -3.],
+                         [ 2.,  0., -3.],
+                         [ 2., -2., -1.],
+                         [ 0., -2., -1.],
+                         [ 0., -2., -3.],
+                         [ 2., -2., -3.],
+                         [ 2., -2., -3.],
+                         [ 0., -2., -3.],
+                         [ 0.,  0., -3.],
+                         [ 2.,  0., -3.]])
     
     assert np.isclose(mesh_bem_trans.vertices, expected).all()
 
@@ -220,3 +222,45 @@ def test_mesh_bem_invert_norm_single(mesh_bem):
     
     mesh_bem.invert_norm(0)
     assert (mesh_bem.connectivity == expected).all()
+
+
+def test_panel():
+    vertices = np.array([[-1., -1.,  0.],
+                         [ 1., -1.,  0.],
+                         [ 1.,  1.,  0.],
+                         [-1.,  1.,  0.]])
+    panel = Panel(vertices)
+    assert np.isclose(panel.centroid, (0, 0, 0)).all()
+    assert np.isclose(panel.d, (0, 0, 1)).all()
+
+
+def test_panel_reverse():
+    vertices = np.array([[-1., -1.,  0.],
+                         [-1.,  1.,  0.],
+                         [ 1.,  1.,  0.],
+                         [ 1., -1.,  0.]])
+    panel = Panel(vertices)
+    assert np.isclose(panel.centroid, (0, 0, 0)).all()
+    assert np.isclose(panel.d, (0, 0, -1)).all()
+
+
+def test_panel_again():
+    vertices = np.array([[ 1., -1., -2.],
+                         [ 1., -1.,  0.],
+                         [-1., -1.,  0.],
+                         [-1., -1., -2.]])
+    panel = Panel(vertices)
+    assert np.isclose(panel.centroid, (0, -1, -1)).all()
+    assert np.isclose(panel.d, (0, -1, 0)).all()
+
+
+def test_mesh_bem_visualise_mesh(mocker, mesh_bem):
+    mocker.patch("dtocean_wec.submodule.utils.mesh.plt.show")
+    mesh_bem.visualise_mesh()
+    plt.close("all")
+
+
+def test_mesh_bem_visualise_norm(mocker, mesh_bem):
+    mocker.patch("dtocean_wec.submodule.utils.mesh.plt.show")
+    mesh_bem.visualise_norm()
+    plt.close("all")

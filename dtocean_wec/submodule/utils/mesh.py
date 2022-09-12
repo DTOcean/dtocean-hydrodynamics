@@ -131,7 +131,7 @@ class MeshBem(object):
         ax[0, 0].margins(0.05)
         
         for elm in panels:
-            elm.show(ax[0,0 ], dimension=1)
+            elm.show(ax[0, 0], dimension=1)
         
         ax[0, 0].set_aspect('equal')
         plt.grid()
@@ -173,7 +173,6 @@ class MeshBem(object):
         ax = fig.add_subplot(111, projection='3d')
         
         for elm in panels:
-            elm.norm(scale)
             elm.show_norm(ax)
         
         ax.set_aspect('equal')
@@ -282,12 +281,12 @@ class Panel(object):
         self.x = vertex[[0, 1, 2, 3], 0]
         self.y = vertex[[0 ,1 ,2, 3], 1]
         self.z = vertex[[0, 1, 2, 3], 2]
-        self.centroid = np.mean(vertex,axis=0)
+        self.centroid = np.mean(vertex, axis=0)
         self.d = None
         
         self._init_norm()
     
-    def _init_norm(self, scale=1):
+    def _init_norm(self):
         """
         _init_norm: calculated the panel norm
         
@@ -298,19 +297,15 @@ class Panel(object):
         y = self.y
         z = self.z
         
-        v12 = np.array([x[1] - x[0], y[1] - y[0], z[1] - z[0]])
-        v14 = np.array([x[3] - x[0], y[3] - y[0], z[3] - z[0]])
-        v34 = np.array([x[3] - x[2], y[3] - y[2], z[3] - z[2]])
-        v32 = np.array([x[1] - x[2], y[1] - y[2], z[1] - z[2]])
+        v24 = np.array([x[3] - x[1],
+                        y[3] - y[1],
+                        z[3] - z[1]])
+        v31 = np.array([x[0] - x[2],
+                        y[0] - y[2],
+                        z[0] - z[2]])
         
-        n1 = np.cross(v12, v14)
-        n2 = np.cross(v34, v32)
-        d1 = n1 / LA.norm(n1)
-        d2 = n2 / LA.norm(n2)
-        
-        area = (LA.norm(n1) + np.dot(d1, d2) * LA.norm(n2)) / 2.
-        dr = (((d1 + d2) / 2. * area)) * scale
-        self.d = dr + self.centroid
+        dr = np.cross(v24, v31)
+        self.d = dr / LA.norm(dr)
     
     def show_norm(self, ax):
         """
@@ -319,10 +314,25 @@ class Panel(object):
         Args:
             ax (matplotlib axes): axes of the parent figure pointer
         """
-        ax.plot_wireframe(self.x, self.y, self.z, color="#000000")
-        ax.plot_wireframe([self.centroid[0], self.d[0]],
-                          [self.centroid[1], self.d[1]],
-                          [self.centroid[2], self.d[2]],
+        
+        x = self.x
+        y = self.y
+        z = self.z
+        
+        v24 = np.array([x[3] - x[1],
+                        y[3] - y[1],
+                        z[3] - z[1]])
+        v31 = np.array([x[0] - x[2],
+                        y[0] - y[2],
+                        z[0] - z[2]])
+        
+        scale = (LA.norm(v24) + LA.norm(v31)) / 8
+        d = self.d * scale + self.centroid
+        
+        ax.plot_wireframe(x, y, z, color="#000000")
+        ax.plot_wireframe([self.centroid[0], d[0]],
+                          [self.centroid[1], d[1]],
+                          [self.centroid[2], d[2]],
                           color="red")
         ax.scatter(self.centroid[0],
                    self.centroid[1],
