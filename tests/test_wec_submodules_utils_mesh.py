@@ -9,6 +9,8 @@ from dtocean_wec.submodule.utils.mesh import (strip_comments,
                                               read_NEMOH,
                                               read_WAMIT,
                                               MeshBem,
+                                              _get_panel_norm,
+                                              _get_panel_area,
                                               Panel)
 
 
@@ -232,6 +234,38 @@ def test_mesh_bem_invert_norm_single(mesh_bem):
     assert (mesh_bem.connectivity == expected).all()
 
 
+def test_get_panel_norm_zpos():
+    x = np.array([-1.,  1.,  1., -1.])
+    y = np.array([-1., -1.,  1.,  1.])
+    z = np.array([ 0.,  0.,  0.,  0.])
+    norm = _get_panel_norm(x, y, z)
+    assert np.isclose(norm, (0, 0, 1)).all()
+
+
+def test_get_panel_norm_zneg():
+    x = np.array([-1., -1.,  1., -1.])
+    y = np.array([-1.,  1.,  1., -1.])
+    z = np.array([ 0.,  0.,  0.,  0.])
+    norm = _get_panel_norm(x, y, z)
+    assert np.isclose(norm, (0, 0, -1)).all()
+
+
+def test_get_panel_norm_yneg():
+    x = np.array([ 1.,  1., -1., -1.])
+    y = np.array([-1., -1., -1., -1.])
+    z = np.array([-2.,  0.,  0., -2.])
+    norm = _get_panel_norm(x, y, z)
+    assert np.isclose(norm, (0, -1, 0)).all()
+
+
+def test_get_panel_area_four():
+    x = np.array([-1.,  1.,  1., -1.])
+    y = np.array([-1., -1.,  1.,  1.])
+    z = np.array([ 0.,  0.,  0.,  0.])
+    area = _get_panel_area(x, y, z)
+    assert np.isclose(area, 4)
+
+
 def test_panel():
     vertices = np.array([[-1., -1.,  0.],
                          [ 1., -1.,  0.],
@@ -240,6 +274,7 @@ def test_panel():
     panel = Panel(vertices)
     assert np.isclose(panel.centroid, (0, 0, 0)).all()
     assert np.isclose(panel.n, (0, 0, 1)).all()
+    assert np.isclose(panel.area, 4)
 
 
 def test_panel_reverse():
@@ -250,6 +285,7 @@ def test_panel_reverse():
     panel = Panel(vertices)
     assert np.isclose(panel.centroid, (0, 0, 0)).all()
     assert np.isclose(panel.n, (0, 0, -1)).all()
+    assert np.isclose(panel.area, 4)
 
 
 def test_panel_again():
@@ -260,6 +296,7 @@ def test_panel_again():
     panel = Panel(vertices)
     assert np.isclose(panel.centroid, (0, -1, -1)).all()
     assert np.isclose(panel.n, (0, -1, 0)).all()
+    assert np.isclose(panel.area, 4)
 
 
 def test_mesh_bem_visualise_mesh(mocker, mesh_bem):
