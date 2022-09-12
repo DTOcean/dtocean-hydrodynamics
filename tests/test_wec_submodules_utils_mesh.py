@@ -231,7 +231,7 @@ def test_panel():
                          [-1.,  1.,  0.]])
     panel = Panel(vertices)
     assert np.isclose(panel.centroid, (0, 0, 0)).all()
-    assert np.isclose(panel.d, (0, 0, 1)).all()
+    assert np.isclose(panel.n, (0, 0, 1)).all()
 
 
 def test_panel_reverse():
@@ -241,7 +241,7 @@ def test_panel_reverse():
                          [ 1., -1.,  0.]])
     panel = Panel(vertices)
     assert np.isclose(panel.centroid, (0, 0, 0)).all()
-    assert np.isclose(panel.d, (0, 0, -1)).all()
+    assert np.isclose(panel.n, (0, 0, -1)).all()
 
 
 def test_panel_again():
@@ -251,7 +251,7 @@ def test_panel_again():
                          [-1., -1., -2.]])
     panel = Panel(vertices)
     assert np.isclose(panel.centroid, (0, -1, -1)).all()
-    assert np.isclose(panel.d, (0, -1, 0)).all()
+    assert np.isclose(panel.n, (0, -1, 0)).all()
 
 
 def test_mesh_bem_visualise_mesh(mocker, mesh_bem):
@@ -264,3 +264,88 @@ def test_mesh_bem_visualise_norm(mocker, mesh_bem):
     mocker.patch("dtocean_wec.submodule.utils.mesh.plt.show")
     mesh_bem.visualise_norm()
     plt.close("all")
+
+
+def test_mesh_bem_mesh_generation_gdf(tmpdir, test_data_folder, mesh_bem):
+    
+    mesh_bem.mesh_generation("gdf", str(tmpdir))
+    files = tmpdir.listdir()
+    
+    assert len(files) == 1
+    assert files[0].ext == ".gdf"
+    
+    expected = os.path.join(test_data_folder, "cube.GDF")
+    
+    with open(str(files[0])) as f1, open(expected) as f2:
+        
+        for _ in xrange(3):
+            next(f1)
+            next(f2)
+        
+        assert int(next(f1)) == int(next(f2))
+        
+        for line1, line2 in zip(f1, f2):
+            vals1 = [float(x) for x in line1.split()]
+            vals2 = [float(x) for x in line2.split()]
+            assert np.isclose(vals1, vals2).all()
+
+
+def test_mesh_bem_mesh_generation_nemoh(tmpdir, test_data_folder, mesh_bem):
+    
+    mesh_bem.mesh_generation("nemoh", str(tmpdir))
+    files = tmpdir.listdir()
+    
+    assert len(files) == 1
+    assert files[0].ext == ".dat"
+    
+    expected = os.path.join(test_data_folder, "cube.dat")
+    
+    with open(str(files[0])) as f1, open(expected) as f2:
+        
+        vals1 = [int(x) for x in next(f1).split()]
+        vals2 = [int(x) for x in next(f2).split()]
+        
+        assert vals1 == vals2
+        
+        for line1, line2 in zip(f1, f2):
+            
+            vals1 = [float(x) for x in line1.split()]
+            vals2 = [float(x) for x in line2.split()]
+            
+            if np.isclose(vals1, (0, 0, 0, 0)).all():
+                break
+            
+            assert np.isclose(vals1, vals2).all()
+        
+        for line1, line2 in zip(f1, f2):
+            vals1 = [int(x) for x in line1.split()]
+            vals2 = sorted([int(x) for x in line2.split()])
+            assert vals1 == vals2
+
+
+def test_mesh_bem_mesh_generation_mesh(tmpdir, test_data_folder, mesh_bem):
+    
+    mesh_bem.mesh_generation("mesh", str(tmpdir))
+    files = tmpdir.listdir()
+    
+    assert len(files) == 1
+    assert files[0].ext == ".dat"
+    
+    expected = os.path.join(test_data_folder, "cube2.dat")
+    
+    with open(str(files[0])) as f1, open(expected) as f2:
+        
+        n_vertices = int(next(f1))
+        
+        assert n_vertices == int(next(f2))
+        assert int(next(f1)) == int(next(f2))
+        
+        for _ in range(n_vertices):
+            vals1 = [float(x) for x in next(f1).split()]
+            vals2 = [float(x) for x in next(f2).split()]
+            assert np.isclose(vals1, vals2).all()
+        
+        for line1, line2 in zip(f1, f2):
+            vals1 = [int(x) for x in line1.split()]
+            vals2 = sorted([int(x) for x in line2.split()])
+            assert vals1 == vals2

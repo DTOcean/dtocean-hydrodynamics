@@ -189,7 +189,7 @@ class MeshBem(object):
                             mesh: nenoh dat file for hydrostatic calculation
         
         Optional args:
-            output_path (str): name of the location where to save the file
+            output_path (str): name of the folder where to save the file
         """
         
         if output_path is None: output_path = self.path
@@ -202,42 +202,56 @@ class MeshBem(object):
             with open(file_p, 'w') as f:
                 
                 f.write('WAMIT mesh file.\n')
-                f.write('1 9.82    ULEN GRAV\n')
+                f.write('1 9.80665 ULEN GRAV\n')
                 f.write('{} 0 ISX ISY\n'.format(self.xsim))
                 f.write('{}\n'.format(self.nP))
                 
-                for vertex in range(self.nV):
-                    f.write('{} {} {}\n'.format(self.vertices[vertex, 0],
+                for panel in self.connectivity:
+                    
+                    for vertex in panel[:-1]:
+                        f.write('{:15.6f} {:15.6f} {:15.6f}'.format(
+                                                self.vertices[vertex, 0],
                                                 self.vertices[vertex, 1],
                                                 self.vertices[vertex, 2]))
+                        f.write('  ')
+                    
+                    f.write('{:15.6f} {:15.6f} {:15.6f}'.format(
+                                                self.vertices[panel[-1], 0],
+                                                self.vertices[panel[-1], 1],
+                                                self.vertices[panel[-1], 2]))
+                    f.write('\n')
         
         elif output_format == "nemoh":
             
             file_n = '{}dat'.format(self.file_name[0:-3])
             file_p = os.path.join(output_path, file_n)
+            float_format = '{:>10d} {:15.6f} {:15.6f} {:15.6f}\n'
+            int_format = '{:>10d} {:>10d} {:>10d} {:>10d}\n'
             
             with open(file_p, 'w') as f:
                 
                 f.write('2 0\n')
                 
                 for vertex in range(self.nV):
-                    f.write('{} {} {} {}\n'.format(vertex+1,
-                                                   self.vertices[vertex, 0],
-                                                   self.vertices[vertex, 1],
-                                                   self.vertices[vertex, 2]))
+                    f.write(float_format.format(vertex + 1,
+                                                self.vertices[vertex, 0],
+                                                self.vertices[vertex, 1],
+                                                self.vertices[vertex, 2]))
                 
-                f.write('0 0.00 0.00 0.00\n')
+                f.write(float_format.format(0, 0, 0, 0))
                 
                 for panel in range(self.nP):
-                    f.write('{} {} {} {}\n'.format(*(
-                                            self.connectivity[panel,:] + 1)))
+                    f.write(int_format.format(
+                                            *(self.connectivity[panel,:] + 1)))
                 
-                f.write('0 0 0 0\n')
+                f.write(int_format.format(0, 0, 0, 0))
         
         elif output_format == "mesh":
             
-            file_n = '{}_mesh.dat'.format(self.file_name[0:-4])
+            file_n = '{}dat'.format(self.file_name[0:-3])
             file_p = os.path.join(output_path, file_n)
+            float_format = '{:15.6f} {:15.6f} {:15.6f}\n'
+            int_format = '{:>10d} {:>10d} {:>10d} {:>10d}\n'
             
             with open(file_p, 'w') as f:
             
@@ -245,16 +259,13 @@ class MeshBem(object):
                 f.write('{}\n'.format(self.nP))
                 
                 for vertex in range(self.nV):
-                    f.write('{} {} {}\n'.format(self.vertices[vertex, 0],
+                    f.write(float_format.format(self.vertices[vertex, 0],
                                                 self.vertices[vertex, 1],
                                                 self.vertices[vertex, 2]))
                 
                 for panel in range(self.nP):
-                    msg = '{} {} {} {}\n'.format(self.connectivity[panel, 0],
-                                                 self.connectivity[panel, 1],
-                                                 self.connectivity[panel, 2],
-                                                 self.connectivity[panel, 3])
-                    f.write(msg)
+                    f.write(int_format.format(
+                                            *(self.connectivity[panel,:] + 1)))
         
         else:
             
@@ -274,7 +285,7 @@ class Panel(object):
         y (numpy.ndarray): y coordinates of the vertexs
         z (numpy.ndarray): z coordinates of the vertexs
         centroid (numpy.ndarray): panel centroid
-        d (numpy.ndarray): normal direction applied at the panel centroid
+        n (numpy.ndarray): normal vector at the panel centroid
     """
     def __init__(self, vertex):
         
@@ -282,7 +293,7 @@ class Panel(object):
         self.y = vertex[[0 ,1 ,2, 3], 1]
         self.z = vertex[[0, 1, 2, 3], 2]
         self.centroid = np.mean(vertex, axis=0)
-        self.d = None
+        self.n = None
         
         self._init_norm()
     
@@ -305,7 +316,7 @@ class Panel(object):
                         z[0] - z[2]])
         
         dr = np.cross(v24, v31)
-        self.d = dr / LA.norm(dr)
+        self.n = dr / LA.norm(dr)
     
     def show_norm(self, ax):
         """
@@ -327,7 +338,7 @@ class Panel(object):
                         z[0] - z[2]])
         
         scale = (LA.norm(v24) + LA.norm(v31)) / 8
-        d = self.d * scale + self.centroid
+        d = self.n * scale + self.centroid
         
         ax.plot_wireframe(x, y, z, color="#000000")
         ax.plot_wireframe([self.centroid[0], d[0]],
