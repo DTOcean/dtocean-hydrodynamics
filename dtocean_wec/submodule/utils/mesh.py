@@ -22,7 +22,7 @@ import re
 import numpy as np
 import matplotlib.pyplot as plt
 from numpy import linalg as LA
-from mpl_toolkits.mplot3d import axes3d
+from mpl_toolkits.mplot3d import axes3d # pylint: disable=unused-import
 
 
 class MeshBem(object):

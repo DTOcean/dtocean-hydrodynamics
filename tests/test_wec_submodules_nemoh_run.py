@@ -2,20 +2,9 @@
 import numpy as np
 import pytest
 import logging
-import contextlib
 
 from dtocean_wec.submodule.nemoh_run import _get_cylinder_radius
 from dtocean_wec.submodule.utils.mesh import MeshBem
-
-
-@contextlib.contextmanager
-def caplog_for_logger(caplog, logger_name, level=logging.DEBUG):
-    caplog.handler.records = []
-    logger = logging.getLogger(logger_name)
-    logger.addHandler(caplog.handler)
-    logger.setLevel(level)
-    yield
-    logger.removeHandler(caplog.handler)
 
 
 def test_get_cylinder_radius_no_meshs():
