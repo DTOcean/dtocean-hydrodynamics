@@ -139,6 +139,14 @@ def test_mesh_bem_init_dat(file_name,
     assert mesh_bem.nV == len(cube_vertices)
 
 
+def test_mesh_bem_bad_ext():
+    
+    with pytest.raises(IOError) as excinfo:
+        MeshBem("bad.bad")
+    
+    assert "file type not supported" in str(excinfo.value)
+
+
 @pytest.fixture
 def mesh_bem(test_data_folder):
     return MeshBem("cube.GDF", test_data_folder)
@@ -349,3 +357,11 @@ def test_mesh_bem_mesh_generation_mesh(tmpdir, test_data_folder, mesh_bem):
             vals1 = [int(x) for x in line1.split()]
             vals2 = sorted([int(x) for x in line2.split()])
             assert vals1 == vals2
+
+
+def test_mesh_bem_mesh_generation_not_supported(mesh_bem):
+    
+    with pytest.raises(ValueError) as excinfo:
+        mesh_bem.mesh_generation("bad")
+    
+    assert "Unsupported output format" in str(excinfo.value)

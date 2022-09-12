@@ -467,19 +467,3 @@ def strip_comments(code):
     msg = re.sub('\s*!.*', '', code, re.MULTILINE)
     msg = re.sub(r'^\n', '', msg)
     return re.sub(r'\n\s*\n', '\n', msg, re.MULTILINE)
-
-
-if __name__== "__main__":
-
-    path = r"C:\Users\francesco\Desktop\Nemoh_run"
-    name = "Cylinder.GDF"
-
-    m = MeshBem(name, path=path)
-    m.visualise_mesh()
-    m.translate(5,0,0)
-    m.rotate(90./180*np.pi, np.array([0,0,0]))
-    m.visualise_mesh()
-    m.rotate(-90./180*np.pi, np.array([0,0,0]))
-    m.rotate(90./180*np.pi, m.vertices.mean(0))
-    m.visualise_mesh()
-
