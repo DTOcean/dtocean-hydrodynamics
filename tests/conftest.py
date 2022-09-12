@@ -566,3 +566,8 @@ def main_window(mocker, qtbot, tmpdir, install_lines):
     qtbot.addWidget(window)
     
     return window
+
+
+@pytest.fixture
+def test_data_folder():
+    return os.path.join(this_dir, "..", "test_data")

@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 
 #    Copyright (C) 2016 Pau Mercadez Ruiz
-#    Copyright (C) 2017-2018 Mathew Topper
+#    Copyright (C) 2017-2022 Mathew Topper
 #
 #    This program is free software: you can redistribute it and/or modify
 #    it under the terms of the GNU General Public License as published by
@@ -33,9 +33,10 @@ import logging
 import subprocess
 
 import numpy as np
+from numpy import linalg as LA
 
 from hydrostatics import Hydrostatics_Nemohcal
-from utils.mesh_util import MeshBem
+from utils.mesh import MeshBem
 from utils.multibody_analysis import MultiBodyAnalysis
 
 # Start logging
@@ -198,29 +199,13 @@ class NemohExecute():
             self.mesh_obj += [msh_obj]
 
         # identify the size of the circumscribing cylinder
-        if self.Cyl_Nzeta == 0 or self.Cyl_Ntheta == 0 or (not self.__get_array_mat):
+        if (self.Cyl_Nzeta == 0 or
+                self.Cyl_Ntheta == 0 or
+                    not self.__get_array_mat):
             self.Cyl_radius = 0
-        else :
-            coord = np.empty((0, 3))
-            for b_mesh in self.mesh_obj:
-                coord = np.vstack((coord, b_mesh.Vertex))
-                area = 0.0
-                for panel in b_mesh.panels:
-                    if panel.area > area:
-                        area = panel.area
-                        d = max([(panel.x[0]-panel.x[s])**2+(panel.y[0]-panel.y[s])**2+
-                                 (panel.z[0]-panel.z[s])**2 for s in [1,-1]])
-
-            centroid = coord.mean(0)
-            if not np.sqrt(np.sum(centroid[:2]**2))/coord.max() < 1e-3:
-                module_logger.warning("WARNING: the centroid of the mesh file is not centered in the"
-                        " origin of the mesh coordinate system. \nConsider to regenerate"
-                        " a mesh that satisfy this condition.")
-
-            self.Cyl_radius = (np.sqrt(coord[:,0]**2+coord[:,1]**2)).max()
-            self.Cyl_radius += np.sqrt(d)
-            
-
+        else:
+            self.Cyl_radius = _get_cylinder_radius(self.mesh_obj)
+    
     def load_folder_tree(self):
         self.path_prj_hdy = os.path.join(self.prj_folder,'hydrodynamic')
         self.path_prj_dyn_res = os.path.join(self.path_prj_hdy,'results')
@@ -254,14 +239,8 @@ class NemohExecute():
         for nb in range(self.n_bodies):
             msh_obj = self.mesh_obj[nb]
             if self._debug: msh_obj.visualise_mesh()
-
-            if self.bodies[nb]['mesh'][-3:].lower()=="gdf":
-                msh_obj.mesh_generation("nemoh", output_path=self.path_prj_dyn_mesh)
-
-            else:
-                msh_obj.mesh_generation("nemoh", output_path=self.path_prj_dyn_mesh)
-
-            if self._debug and self.n_bodies>1: msh_obj.visualise_mesh()
+            msh_obj.mesh_generation("nemoh",
+                                    output_path=self.path_prj_dyn_mesh)
     
     def gen_multibody_structure(self):
         mb_obj = MultiBodyAnalysis(self.bodies, self.shared_dof_binary,  self.point_application)
@@ -376,7 +355,39 @@ class NemohExecute():
                             os.path.join(nemoh_folder, 'postprocessor.exe')
                             )
             os.chdir(actual_dir)
+
+
+def _get_cylinder_radius(meshes):
+    
+    coord = np.empty((0, 3))
+    d = None
+    
+    for mesh in meshes:
         
+        coord = np.vstack((coord, mesh.vertices))
+        
+        for panel in mesh.connectivity:
+            
+            d_panel = max([LA.norm(mesh.vertices[panel[0]] -
+                                   mesh.vertices[panel[s]]) for s in [1, -1]])
+            
+            if d is None or d_panel > d:
+                d = d_panel
+    
+    if d is None:
+        raise RuntimeError("Can not determine mesh extents")
+    
+    centroid = coord.mean(0)
+    
+    if not np.sqrt(np.sum(centroid[:2] ** 2)) / coord.max() < 1e-3:
+        module_logger.warning(
+            "WARNING: the centroid of the mesh file is not centered "
+            "at the origin of the mesh coordinate system.\n"
+            "Consider regenerating a mesh to satisfy this condition.")
+    
+    return (np.sqrt(coord[:, 0] ** 2 + coord[:, 1] ** 2)).max() + d
+
+
 def rot_matrix(ang):
     Rz = lambda angle: np.array([[np.cos(angle), -np.sin(angle), 0], [np.sin(angle), np.cos(angle), 0], [0, 0, 1]])
     Ry = lambda angle: np.array([[np.cos(angle), 0, np.sin(angle)], [0, 1, 0], [-np.sin(angle), 0, np.cos(angle)]])

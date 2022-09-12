@@ -150,9 +150,13 @@ class RunNemoh(QWidget, Ui_T2):
         """
         
         """
-            
+    
     def browse_folder(self):
-        folder = QFileDialog.getOpenFileName(self, "Select the mesh file of the body")
+        folder = QFileDialog.getOpenFileName(
+                self,
+                "Select the mesh file of the body",
+                "",
+                "mesh files (*.dat *.gdf *.GDF)")
         self.mesh_f_t2.setText(folder)
         
     def submit_input_data(self):

@@ -129,7 +129,7 @@ $ conda activate _dtocean_hydro
 Install pytest to the environment (one time only):
 
 ```
-$ conda install -y mock pytest pytest-mock pytest-qt
+$ conda install -y mock pytest pytest-catchlog pytest-mock pytest-qt
 ```
 
 Run the tests:
