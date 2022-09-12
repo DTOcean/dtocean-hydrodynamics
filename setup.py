@@ -256,7 +256,9 @@ setup(name='dtocean-hydrodynamics',
       zip_safe=False, # Important for reading config files
       tests_require=['mock',
                      'pytest',
-                     'pytest-mock'],
+                     'pytest-catchlog',
+                     'pytest-mock',
+                     'pytest-qt'],
       cmdclass={'bootstrap': Bootstrap,
                 'test': PyTest,
                 'cleantest': CleanTest}
