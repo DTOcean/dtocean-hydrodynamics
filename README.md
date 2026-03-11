@@ -1,7 +1,9 @@
-[![appveyor](https://ci.appveyor.com/api/projects/status/github/DTOcean/dtocean-hydrodynamics?branch=master&svg=true)](https://ci.appveyor.com/project/DTOcean/dtocean-hydrodynamics)
-[![codecov](https://codecov.io/gh/DTOcean/dtocean-hydrodynamics/branch/master/graph/badge.svg)](https://codecov.io/gh/DTOcean/dtocean-hydrodynamics)
-[![Codacy Badge](https://app.codacy.com/project/badge/Grade/0ba57ae117cb4cb8b284635638f7c5a2)](https://www.codacy.com/gh/DTOcean/dtocean-hydrodynamics/dashboard?utm_source=github.com&amp;utm_medium=referral&amp;utm_content=DTOcean/dtocean-hydrodynamics&amp;utm_campaign=Badge_Grade)
-[![release](https://img.shields.io/github/release/DTOcean/dtocean-hydrodynamics.svg)](https://github.com/DTOcean/dtocean-hydrodynamics/releases/latest)
+***
+
+:loudspeaker: This repository was archived on 11 March 2026. It is now
+maintained in the [dtocean](https://github.com/DTOcean/dtocean) monorepo.
+
+***
 
 # DTOcean Hydrodynamics Module
 
